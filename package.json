@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"Error: no runner specified\" && exit 1",
+    "cli": "node ./dist/cli/index.js",
+    "start": "pnpm cli start",
+    "build:cli": "pnpm --filter @server/cli build",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -12,10 +15,12 @@
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
+  "dependencies": {
+    "reflect-metadata": "^0.2.2"
+  },
   "devDependencies": {
     "@types/node": "^22.15.19",
     "prettier": "^3.5.3",
-    "reflect-metadata": "^0.2.2",
     "typescript": "^5.8.3"
   }
 }

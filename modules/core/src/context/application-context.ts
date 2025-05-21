@@ -1,6 +1,6 @@
 import { Nullable } from '../helper/type.helper';
 import { Type } from './provider.type';
-import { ProviderFactory, SingletonProviderFactory } from './factory/provider.factory';
+import { ComponentContext, retrieveContext } from '../decorators/components/context.helper';
 
 export interface Context {
   resolve: <T extends any = any>(key: Type<T>, defaultValue?: Nullable<T> | (() => Nullable<T>)) => Nullable<T>;
@@ -9,13 +9,22 @@ export interface Context {
 }
 
 export class Module implements Context {
-  private readonly injectables: Record<any, ProviderFactory> = {};
+  private injectables: Record<string, ComponentContext[]> = {};
 
   constructor(private readonly providers: Type<any>[] = []) {}
 
   init() {
     this.providers.forEach(provider => {
-      this.injectables[provider as any] = new SingletonProviderFactory(provider as Type<any>);
+      const metadata = retrieveContext(provider);
+      metadata.names?.forEach(name => {
+        const context = this.injectables[name] ?? [];
+        context.push(metadata);
+        this.injectables[name] = context;
+      });
+    });
+
+    Object.entries(this.injectables).forEach(([key, context]) => {
+      this.injectables[key] = context.sort((first, second) => first.order - second.order);
     });
   }
 
@@ -24,7 +33,7 @@ export class Module implements Context {
   }
 
   resolve<T>(key: Type<T>, defaultValue?: Nullable<T> | (() => Nullable<T>)): Nullable<T> {
-    const injectable = this.injectables[key as any]?.build(this) as Nullable<T>;
+    const injectable = (this.injectables[key.name] ?? [])[0]?.factory?.build(this);
     if (injectable) {
       return injectable;
     }

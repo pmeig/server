@@ -1,17 +1,33 @@
 {
   "compilerOptions": {
-    "target": "ES2024",
-    "module": "CommonJS",
+    "module": "commonjs",
     "resolveJsonModule": true,
-    "sourceMap": true,
-    "declarationMap": true,
-    "declaration": true,
-    "removeComments": true,
-    "strict": true,
     "esModuleInterop": true,
-    "experimentalDecorators": true,
+    "removeComments": true,
     "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
-  }
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@server/core": [
+        "modules/core"
+      ],
+      "@server/core/*": [
+        "modules/core/src/*"
+      ]
+    }
+  },
+
 }

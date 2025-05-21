@@ -1,4 +1,4 @@
-import { RequestProviderFactory, SingletonProviderFactory, TransientProviderFactory } from './provider.factory';
+import { RequestProviderFactory, SingletonProviderFactory, TransientProviderFactory } from './provider-factory';
 
 export const FactoryProviderScoped = Object.freeze({
   scope: SingletonProviderFactory,

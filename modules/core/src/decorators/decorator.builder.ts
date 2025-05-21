@@ -20,7 +20,8 @@ const createDecorator = <T extends Decorators = Decorator>(handle: DecoratorBuil
     handlerAdded = (handle as () => Decorator)();
   }
   return target => {
-    const handler: Decorator = Reflect.getMetadata(handler_key, target) ?? ((_subTarget, _subPropertyKey, _subDescriptor) => {});
+    const handler: Decorator =
+      Reflect.getMetadata(handler_key, target) ?? ((_subTarget, _subPropertyKey, _subDescriptor) => {});
     Reflect.defineMetadata(
       handler_key,
       (subTarget: object, subPropertyKey?: string | symbol, subDescriptor?: PropertyDescriptor | number) => {
@@ -63,7 +64,7 @@ const concatDecoratorFunction = <T extends Decorators>(...decorators: T[]) => {
   };
 };
 
-export const Decorators = {
+export const Decorators = Object.freeze({
   parameter: {
     generic: parameterDecorator,
     constructor: constructorParameterDecorator,
@@ -74,4 +75,8 @@ export const Decorators = {
   class: classDecorator,
   all: createDecorator,
   concat: <T extends Decorators>(...decorators: T[]) => createDecorator(concatDecoratorFunction(...decorators)),
+});
+
+export const retrieveCustomDecorator = (target: object) => {
+  return Reflect.getMetadata(handler_key, target) as Decorator;
 };

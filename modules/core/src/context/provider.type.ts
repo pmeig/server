@@ -1,4 +1,4 @@
-import { FactoryProviderScoped } from './factory/provider-scope.factory';
+import { FactoryProviderScoped } from './factory/provider-scope';
 
 export interface Type<T> extends Function {
   new (...args: any[]): T;
