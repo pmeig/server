@@ -1,5 +1,5 @@
 import { PutType, PutOrder, PutScope } from './context.helper';
-import { ScopeType } from '../../context/provider.type';
+import { ScopeType } from '../../context/provider/provider.type';
 
 export const Priority = Object.freeze({
   custom: Number.MAX_SAFE_INTEGER,

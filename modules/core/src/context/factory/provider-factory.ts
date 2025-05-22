@@ -1,52 +1,48 @@
 import { Context } from '../application-context';
-import { Type } from '../provider.type';
+import { CustomProviderFactory, Type } from '../provider/provider.type';
 import { ConstructorFactory } from './constructor.factory';
 
-export interface ProviderFactory<T extends any = any> {
-  build(context: Context): T | undefined;
-  valid(target: object): ProviderFactory<T> | undefined;
-}
+export type ProviderType<T> = Type<T> | CustomProviderFactory<T>;
 
-export class RequestProviderFactory<T extends any = any> implements ProviderFactory<T> {
-  constructor(private readonly type: Type<T>) {}
+export abstract class ProviderFactory<T extends any = any> {
+  protected readonly constructorFactory: ConstructorFactory;
 
-  build(_context: Context): T | undefined {
-    return undefined;
-  }
-
-  valid(target: object): ProviderFactory<T> | undefined {
-    return undefined;
-  }
-}
-
-export class TransientProviderFactory<T extends any = any> implements ProviderFactory<T> {
-  constructor(private readonly type: Type<T>) {}
-
-  build(_context: Context): T | undefined {
-    return undefined;
-  }
-
-  valid(target: object): ProviderFactory<T> | undefined {
-    return undefined;
-  }
-}
-
-export class SingletonProviderFactory<T extends any = any> implements ProviderFactory<T> {
-  private singleton?: T;
-  private readonly constructorFactory: ConstructorFactory;
-  constructor(private readonly type: Type<T>) {
+  protected constructor(protected readonly type: ProviderType<T>) {
     this.constructorFactory = ConstructorFactory.from(type);
   }
-
-  build(context: Context): T | undefined {
-    if (this.singleton) {
-      return this.singleton;
+  build(context: Context): Promise<T | undefined> {
+    return Promise.resolve(this.constructorFactory?.build(this.type as Type<T>, context));
+  }
+  valid(target: object): ProviderFactory<T> | undefined {
+    if (typeof this.type === 'function') {
+      return this.type.name === (target as { name: string }).name ? this : undefined;
     }
-    this.singleton = this.constructorFactory.build(this.type, context);
-    return this.singleton;
+    return target === this.type ? this : undefined;
+  }
+}
+
+export class RequestProviderFactory<T extends any = any> extends ProviderFactory<T> {
+  constructor(type: ProviderType<T>) {
+    super(type);
+  }
+}
+
+export class TransientProviderFactory<T extends any = any> extends ProviderFactory<T> {
+  constructor(type: ProviderType<T>) {
+    super(type);
+  }
+}
+
+export class SingletonProviderFactory<T extends any = any> extends ProviderFactory<T> {
+  private singleton?: Promise<T>;
+  constructor(type: ProviderType<T>) {
+    super(type);
   }
 
-  valid(target: object): ProviderFactory<T> | undefined {
-    return this.type.name === (target as { name: string }).name ? this : undefined;
+  build(context: Context): Promise<T | undefined> {
+    if (!this.singleton) {
+      this.singleton = this.constructorFactory.build(this.type as Type<T>, context);
+    }
+    return this.singleton;
   }
 }

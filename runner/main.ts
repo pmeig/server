@@ -47,13 +47,24 @@ class Fourth implements Named {
   }
 }
 
-export const main = () => {
-  const module = new Module([First, Second, Fourth]);
-  module.init();
-  console.log(module.resolveRequired(First));
-  console.log(module.resolveRequired(Second));
-  console.log(module.resolve(Third));
-  console.log(module.resolveRequired(Fourth));
+export const main = async () => {
+  const module = new Module({
+    providers: [
+      First,
+      Second,
+      Fourth,
+      {
+        provide: Third,
+        useFactory: context => {
+          return new Promise(resolve => resolve(new Third()));
+        },
+      },
+    ],
+  });
+  console.log(await module.resolveRequired(First));
+  console.log(await module.resolveRequired(Second));
+  console.log(await module.resolve(Third));
+  console.log(await module.resolveRequired(Fourth));
 };
 
 main();

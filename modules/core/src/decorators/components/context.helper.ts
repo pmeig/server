@@ -1,13 +1,13 @@
 import 'reflect-metadata';
 import { ProviderFactory, SingletonProviderFactory } from '../../context/factory/provider-factory';
-import { ScopeType, Type } from '../../context/provider.type';
+import { ScopeType, Type } from '../../context/provider/provider.type';
 import { FactoryProviderScoped } from '../../context/factory/provider-scope';
 
 const context_key = 'components:context';
 
 export interface ComponentContext {
   type?: string;
-  names?: string[];
+  names?: (string | symbol)[];
   priority: number;
   order: number;
   factory?: ProviderFactory;
@@ -30,7 +30,7 @@ export const PutScope = (target: object, scope: ScopeType) => {
   updateContext({ factory: new FactoryProviderScoped[scope](target as Type<any>) }, target);
 };
 
-const updateContext = (context: Partial<ComponentContext>, target: object) => {
+export const updateContext = (context: Partial<ComponentContext>, target: object) => {
   const previous = Reflect.getMetadata(context_key, target) as ComponentContext;
   Reflect.defineMetadata(
     context_key,

@@ -1,4 +1,4 @@
-import { Type } from '../context/provider.type';
+import { Type } from '../context/provider/provider.type';
 
 export type MethodDecorator = (
   target: object,

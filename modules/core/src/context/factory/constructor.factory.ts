@@ -1,10 +1,11 @@
 import { retrieveOptionals } from '../../decorators/global/parameter.decorators';
 import { retrieveParameterTypes } from '../../decorators/global/metadata.decorators';
-import { Type } from '../provider.type';
+import { Type } from '../provider/provider.type';
 import { Context } from '../application-context';
+import { ProviderType } from './provider-factory';
 
 interface FactoryConstructorArgumentContext {
-  resolve(context: Context): any;
+  resolve(context: Context): Promise<any>;
   type: string;
 }
 
@@ -13,11 +14,14 @@ interface FactoryConstructorContext {
 }
 
 export abstract class ConstructorFactory {
-  abstract build<T extends any>(target: Type<T>, context: Context): T;
+  abstract build<T extends any>(target: ProviderType<T>, context: Context): Promise<T>;
 
-  static from(target: Type<any>) {
+  static from(target: ProviderType<any>) {
     if (target.length > 0) {
-      return new ConstructorInjectorFactory();
+      if (target.prototype?.constructor) {
+        return new ConstructorInjectorFactory();
+      }
+      return new FunctionConstructorFactory();
     }
     return new EmptyConstructorFactory();
   }
@@ -28,15 +32,16 @@ class ConstructorInjectorFactory extends ConstructorFactory {
     arguments: [],
   };
 
-  build<T>(target: Type<T>, context: Context): T {
+  async build<T>(target: Type<T>, context: Context): Promise<T> {
     const contextConstructor = this.getInjectorArguments(target);
     let index = 0;
     try {
-      const args = contextConstructor.map((argumentContext, indexArgument) => {
+      const args = contextConstructor.map(async (argumentContext, indexArgument) => {
         index = indexArgument;
-        return argumentContext.resolve(context);
+        return await argumentContext.resolve(context);
       });
-      return new target(...args) as T;
+      const values_1 = await Promise.all(args);
+      return new target(...values_1) as T;
     } catch (error) {
       throw new Error(`Error while injecting ${contextConstructor[index].type} for ${target.name} at index ${index}`);
     }
@@ -62,7 +67,13 @@ class ConstructorInjectorFactory extends ConstructorFactory {
 }
 
 class EmptyConstructorFactory extends ConstructorFactory {
-  build<T>(target: Type<T>, context: Context): T {
-    return new target() as T;
+  build<T>(target: Type<T>, context: Context): Promise<T> {
+    return Promise.resolve(new target() as T);
+  }
+}
+
+class FunctionConstructorFactory extends ConstructorFactory {
+  build<T extends any>(target: (context: Context) => Promise<T> | T, context: Context): Promise<T> {
+    return Promise.resolve(target(context));
   }
 }

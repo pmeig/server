@@ -7,7 +7,7 @@ import {
   ConstructorParameterDecorator,
   MethodParameterDecorator,
 } from './type.decorators';
-import { Type } from '../context/provider.type';
+import { Type } from '../context/provider/provider.type';
 
 const handler_key = 'decorator:handler';
 
