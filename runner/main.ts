@@ -1,4 +1,5 @@
-import { Component, Module, Optional, Order, Properties, Service } from '@server/core';
+import { Component, Module, Optional, Order, Properties, Service, List } from '@server/core';
+import { randomBytes } from 'crypto';
 
 interface Named {
   name: string;
@@ -8,6 +9,7 @@ interface Named {
 @Order(-5)
 class First implements Named {
   name = 'first';
+  id = randomBytes(16).toString('hex');
 
   toString(): string {
     return this.name;
@@ -17,6 +19,7 @@ class First implements Named {
 @Properties('test')
 class Third implements Named {
   name = 'third';
+  id = randomBytes(16).toString('hex');
 
   toString(): string {
     return this.name;
@@ -26,6 +29,7 @@ class Third implements Named {
 @Service
 class Second extends First implements Named {
   override name = 'second';
+  id = randomBytes(16).toString('hex');
 
   constructor(@Optional private readonly third?: Third) {
     super();
@@ -39,15 +43,18 @@ class Second extends First implements Named {
 @Component
 class Fourth implements Named {
   name = 'fourth';
+  id = randomBytes(16).toString('hex');
 
-  constructor(private readonly third: Third) {}
+  constructor(@List(First) private readonly param: First[]) {}
 
   toString(): string {
-    return `me: ${this.name}, param: ${this.third ?? 'undefined'}`;
+    return `me: ${this.name}, param: ${this.param ?? 'undefined'}`;
   }
 }
 
 export const main = async () => {
+  console.log(new First());
+  console.log(new First());
   const module = new Module({
     providers: [
       First,

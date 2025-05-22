@@ -1,15 +1,20 @@
 import { Nullable } from '../helper/type.helper';
-import { CustomProvider, Provider, Type } from './provider/provider.type';
+import { CustomProvider, Provider, ProviderToken, Type } from './provider/provider.type';
 import { ComponentContext, retrieveContext, updateContext } from '../decorators/components/context.helper';
 import { createComponentDecorator, Scope } from '../decorators/components/component.decorator';
 import { PutParam } from '../decorators/global/metadata.decorators';
 
 export interface Context {
   resolve: <T extends any = any>(
-    key: Type<T>,
-    defaultValue?: Nullable<T> | (() => Nullable<T>)
+    key: ProviderToken<T>,
+    defaultValue?: Nullable<T> | Promise<Nullable<T>> | (() => Nullable<T> | Promise<Nullable<T>>)
   ) => Promise<Nullable<T>>;
-  resolveRequired: <T extends any = any>(key: Type<T>) => Promise<T>;
+  resolveRequired: <T extends any = any>(key: ProviderToken<T>) => Promise<T>;
+  multiResolve: <T extends any = any>(
+    key: ProviderToken<T>,
+    defaultValue?: T[] | Promise<T[]> | (() => T[] | Promise<T[]>)
+  ) => Promise<T[]>;
+  multiResolveRequired: <T extends any = any>(key: Type<T>) => Promise<T[]>;
   has: (key: Type<any>) => boolean;
 }
 
@@ -18,36 +23,47 @@ export interface ModuleContext {
 }
 
 export class Module implements Context {
-  private injectables: Record<string | symbol, ComponentContext[]> = {};
+  private factories: Record<string | symbol, ComponentContext[]> = {};
 
   constructor(context: ModuleContext) {
     this.init(context);
   }
 
   has(key: any): boolean {
-    return !!this.injectables[key];
+    return !!this.factories[key];
   }
 
-  async resolve<T>(key: Type<T>, defaultValue?: Nullable<T> | (() => Nullable<T>)): Promise<Nullable<T>> {
-    if (key.name === Module.name) {
+  async resolve<T>(
+    key: ProviderToken<T>,
+    defaultValue: Nullable<T> | Promise<Nullable<T>> | (() => Nullable<T> | Promise<T>) = undefined
+  ): Promise<Nullable<T>> {
+    const token = this.extractToken(key);
+    if (token === Module.name) {
       return this as unknown as T;
     }
-    const injectable = await (this.injectables[key.name] ?? [])[0]?.factory?.build(this);
-    if (injectable) {
-      return injectable;
-    }
-    if (defaultValue) {
-      if (typeof defaultValue !== 'function') {
-        defaultValue = () => defaultValue as Nullable<T>;
-      }
-      return (defaultValue as () => Nullable<T>)();
-    }
-    return undefined;
+    const injectable = await (this.factories[token] ?? [])[0]?.factory?.build(this);
+    return this.applyDefault(injectable, defaultValue);
   }
 
-  async resolveRequired<T>(key: Type<T>): Promise<T> {
+  async resolveRequired<T>(key: ProviderToken<T>): Promise<T> {
     const retrieve = await this.resolve(key);
-    if (!retrieve) throw new Error(`No provider found for ${key}`);
+    if (!retrieve) throw new Error(`No provider found for ${this.extractToken(key).toString()}`);
+    return retrieve;
+  }
+
+  async multiResolve<T>(
+    key: ProviderToken<T>,
+    defaultValue: T[] | Promise<T[]> | (() => T[] | Promise<T[]>) = []
+  ): Promise<T[]> {
+    const token = this.extractToken(key);
+    if (token === Module.name) return [this as unknown as T];
+    const factories = this.factories[token];
+    return Promise.all(factories.map(factory => this.applyDefault(factory.factory?.build(this), defaultValue)));
+  }
+
+  async multiResolveRequired<T>(key: ProviderToken<T>): Promise<T[]> {
+    const retrieve = await this.multiResolve(key);
+    if (retrieve.length === 0) throw new Error(`No provider found for ${this.extractToken(key).toString()}`);
     return retrieve;
   }
 
@@ -63,14 +79,14 @@ export class Module implements Context {
       }
       const metadata = retrieveContext(targetProvider);
       metadata.names?.forEach(name => {
-        const context = this.injectables[name] ?? [];
+        const context = this.factories[name] ?? [];
         context.push(metadata);
-        this.injectables[name] = context;
+        this.factories[name] = context;
       });
     });
 
-    Object.entries(this.injectables).forEach(([key, context]) => {
-      this.injectables[key] = context.sort((first, second) => first.order - second.order);
+    Object.entries(this.factories).forEach(([key, context]) => {
+      this.factories[key] = context.sort((first, second) => first.order - second.order);
     });
   }
 
@@ -89,5 +105,28 @@ export class Module implements Context {
       Scope(provider.scope)(target);
     }
     return target;
+  }
+
+  private extractToken(key: ProviderToken<any>) {
+    if (['string', 'symbol'].includes(typeof key)) {
+      return key as string | symbol;
+    }
+    return (key as { name: string }).name;
+  }
+
+  private applyDefault<T extends any>(
+    injectable: Promise<any> | undefined,
+    defaultValue: Nullable<T> | Promise<Nullable<T>> | (() => Nullable<T> | Promise<Nullable<T>>)
+  ) {
+    if (injectable) {
+      return injectable;
+    }
+    if (defaultValue) {
+      if (typeof defaultValue !== 'function') {
+        defaultValue = () => defaultValue as Nullable<T> | Promise<Nullable<T>>;
+      }
+      return (defaultValue as () => Nullable<T>)();
+    }
+    return undefined;
   }
 }

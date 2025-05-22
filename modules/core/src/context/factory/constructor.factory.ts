@@ -1,6 +1,6 @@
-import { retrieveOptionals } from '../../decorators/global/parameter.decorators';
+import { retrieveElementTypes, retrieveOptionals } from '../../decorators/global/parameter.decorators';
 import { retrieveParameterTypes } from '../../decorators/global/metadata.decorators';
-import { Type } from '../provider/provider.type';
+import { ProviderToken, Type } from '../provider/provider.type';
 import { Context } from '../application-context';
 import { ProviderType } from './provider-factory';
 
@@ -51,10 +51,12 @@ class ConstructorInjectorFactory extends ConstructorFactory {
     if (this.context.arguments.length === 0) {
       const optionals = retrieveOptionals(target);
       const types = retrieveParameterTypes(target);
+      const elements = retrieveElementTypes(target);
       this.context.arguments = types.map((type, index) => {
-        let resolve = (context: Context) => context.resolveRequired(type);
-        if (optionals.includes(index)) {
-          resolve = (context: Context) => context.resolve(type);
+        const element = elements.find(element => element.index === index);
+        let resolve = this.extractResolver('resolve', type, index, optionals);
+        if (element) {
+          resolve = this.extractResolver('multiResolve', element.type, index, optionals);
         }
         return {
           resolve,
@@ -63,6 +65,18 @@ class ConstructorInjectorFactory extends ConstructorFactory {
       });
     }
     return this.context.arguments;
+  }
+
+  private extractResolver(
+    prefix: 'resolve' | 'multiResolve',
+    type: ProviderToken<any>,
+    index: number,
+    optionals: number[]
+  ) {
+    if (optionals.includes(index)) {
+      return (context: Context) => context[prefix](type);
+    }
+    return (context: Context) => context[prefix + 'Required'](type);
   }
 }
 

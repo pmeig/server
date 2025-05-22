@@ -1,27 +1,40 @@
-import { ParameterDecorator } from '@server/core';
+import { ParameterDecorator, ProviderToken } from '@server/core';
+import { getMultiMetadataReflection, reflectMultiMetadataContext } from '../decorators.helper';
 
 const optional_key = 'param:optional';
+const list_key = 'param:list';
 
-export const Optional: ParameterDecorator = (target, propertyKey, parameterIndex) => {
-  let handlerOptional = {
-    get: () => Reflect.getMetadata(optional_key, target) as number[] | undefined,
-    set: (optionals: number[]) => Reflect.defineMetadata(optional_key, optionals, target),
+export interface ParameterListTyped {
+  index: number;
+  type: ProviderToken<any>;
+}
+
+export const List: (name: ProviderToken<any>) => ParameterDecorator =
+  name => (target: object, propertyKey: string | symbol | undefined, parameterIndex: number) => {
+    const handlerList = reflectMultiMetadataContext<ParameterListTyped>(list_key, target, propertyKey);
+    const listed = handlerList.get();
+    listed.push({
+      index: parameterIndex,
+      type: name,
+    });
+    handlerList.set(listed);
   };
-  if (propertyKey) {
-    handlerOptional = {
-      get: () => Reflect.getMetadata(optional_key, target, propertyKey) as number[] | undefined,
-      set: optional => Reflect.defineMetadata(optional_key, optional, target, propertyKey),
-    };
-  }
-  const optionals = handlerOptional.get() ?? [];
+
+export const Optional: ParameterDecorator = (
+  target: object,
+  propertyKey: string | symbol | undefined,
+  parameterIndex: number
+) => {
+  const handlerOptional = reflectMultiMetadataContext<number>(optional_key, target, propertyKey);
+  const optionals = handlerOptional.get();
   optionals.push(parameterIndex);
   handlerOptional.set(optionals);
 };
 
+export const retrieveElementTypes = (target: object, propertyKey?: string | symbol) => {
+  return getMultiMetadataReflection<ParameterListTyped>(list_key, target, propertyKey);
+};
+
 export const retrieveOptionals = (target: object, propertyKey?: string | symbol) => {
-  return (
-    ((propertyKey
-      ? Reflect.getMetadata(optional_key, target, propertyKey)
-      : Reflect.getMetadata(optional_key, target)) as number[] | undefined) ?? []
-  );
+  return getMultiMetadataReflection<number>(optional_key, target, propertyKey);
 };

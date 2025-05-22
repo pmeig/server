@@ -41,9 +41,12 @@ export const updateContext = (context: Partial<ComponentContext>, target: object
         previous?.factory?.valid(target) ??
         new SingletonProviderFactory(target as Type<any>),
       type: context.type ?? previous?.type,
-      priority: context.priority ?? previous?.priority ?? 0,
-      order: context.order ?? previous?.order ?? 0,
-      metadata: context.metadata ?? previous?.metadata ?? {},
+      priority: context.priority || previous?.priority || 0,
+      order: context.order || previous?.order || 0,
+      metadata: {
+        ...context.metadata,
+        ...previous?.metadata,
+      },
     },
     target
   );

@@ -1,1 +1,1 @@
-export { Optional } from './parameter.decorators';
+export { Optional, List } from './parameter.decorators';

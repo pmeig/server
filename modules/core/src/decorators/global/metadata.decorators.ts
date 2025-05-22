@@ -1,4 +1,5 @@
 import { Type } from '@server/core';
+import { getMultiMetadataReflection } from '../decorators.helper';
 
 const parameter_type = 'design:paramtypes';
 
@@ -25,8 +26,5 @@ export const PutParam = (target: object, param: Type<any>, propertyKey?: string 
 };
 
 export const retrieveParameterTypes = (target: Type<any>, propertyKey?: string | symbol) => {
-  if (propertyKey) {
-    return (Reflect.getMetadata(parameter_type, target, propertyKey) as Type<any>[]) ?? [];
-  }
-  return (Reflect.getMetadata(parameter_type, target) as Type<any>[]) ?? [];
+  return getMultiMetadataReflection<Type<any>>(parameter_type, target, propertyKey);
 };
