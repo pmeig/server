@@ -82,7 +82,8 @@ class ConstructorInjectorFactory extends ConstructorFactory {
 
 class EmptyConstructorFactory extends ConstructorFactory {
   build<T>(target: Type<T>, context: Context): Promise<T> {
-    return Promise.resolve(new target() as T);
+    const item = new target() as T;
+    return Promise.resolve(item);
   }
 }
 

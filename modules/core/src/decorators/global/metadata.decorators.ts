@@ -1,9 +1,16 @@
 import { Type } from '@server/core';
-import { getMultiMetadataReflection } from '../decorators.helper';
+import { getMetadataReflection, getMultiMetadataReflection } from '../decorators.helper';
 
-const parameter_type = 'design:paramtypes';
+const design_parameters = 'design:paramtypes';
+const design_return = 'design:returntype';
+const design_type = 'design:type';
 
-export const PutParam = (target: object, param: Type<any>, propertyKey?: string | symbol | number, index?: number) => {
+export const PutDesignParam = (
+  target: object,
+  param: Type<any>,
+  propertyKey?: string | symbol | number,
+  index?: number
+) => {
   if (typeof propertyKey === 'number') {
     index = propertyKey;
     propertyKey = undefined;
@@ -21,10 +28,26 @@ export const PutParam = (target: object, param: Type<any>, propertyKey?: string 
   }
   const params = retrieveParameterTypes(target as Type<any>, propertyKey);
   if (propertyKey) {
-    Reflect.defineMetadata(parameter_type, insert(params), target, propertyKey);
-  } else Reflect.defineMetadata(parameter_type, insert(params), target);
+    Reflect.defineMetadata(design_parameters, insert(params), target, propertyKey);
+  } else Reflect.defineMetadata(design_parameters, insert(params), target);
+};
+
+export const PutDesignReturn = (target: object, param: Type<any>, propertyKey: string | symbol) => {
+  Reflect.defineMetadata(design_return, param, target, propertyKey);
+};
+
+export const PutDesignType = (target: object, param: Type<any>, propertyKey: string | symbol) => {
+  Reflect.defineMetadata(design_type, param, target, propertyKey);
 };
 
 export const retrieveParameterTypes = (target: Type<any>, propertyKey?: string | symbol) => {
-  return getMultiMetadataReflection<Type<any>>(parameter_type, target, propertyKey);
+  return getMultiMetadataReflection<Type<any>>(design_parameters, target, propertyKey);
+};
+
+export const retrieveDesignReturn = (target: Type<any>, propertyKey: string | symbol) => {
+  return getMetadataReflection(design_return, target, propertyKey);
+};
+
+export const retrieveDesignType = (target: Type<any>, propertyKey: string | symbol) => {
+  return getMetadataReflection(design_type, target, propertyKey);
 };

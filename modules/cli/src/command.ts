@@ -1,4 +1,6 @@
 import { exec } from 'child_process';
+import { resolve } from 'path';
+import { existsSync } from 'fs';
 
 export interface ConsoleCommand {
   success: string[];
@@ -7,9 +9,33 @@ export interface ConsoleCommand {
 }
 
 export class Command {
-  private readonly launcher = 'tsc';
+  constructor(
+    private readonly manager?: 'pnpm' | 'npm' | string,
+    private readonly workspace = process.cwd()
+  ) {
+    if (!this.manager) {
+      let current = process.cwd();
+      do {
+        const path = resolve(current, 'pnpm-lock.yaml');
+        if (existsSync(path)) {
+          this.manager = 'pnpm';
+        } else {
+          const path = resolve(current, 'package-lock.json');
+          if (existsSync(path)) {
+            this.manager = 'npm';
+          }
+        }
+      } while (!this.manager && !current.endsWith('\\') && !current.endsWith('/'));
+    }
+  }
 
-  constructor(private readonly manager: 'pnpm' | 'npm' = 'pnpm') {}
+  cwd(cwd: string): Command {
+    return new Command(this.manager, cwd);
+  }
+
+  bin(bin: string): Command {
+    return new Command(bin, this.workspace);
+  }
 
   launch(...args: any[]): Promise<ConsoleCommand>;
   launch(argument: string, ...args: any[]): Promise<ConsoleCommand>;
@@ -19,19 +45,28 @@ export class Command {
         error: [],
         success: [],
       };
-      const thread = exec(`${this.manager} ${this.launcher} ${argument} ${args.join(' ')}`, (error, stdout, stderr) => {
-        if (error) {
-          consoleCommand.exception = error;
+      const thread = exec(
+        `${this.manager} ${argument} ${args.join(' ')}`,
+        {
+          cwd: this.workspace,
+          encoding: 'utf8',
+        },
+        (error, stdout, stderr) => {
+          if (error) {
+            consoleCommand.exception = error;
+          }
+          if (stderr) {
+            consoleCommand.error.push(stderr);
+          }
+          if (stdout) {
+            consoleCommand.success.push(stdout);
+          }
         }
-        if (stderr) {
-          consoleCommand.error.push(stderr);
-        }
-        if (stdout) {
-          consoleCommand.success.push(stdout);
-        }
-      });
+      );
       thread.on('close', () => resolve(consoleCommand));
       thread.on('error', () => reject(consoleCommand));
     });
   }
 }
+
+export const command = new Command();

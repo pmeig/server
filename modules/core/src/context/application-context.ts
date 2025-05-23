@@ -2,7 +2,7 @@ import { Nullable } from '../helper/type.helper';
 import { CustomProvider, Provider, ProviderToken, Type } from './provider/provider.type';
 import { ComponentContext, retrieveContext, updateContext } from '../decorators/components/context.helper';
 import { createComponentDecorator, Scope } from '../decorators/components/component.decorator';
-import { PutParam } from '../decorators/global/metadata.decorators';
+import { PutDesignParam } from '../decorators/global/metadata.decorators';
 
 export interface Context {
   resolve: <T extends any = any>(
@@ -94,7 +94,7 @@ export class Module implements Context {
     const target = provider.useFactory.bind(provider);
     const name = typeof provider.provide === 'function' ? provider.provide.name : provider.provide;
     createComponentDecorator('provider')(target);
-    PutParam(target, Module);
+    PutDesignParam(target, Module);
     updateContext(
       {
         names: [name],

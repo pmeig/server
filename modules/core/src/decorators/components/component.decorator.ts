@@ -1,12 +1,14 @@
-import { PutType, PutOrder, PutScope } from './context.helper';
+import { PutName, PutOrder, PutScope, PutType } from './context.helper';
 import { ScopeType } from '../../context/provider/provider.type';
+import { ClassDecorator } from '../type.decorators';
 
 export const Priority = Object.freeze({
   custom: Number.MAX_SAFE_INTEGER,
-  component: 3,
-  service: 2,
-  controller: 1,
-  properties: 0,
+  component: 4,
+  service: 3,
+  controller: 2,
+  properties: 1,
+  configuration: Number.MIN_SAFE_INTEGER + 1,
 });
 
 export const Properties = (prefix: string) => (target: any) => {
@@ -19,9 +21,13 @@ export const Service = (target: object) => PutType(target, 'service', Priority.s
 
 export const Controller = (target: object) => PutType(target, 'controller', Priority.controller);
 
+export const Configuration = (target: object) => PutType(target, 'configuration', Priority.configuration);
+
 export const Order = (order: number) => (target: object) => PutOrder(target, order);
 
 export const Scope = (scope: ScopeType) => (target: object) => PutScope(target, scope);
+
+export const Named: (...names: string[]) => ClassDecorator = names => (target: object) => PutName(target, ...names);
 
 export function createComponentDecorator(name: string, priority: number, before: keyof typeof Priority): ClassDecorator;
 export function createComponentDecorator(name: string, priority: number | keyof typeof Priority): ClassDecorator;

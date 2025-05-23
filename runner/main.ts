@@ -1,4 +1,4 @@
-import { Component, Module, Optional, Order, Properties, Service, List } from '@server/core';
+import { Component, Module, Optional, Order, Properties, Service, List, Lifecycle } from '@server/core';
 import { randomBytes } from 'crypto';
 
 interface Named {
@@ -17,9 +17,29 @@ class First implements Named {
 }
 
 @Properties('test')
-class Third implements Named {
+class Third implements Named, Lifecycle {
   name = 'third';
   id = randomBytes(16).toString('hex');
+
+  destroy(): Promise<void> {
+    console.log('destroy');
+    return Promise.resolve(undefined);
+  }
+
+  dispose(): Promise<void> {
+    console.log('dispose');
+    return Promise.resolve(undefined);
+  }
+
+  initialize(): Promise<void> {
+    console.log('initialize');
+    return Promise.resolve(undefined);
+  }
+
+  refresh(): Promise<void> {
+    console.log('refresh');
+    return Promise.resolve(undefined);
+  }
 
   toString(): string {
     return this.name;
@@ -62,7 +82,7 @@ export const main = async () => {
       Fourth,
       {
         provide: Third,
-        useFactory: context => {
+        useFactory: () => {
           return new Promise(resolve => resolve(new Third()));
         },
       },

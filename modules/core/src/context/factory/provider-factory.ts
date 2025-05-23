@@ -1,6 +1,7 @@
 import { Context } from '../application-context';
 import { CustomProviderFactory, Type } from '../provider/provider.type';
 import { ConstructorFactory } from './constructor.factory';
+import { toLifecycle } from '../lifecycle';
 
 export type ProviderType<T> = Type<T> | CustomProviderFactory<T>;
 
@@ -34,14 +35,17 @@ export class TransientProviderFactory<T extends any = any> extends ProviderFacto
 }
 
 export class SingletonProviderFactory<T extends any = any> extends ProviderFactory<T> {
-  private singleton?: Promise<T>;
+  private singleton?: T;
   constructor(type: ProviderType<T>) {
     super(type);
   }
 
-  build(context: Context): Promise<T | undefined> {
+  async build(context: Context): Promise<T | undefined> {
     if (!this.singleton) {
-      this.singleton = this.constructorFactory.build(this.type as Type<T>, context);
+      this.singleton = await this.constructorFactory.build(this.type as Type<T>, context);
+      const lifecycle = toLifecycle(this.singleton);
+      await lifecycle.initialize();
+      await lifecycle.dispose();
     }
     return this.singleton;
   }
