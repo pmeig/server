@@ -4,5 +4,5 @@
   "compilerOptions": {
     "outDir": "../dist/runner",
   },
-  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts", "target"]
 }

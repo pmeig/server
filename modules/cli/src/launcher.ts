@@ -1,6 +1,7 @@
 import { exec } from 'child_process';
 import { dirname, resolve } from 'path';
 import { existsSync } from 'fs';
+import * as process from 'node:process';
 
 export interface ConsoleCommand {
   success: string[];
@@ -9,10 +10,16 @@ export interface ConsoleCommand {
 }
 
 export class Launcher {
+  private env: Record<string, string> = {};
   constructor(
     private readonly manager?: 'pnpm' | 'npm' | string,
     private readonly workspace = process.cwd()
   ) {
+    const separator = process.platform === 'win32' ? ';' : ':';
+    this.env = {
+      ...process.env,
+      Path: dirname(process.argv[0]) + separator + process.env.Path,
+    };
     if (!this.manager) {
       let current = process.cwd();
       do {
@@ -51,6 +58,8 @@ export class Launcher {
         {
           cwd: this.workspace,
           encoding: 'utf8',
+          // env: this.env,
+          // shell: process.platform === 'win32' ? 'cmd.exe' : 'bash',
         },
         (error, stdout, stderr) => {
           if (error) {

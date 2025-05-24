@@ -13,6 +13,6 @@ export const startApplication: CliRunner = async (
   if (!cliProject || cliProject.type !== 'application') {
     return;
   }
-  await Builder.from(context, project, ...params).build('--outDir', './target');
+  await Builder.from(context, rootProject, project, ...params).build('--outDir', './target', '--sourceMap', 'true');
   return Starter.from(context, rootProject, project).start(...params);
 };

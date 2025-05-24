@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@server/cli':
+        specifier: file:dist\cli\server-cli-1.0.0.tgz
+        version: file:dist/cli/server-cli-1.0.0.tgz
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -73,6 +76,11 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
+
+  '@server/cli@file:dist/cli/server-cli-1.0.0.tgz':
+    resolution: {integrity: sha512-xuOpTH29l8lbHQlyNjh3HDIXgmDgsWCHJiTn5uRZZQngeVxJcTo4c0FpDIfOMRVp72+q5d0B3OgN3SfHDl5zhQ==, tarball: file:dist/cli/server-cli-1.0.0.tgz}
+    version: 1.0.0
+    hasBin: true
 
   '@types/node@22.15.19':
     resolution: {integrity: sha512-3vMNr4TzNQyjHcRZadojpRaD9Ofr6LsonZAoQ+HMUa/9ORTPoxVIw0e0mpqWpdjj8xybyCM+oKOUH2vwFu/oEw==}
@@ -163,6 +171,10 @@ snapshots:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
+
+  '@server/cli@file:dist/cli/server-cli-1.0.0.tgz':
+    dependencies:
+      fast-glob: 3.3.3
 
   '@types/node@22.15.19':
     dependencies:

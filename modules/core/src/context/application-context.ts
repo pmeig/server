@@ -91,10 +91,14 @@ export class Module implements Context {
   }
 
   private prepareCustomProvider(provider: CustomProvider<any>): Type<any> {
-    const target = provider.useFactory.bind(provider);
+    const factory = provider.useFactory.bind(provider);
     const name = typeof provider.provide === 'function' ? provider.provide.name : provider.provide;
-    createComponentDecorator('provider')(target);
+    let target = factory;
+    if (factory.length === 0) {
+      target = (_: Context) => factory();
+    }
     PutDesignParam(target, Module);
+    createComponentDecorator('provider')(target);
     updateContext(
       {
         names: [name],

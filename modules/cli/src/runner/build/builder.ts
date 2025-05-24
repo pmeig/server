@@ -1,41 +1,47 @@
 import { CliContext, CliProject } from '../../server/cli.context';
 import { resolve } from 'path';
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { copyFileSync, createReadStream, readdirSync, unlinkSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { ConsoleCommand, launcher } from '../../launcher';
 import { glob } from 'fast-glob';
+import { Configuration } from '../../index';
 
 export abstract class Builder {
   constructor(
     protected readonly context: CliProject,
+    protected readonly rootProject: string,
     protected readonly params: string[] = []
   ) {}
 
-  static from(context: CliContext, project: string, ...params: string[]): Builder {
+  static from(context: CliContext, rootProject: string, project: string, ...params: string[]): Builder {
     const cliProject = context.projects?.[project];
     if (cliProject) {
       if (cliProject.type === 'application') {
-        return new ApplicationBuilder(cliProject, params);
+        return new ApplicationBuilder(cliProject, rootProject, params);
       }
-      return new LibraryBuilder(cliProject, params);
+      return new LibraryBuilder(cliProject, rootProject, params);
     }
-    return new NoopBuilder({
-      location: {
-        root: '',
+    return new NoopBuilder(
+      {
+        location: {
+          root: '',
+        },
+        assets: [],
+        type: 'noop',
       },
-      assets: [],
-      type: 'noop',
-    });
+      rootProject,
+      params
+    );
   }
 
   async build(...options: string[]): Promise<ConsoleCommand> {
-    const root = this.context.location.root;
+    const root = resolve(this.rootProject, this.context.location.root);
     const executor = launcher.cwd(root);
     const console = await executor.launch('tsc', ...options);
-    let result = Promise.resolve();
+    let result = Promise.resolve(console);
     if (console.error.length === 0 && !console.exception && this.context.assets.length > 0) {
-      const outDirConsole = await launcher.launch('tsc', '--showConfig', ...options);
+      const outDirConsole = await executor.launch('tsc', '--showConfig', ...options);
       const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
       const outDirPath = resolve(root, outDir);
       const copies = this.context.assets.map(asset => {
@@ -45,16 +51,16 @@ export abstract class Builder {
           files.forEach(file => copyFileSync(resolve(root, file), resolve(outDirPath, file)));
         });
       });
-      result = Promise.all(copies) as unknown as Promise<void>;
+      result = Promise.all(copies).then(() => console);
     }
-    return result.then(() => console);
+    return result;
   }
 }
 
 class ApplicationBuilder extends Builder {
   async build(...options: string[]): Promise<ConsoleCommand> {
     const prepare = await super.build(...options);
-    if (prepare.error.length === 0 && !prepare.exception && this.params.length > 0 && this.params[0] === 'prod') {
+    if (prepare.error.length === 0 && !prepare.exception && Configuration.prod) {
       // bundle
       return prepare;
     }
@@ -74,40 +80,42 @@ class NoopBuilder extends Builder {
 class LibraryBuilder extends Builder {
   private regex = new RegExp(`^export [*] from .*;$`);
 
-  constructor(context: CliProject, params: string[] = []) {
-    super(context, params);
+  constructor(context: CliProject, rootProject: string, params: string[] = []) {
+    super(context, rootProject, params);
     context.assets.push(...new Set(...context.assets, 'package.json'));
   }
 
   async build(...options: string[]): Promise<ConsoleCommand> {
     const prepare = await super.build(...options);
-    if (!prepare.exception && prepare.error.length === 0 && this.params.length > 0 && this.params[0] === 'prod') {
-      const outDirConsole = await launcher.cwd(this.context.location.root).launch('tsc', '--showConfig', ...options);
+    if (!prepare.exception && prepare.error.length === 0 && Configuration.prod) {
+      const src = resolve(this.rootProject, this.context.location.root);
+      const outDirConsole = await launcher.cwd(src).launch('tsc', '--showConfig', ...options);
       const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
-      const outDirPath = resolve(this.context.location.root, outDir);
+      const outDirPath = resolve(src, outDir);
       await this.exposeOnlyPublicApi(outDirPath);
     }
     return prepare;
   }
 
   private async exposeOnlyPublicApi(path: string) {
-    const keep = new Set<string>();
     const typings = (JSON.parse(readFileSync(resolve(path, 'package.json'), 'utf-8')).typings ?? 'index.ts') as string;
-    const dotIndex = typings.lastIndexOf('.');
-    await this.addFileToKeep(path, typings.slice(0, dotIndex) + '.d.ts', keep);
-    const keepFiles = Array.from(keep);
-    readdirSync(path, {
-      encoding: 'utf-8',
-      recursive: true,
-      withFileTypes: true,
-    })
-      .filter(file => file.isFile() && file.name.endsWith('.d.ts'))
-      .map(file => `${file.parentPath ?? path}/${file.name}`.replaceAll('\\', '/'))
-      .forEach(file => {
-        if (!keepFiles.find(name => file.endsWith(name))) {
-          unlinkSync(file);
-        }
-      });
+    if (existsSync(resolve(path, typings))) {
+      const keep = new Set<string>();
+      await this.addFileToKeep(path, typings, keep);
+      const keepFiles = Array.from(keep);
+      readdirSync(path, {
+        encoding: 'utf-8',
+        recursive: true,
+        withFileTypes: true,
+      })
+        .filter(file => file.isFile() && file.name.endsWith('.d.ts'))
+        .map(file => `${file.parentPath ?? path}/${file.name}`.replaceAll('\\', '/'))
+        .forEach(file => {
+          if (!keepFiles.find(name => file.endsWith(name))) {
+            unlinkSync(file);
+          }
+        });
+    }
   }
 
   private async addFileToKeep(parent: string, name: string, keep: Set<string>) {

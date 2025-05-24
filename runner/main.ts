@@ -73,8 +73,6 @@ class Fourth implements Named {
 }
 
 export const main = async () => {
-  console.log(new First());
-  console.log(new First());
   const module = new Module({
     providers: [
       First,

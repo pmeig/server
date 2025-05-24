@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no runner specified\" && exit 1",
-    "cli": "node ./dist/cli/index.js",
-    "start": "pnpm cli start",
+    "pmeig": "pmeig",
+    "start": "pmeig start",
     "build:cli": "pnpm --filter @server/cli build",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -16,6 +16,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
+    "@server/cli": "file:dist\\cli\\server-cli-1.0.0.tgz",
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
