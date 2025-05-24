@@ -36,7 +36,7 @@ class ApplicationStarter extends Starter {}
 
 interface RequireMapper {
   from: string;
-  to: string;
+  to: (rollback: number) => string;
 }
 
 export class LibraryStarter extends Starter {
@@ -48,16 +48,24 @@ export class LibraryStarter extends Starter {
   private replaceRequireProvideInsideProject(projects: CliContext['projects']) {
     const mapper = this.createMapperRequire(projects);
     const runner = resolve(this.root, 'target', this.project.location.root);
-    const folders = new Set([runner]);
+    const folders = new Set([
+      {
+        path: runner,
+        rollback: 1,
+      },
+    ]);
     const iterator = folders.values();
     let current = iterator.next();
     while (!current.done) {
       const parent = current.value;
-      readdirSync(parent, { encoding: 'utf-8', withFileTypes: true }).forEach(file => {
+      readdirSync(parent.path, { encoding: 'utf-8', withFileTypes: true }).forEach(file => {
         if (file.isDirectory() && file.name != 'node_modules') {
-          folders.add(resolve(parent, file.name));
+          folders.add({
+            path: resolve(parent.path, file.name),
+            rollback: parent.rollback + 1,
+          });
         } else if (file.name.endsWith('.js')) {
-          this.replaceRequireByLocalPath(resolve(parent, file.name), mapper);
+          this.replaceRequireByLocalPath(resolve(parent.path, file.name), mapper, parent.rollback);
         }
       });
       current = iterator.next();
@@ -65,9 +73,9 @@ export class LibraryStarter extends Starter {
     return runner;
   }
 
-  private replaceRequireByLocalPath(jsFile: string, mapper: RequireMapper[]) {
+  private replaceRequireByLocalPath(jsFile: string, mapper: RequireMapper[], rollback: number) {
     let content = readFileSync(jsFile, 'utf-8');
-    mapper.forEach(mapping => (content = content.replaceAll(mapping.from, mapping.to)));
+    mapper.forEach(mapping => (content = content.replaceAll(mapping.from, mapping.to(rollback))));
     writeFileSync(jsFile, content, { encoding: 'utf-8' });
   }
 
@@ -77,7 +85,10 @@ export class LibraryStarter extends Starter {
         readFileSync(resolve(this.rootProject, project.location.root, 'package.json'), { encoding: 'utf-8' })
       );
       const name = json.name;
-      acc.push({ from: `= require("${name}")`, to: `= require("../${project.location.root}/src")` });
+      acc.push({
+        from: `= require("${name}")`,
+        to: (rollback: number) => `= require("${'../'.repeat(rollback)}${project.location.root}/src")`,
+      });
       return acc;
     }, [] as RequireMapper[]);
   }
