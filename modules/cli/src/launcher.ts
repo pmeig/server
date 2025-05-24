@@ -1,5 +1,5 @@
 import { exec } from 'child_process';
-import { resolve } from 'path';
+import { dirname, resolve } from 'path';
 import { existsSync } from 'fs';
 
 export interface ConsoleCommand {
@@ -8,7 +8,7 @@ export interface ConsoleCommand {
   exception?: Error;
 }
 
-export class Command {
+export class Launcher {
   constructor(
     private readonly manager?: 'pnpm' | 'npm' | string,
     private readonly workspace = process.cwd()
@@ -25,16 +25,17 @@ export class Command {
             this.manager = 'npm';
           }
         }
+        current = dirname(current);
       } while (!this.manager && !current.endsWith('\\') && !current.endsWith('/'));
     }
   }
 
-  cwd(cwd: string): Command {
-    return new Command(this.manager, cwd);
+  cwd(cwd: string): Launcher {
+    return new Launcher(this.manager, cwd);
   }
 
-  bin(bin: string): Command {
-    return new Command(bin, this.workspace);
+  bin(bin: string): Launcher {
+    return new Launcher(bin, this.workspace);
   }
 
   launch(...args: any[]): Promise<ConsoleCommand>;
@@ -69,4 +70,4 @@ export class Command {
   }
 }
 
-export const command = new Command();
+export const launcher = new Launcher();

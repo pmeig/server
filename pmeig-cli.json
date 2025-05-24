@@ -1,0 +1,27 @@
+{
+  "name": "server",
+  "type": "library",
+  "projects": {
+    "cli": {
+      "type": "library",
+      "location": {
+        "root": "modules/cli"
+      },
+      "assets": ["package.json"]
+    },
+    "core": {
+      "type": "library",
+      "location": {
+        "root": "modules/core"
+      },
+      "assets": ["package.json"]
+    },
+    "runner": {
+      "type": "application",
+      "location": {
+        "root": "runner"
+      },
+      "assets": []
+    }
+  }
+}

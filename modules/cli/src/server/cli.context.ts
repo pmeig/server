@@ -9,25 +9,28 @@ export interface CliProject {
   assets: string[];
 }
 
-export interface CliContext {
+export interface CliContext extends CliProject {
   name: string;
   projects: Record<string, CliProject>;
 }
 
-export const findContext = (cwd: string): CliContext | undefined => {
+export const findContext = (cwd: string) => {
   let context: CliContext | undefined;
-  let current = cwd;
-  do {
-    context = getContext(current);
+  let current = `${cwd}/deleted`;
+  while (!context && !current.endsWith('\\') && !current.endsWith('/')) {
     current = dirname(current);
-  } while (!context && !current.endsWith('\\') && !current.endsWith('/'));
-  return context ?? getContext(current);
+    context = getContext(current);
+  }
+  return {
+    context: context ?? getContext(current),
+    rootProject: current,
+  };
 };
 
 const getContext = (from: string) => {
-  const path = resolve(from, 'pmeig.json');
+  const path = resolve(from, 'pmeig-cli.json');
   if (existsSync(path)) {
-    return JSON.parse(readFileSync(path, 'utf8'));
+    return JSON.parse(readFileSync(path, 'utf8')) as CliContext;
   }
   return undefined;
 };
