@@ -1,5 +1,3 @@
-import { retrieveDesignReturn } from '../decorators/global/metadata.decorators';
-
 export interface Initializable {
   initialize(): Promise<void>;
 }
@@ -55,5 +53,5 @@ export const isLifecycle = (target: any): target is Lifecycle => {
 };
 
 const isFunctionLifecycle = (target: any, func: any) => {
-  return typeof func === 'function' && func.length === 0 && retrieveDesignReturn(target, func.name)?.name === 'Promise';
+  return typeof func === 'function' && func.length === 0;
 };

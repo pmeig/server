@@ -3,12 +3,16 @@ import { Context } from '../application-context';
 
 export interface Type<T> extends Function {
   new (...args: any[]): T;
-  prototype: any;
+  prototype: T;
+}
+
+export interface Abstract<T> extends Function {
+  prototype: T;
 }
 
 export type ScopeType = keyof typeof FactoryProviderScoped;
 
-export type ProviderToken<T> = Type<T> | string | symbol;
+export type ProviderToken<T> = Type<T> | string | symbol | Abstract<T>;
 
 export type CustomProviderFactory<T> = (context: Context) => T | Promise<T>;
 

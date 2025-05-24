@@ -1,7 +1,7 @@
 import { Context } from '../application-context';
 import { CustomProviderFactory, Type } from '../provider/provider.type';
 import { ConstructorFactory } from './constructor.factory';
-import { toLifecycle } from '../lifecycle';
+import { BeanHandler } from './bean-handler';
 
 export type ProviderType<T> = Type<T> | CustomProviderFactory<T>;
 
@@ -11,9 +11,26 @@ export abstract class ProviderFactory<T extends any = any> {
   protected constructor(protected readonly type: ProviderType<T>) {
     this.constructorFactory = ConstructorFactory.from(type);
   }
-  build(context: Context): Promise<T | undefined> {
-    return Promise.resolve(this.constructorFactory?.build(this.type as Type<T>, context));
+
+  protected buildBean(context: Context): Promise<T | undefined> {
+    return this.constructorFactory?.build(this.type as Type<T>, context);
   }
+
+  async build(context: Context, name: string | symbol): Promise<T | undefined> {
+    let bean = await this.buildBean(context);
+    if (name !== BeanHandler.name) {
+      const postConstructors = await context.multiResolve(BeanHandler, []);
+      for (const postConstructor of postConstructors) {
+        if (postConstructor.isHandler(this.type, name, bean)) {
+          bean = (await Promise.resolve(postConstructor.postConstruct(this.type, name, bean))) as
+            | Awaited<T>
+            | undefined;
+        }
+      }
+    }
+    return bean;
+  }
+
   valid(target: object): ProviderFactory<T> | undefined {
     if (typeof this.type === 'function') {
       return this.type.name === (target as { name: string }).name ? this : undefined;
@@ -40,12 +57,9 @@ export class SingletonProviderFactory<T extends any = any> extends ProviderFacto
     super(type);
   }
 
-  async build(context: Context): Promise<T | undefined> {
+  async buildBean(context: Context): Promise<T | undefined> {
     if (!this.singleton) {
       this.singleton = await this.constructorFactory.build(this.type as Type<T>, context);
-      const lifecycle = toLifecycle(this.singleton);
-      await lifecycle.initialize();
-      await lifecycle.dispose();
     }
     return this.singleton;
   }

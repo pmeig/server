@@ -57,19 +57,20 @@ export class Launcher {
         `${this.manager} ${argument} ${args.join(' ')}`,
         {
           cwd: this.workspace,
-          encoding: 'utf8',
-          // env: this.env,
-          // shell: process.platform === 'win32' ? 'cmd.exe' : 'bash',
+          encoding: 'buffer',
         },
         (error, stdout, stderr) => {
           if (error) {
+            console.error(error);
             consoleCommand.exception = error;
           }
           if (stderr) {
-            consoleCommand.error.push(stderr);
+            console.error(stderr.toString('utf-8'));
+            consoleCommand.error.push(stderr.toString('utf-8'));
           }
           if (stdout) {
-            consoleCommand.success.push(stdout);
+            console.info(stdout.toString('utf-8'));
+            consoleCommand.success.push(stdout.toString('utf-8'));
           }
         }
       );

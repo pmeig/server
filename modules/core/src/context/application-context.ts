@@ -3,6 +3,7 @@ import { CustomProvider, Provider, ProviderToken, Type } from './provider/provid
 import { ComponentContext, retrieveContext, updateContext } from '../decorators/components/context.helper';
 import { createComponentDecorator, Scope } from '../decorators/components/component.decorator';
 import { PutDesignParam } from '../decorators/global/metadata.decorators';
+import { provideLifecycle } from './lifecycle/init-handler.lifecycle';
 
 export interface Context {
   resolve: <T extends any = any>(
@@ -41,7 +42,7 @@ export class Module implements Context {
     if (token === Module.name) {
       return this as unknown as T;
     }
-    const injectable = await (this.factories[token] ?? [])[0]?.factory?.build(this);
+    const injectable = await (this.factories[token] ?? [])[0]?.factory?.build(this, token);
     return this.applyDefault(injectable, defaultValue);
   }
 
@@ -58,7 +59,7 @@ export class Module implements Context {
     const token = this.extractToken(key);
     if (token === Module.name) return [this as unknown as T];
     const factories = this.factories[token];
-    return Promise.all(factories.map(factory => this.applyDefault(factory.factory?.build(this), defaultValue)));
+    return Promise.all(factories.map(factory => this.applyDefault(factory.factory?.build(this, token), defaultValue)));
   }
 
   async multiResolveRequired<T>(key: ProviderToken<T>): Promise<T[]> {
@@ -72,6 +73,7 @@ export class Module implements Context {
   }
 
   private initProviders(providers: Provider[]) {
+    this.putDefaultHandler(providers);
     providers.forEach(provider => {
       let targetProvider = provider;
       if (typeof provider !== 'function') {
@@ -132,5 +134,9 @@ export class Module implements Context {
       return (defaultValue as () => Nullable<T>)();
     }
     return undefined;
+  }
+
+  private putDefaultHandler(providers: Provider[] = []) {
+    providers.push(...provideLifecycle());
   }
 }
