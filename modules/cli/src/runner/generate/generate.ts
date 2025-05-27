@@ -62,7 +62,7 @@ export abstract class Generator {
             : this.location,
         this.name
       ),
-      parameters.prefix?.[0] ?? configuration?.prefix ?? '',
+      parameters.prefix?.[0] ?? configuration?.prefix ?? context.architecture.prefix ?? '',
       ...params
     );
   }
@@ -157,7 +157,7 @@ class ModuleGenerator extends Generator {
     context.projects[this.name] = {
       type: this.type as 'application' | 'library',
       location: {
-        root: resolve(path, this.name).replace(this.rootProject, '').replaceAll('\\', '/')
+        root: path.replace(this.rootProject, '').replaceAll('\\', '/')
       },
       assets: []
     };
