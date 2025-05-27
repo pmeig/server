@@ -5,32 +5,25 @@ import {
   FieldDecorator,
   MethodDecorator,
   ConstructorParameterDecorator,
-  MethodParameterDecorator,
+  MethodParameterDecorator
 } from './type.decorators';
 import { Type } from '../context/provider/provider.type';
+import { Component } from './components/component.decorator';
+import { getMultiMetadataReflection, reflectMultiMetadataContext } from './decorators.helper';
 
-const handler_key = 'decorator:handler';
+const decorator_names = 'decorator:names';
 
 export type Decorators = ClassDecorator | ParameterDecorator | FieldDecorator | MethodDecorator | Decorator;
-export type DecoratorBuilder<T extends Decorators> = (() => T) | T;
 
-const createDecorator = <T extends Decorators = Decorator>(handle: DecoratorBuilder<T>): Decorator => {
-  let handlerAdded = handle as Decorator;
-  if (handle.prototype.length === 0) {
-    handlerAdded = (handle as () => Decorator)();
-  }
-  return target => {
-    const handler: Decorator =
-      Reflect.getMetadata(handler_key, target) ?? ((_subTarget, _subPropertyKey, _subDescriptor) => {});
-    Reflect.defineMetadata(
-      handler_key,
-      (subTarget: object, subPropertyKey?: string | symbol, subDescriptor?: PropertyDescriptor | number) => {
-        handler(subTarget, subPropertyKey, subDescriptor);
-        handlerAdded(subTarget, subPropertyKey, subDescriptor);
-      },
-      target
-    );
-  };
+const createDecorator = <T extends Decorators = Decorator>(name: string, decorator: T): T => {
+  return ((target: object, propertyKey?: string | symbol, descriptor?: number | TypedPropertyDescriptor<any>) => {
+    const context = reflectMultiMetadataContext<string>(decorator_names, target, propertyKey);
+    const names = context.get();
+    names.push(name);
+    context.set(names);
+    const reflector = decorator as Decorator;
+    reflector(target, propertyKey, descriptor);
+  }) as T;
 };
 
 const parameterDecorator = createDecorator<ParameterDecorator>;
@@ -58,7 +51,9 @@ const concatDecoratorFunction = <T extends Decorators>(...decorators: T[]) => {
           acc(subTarget, subPropertyKey, subDescriptor);
           decorator(subTarget, subPropertyKey, subDescriptor);
         },
-        (_target, _propertyKey, _descriptor) => {}
+        (_target, _propertyKey, _descriptor) => {
+          isDecorator(_target as Type<any>, Component);
+        }
       );
     return handlers as T;
   };
@@ -68,15 +63,17 @@ export const Decorators = Object.freeze({
   parameter: {
     generic: parameterDecorator,
     constructor: constructorParameterDecorator,
-    method: methodParameterDecorator,
+    method: methodParameterDecorator
   },
   field: fieldDecorator,
   method: methodDecorator,
   class: classDecorator,
   all: createDecorator,
-  concat: <T extends Decorators>(...decorators: T[]) => createDecorator(concatDecoratorFunction(...decorators)),
+  concat: <T extends Decorators>(...decorators: T[]) =>
+    createDecorator('concat', concatDecoratorFunction(...decorators))
 });
 
-export const retrieveCustomDecorator = (target: object) => {
-  return Reflect.getMetadata(handler_key, target) as Decorator;
+export const isDecorator = <T extends Decorators>(bean: Type<any>, decorator: T) => {
+  const names = getMultiMetadataReflection<string>(decorator_names, bean);
+  return names.includes(decorator.name);
 };

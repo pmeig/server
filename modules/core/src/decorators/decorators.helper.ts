@@ -1,10 +1,8 @@
-import { metadata } from 'reflect-metadata/no-conflict';
-
 export const reflectMultiMetadataContext = <T = any>(key: string, target: object, propertyKey?: string | symbol) => {
   const handler = reflectMetadataContext<T[]>(key, target, propertyKey);
   return {
     get: () => handler.get() ?? [],
-    set: (metadata: T[]) => handler.set(metadata),
+    set: (metadata: T[]) => handler.set(metadata)
   };
 };
 
@@ -12,12 +10,12 @@ export const reflectMetadataContext = <T = any>(key: string, target: object, pro
   if (propertyKey) {
     return {
       get: () => getMetadataReflection<T>(key, target, propertyKey),
-      set: (metadata: T) => Reflect.defineMetadata(key, metadata, target, propertyKey),
+      set: (metadata: T) => Reflect.defineMetadata(key, metadata, target, propertyKey)
     };
   }
   return {
     get: () => getMetadataReflection<T>(key, target, propertyKey),
-    set: (metadata: T) => Reflect.defineMetadata(key, metadata, target),
+    set: (metadata: T) => Reflect.defineMetadata(key, metadata, target)
   };
 };
 
