@@ -18,6 +18,8 @@ import { launcher } from '../../launcher';
 const templates = resolve(dirname(process.argv[1]), 'runner', 'generate', 'templates');
 const fileImportReference = Object.freeze({
   service: '@server/mvc',
+  component: '@server/core',
+  configuration: '@server/core',
   controller: '@server/mvc',
   properties: '@server/properties'
 });
@@ -90,17 +92,17 @@ class NoopGenerator extends Generator {
 class FileGenerator extends Generator {
   protected generate(context: CliContext, path: string, prefix: string, ...params: string[]): Promise<void> {
     const nameFile = (!this.name.includes('-') ? this.toTildeName() : this.name).toLowerCase();
-    const file = resolve(path, nameFile, `.${this.type}.ts`);
-    copyFileSync(resolve(templates, 'file'), file);
-    updateContent(path, content => {
+    const file = resolve(dirname(path), `${nameFile}.${this.type}.ts`);
+    const name = this.name
+      .split('-')
+      .reduce((acc, fragment) => acc + fragment.slice(0, 1).toUpperCase() + fragment.slice(1));
+    copyFileSync(resolve(templates, 'file', 'component.ts.template'), file);
+    updateContent(file, content => {
       const decorator = this.type.slice(0, 1).toUpperCase() + this.type.slice(1);
       return content
-        .replace(
-          '{NAME}',
-          this.name.split('-').reduce((acc, fragment) => acc + fragment.slice(0, 1).toUpperCase() + fragment.slice(1))
-        )
-        .replace('{DECORATOR}', decorator)
-        .replace('{LIBRARY}', fileImportReference[this.type]);
+        .replaceAll('{NAME}', name.slice(0, 1).toUpperCase() + name.slice(1))
+        .replaceAll('{DECORATOR}', decorator)
+        .replaceAll('{LIBRARY}', fileImportReference[this.type]);
     });
     return Promise.resolve();
   }
