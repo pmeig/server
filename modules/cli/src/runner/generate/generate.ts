@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync } from 'fs';
 import { CliContext } from '../../server/cli.context';
-import { dirname, resolve } from 'path';
+import { dirname, resolve, basename } from 'path';
 import { copyFileSync } from 'node:fs';
 import { GeneratorParameters } from './generate.runner';
 import { Parameters } from '../runner.helper';
@@ -13,6 +13,7 @@ import {
   updateYaml,
   writeJson
 } from '../../helper/io.helper';
+import { launcher } from '../../launcher';
 
 const templates = resolve(dirname(process.argv[1]), 'runner', 'generate', 'templates');
 const fileImportReference = Object.freeze({
@@ -51,11 +52,14 @@ export abstract class Generator {
     const configuration = context.architecture[this.type];
     return this.generate(
       context,
-      parameters.destination
-        ? resolve(rootProject, parameters.destination[0])
-        : configuration?.root
-          ? resolve(rootProject, configuration.root)
-          : this.location,
+      resolve(
+        parameters.destination
+          ? resolve(rootProject, parameters.destination[0])
+          : configuration?.root
+            ? resolve(rootProject, configuration.root)
+            : this.location,
+        this.name
+      ),
       parameters.prefix?.[0] ?? configuration?.prefix ?? '',
       ...params
     );
@@ -127,16 +131,19 @@ class ModuleGenerator extends Generator {
   protected generate(context: CliContext, path: string, prefix: string, ...params: string[]): Promise<void> {
     this.createSrcRoot(path, prefix);
     this.updateConfigWithNewModule(context, path, prefix);
-    return Promise.resolve();
+    return launcher
+      .cwd(path)
+      .launch('install')
+      .then(() => {});
   }
 
   private createSrcRoot(path: string, prefix: string) {
-    mkdirSync(path, { recursive: true });
+    mkdirSync(dirname(path), { recursive: true });
     const templatePath = resolve(templates, this.type);
     browseDir(templatePath, {
       file: file => {
         const destination = file.replace(templatePath, path).replace('.template', '');
-        mkdirSync(destination, { recursive: true });
+        mkdirSync(dirname(destination), { recursive: true });
         copyFileSync(file, destination);
       }
     });
@@ -148,25 +155,33 @@ class ModuleGenerator extends Generator {
     context.projects[this.name] = {
       type: this.type as 'application' | 'library',
       location: {
-        root: resolve(path, this.name)
+        root: resolve(path, this.name).replace(this.rootProject, '').replaceAll('\\', '/')
       },
       assets: []
     };
     writeJson(resolve(this.rootProject, 'pmeig-cli.json'), context);
+    let pathLibrary = path.replace(this.rootProject, '').replaceAll('\\', '/');
+    pathLibrary = pathLibrary.startsWith('/') ? pathLibrary.slice(1) : pathLibrary;
     updateJson(resolve(this.rootProject, 'tsconfig.json'), (tsconfig: Record<string, any>) => {
-      const paths = tsconfig.paths ?? {};
+      const paths = tsconfig.compilerOptions.paths ?? {};
       const name = prefix + this.name;
-      paths[name] = resolve(path, name);
-      paths[`${name}/src/*`] = resolve(path, name, 'src/*');
-      tsconfig.paths = paths;
+      paths[name] = [pathLibrary];
+      paths[`${name}/src/*`] = [pathLibrary + '/src/*'];
+      tsconfig.compilerOptions.paths = paths;
       return tsconfig;
     });
     const workspace = resolve(this.rootProject, 'pnpm-workspace.yaml');
     if (existsSync(workspace)) {
+      const packageAdd =
+        findFile(path, folder => {
+          if (dirname(folder) === this.rootProject) {
+            return basename(folder);
+          }
+        }) + '/*';
       updateYaml(workspace, (yaml: Record<string, any>) => {
         const packages = yaml.packages ?? [];
-        if (packages.every(name => !path.startsWith(name.replace('/*', '')))) {
-          packages.push(findFile(path, folder => dirname(folder) === this.rootProject) + '/*');
+        if (packages.every(packageName => packageName !== packageAdd)) {
+          packages.push(packageAdd);
         }
         yaml.packages = packages;
         return yaml;
@@ -181,6 +196,8 @@ class ModuleGenerator extends Generator {
       json.keywords = packageJson.keywords ?? [];
       json.license = packageJson.license ?? '';
       json.packageManager = packageJson.packageManager;
+      json.author = packageJson.author;
+      json.scripts.build = json.scripts.build.replace('{PMEIG_NAME}', this.name);
       Object.keys(json.peerDependencies).forEach(dependency => {
         json.peerDependencies[dependency] = packageJson.dependencies[dependency];
       });
@@ -192,7 +209,7 @@ class ModuleGenerator extends Generator {
   }
 
   private updateTsConfig(path: string) {
-    let number = 0;
+    let number = -1;
     findFile(path, folder => {
       number++;
       return folder === this.rootProject;

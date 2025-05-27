@@ -1,25 +1,43 @@
 {
   "name": "server",
   "type": "library",
+  "architecture": {
+    "prefix": "@server/",
+    "library": {
+      "root": "modules"
+    }
+  },
   "projects": {
     "cli": {
       "type": "library",
       "location": {
         "root": "modules/cli"
       },
-      "assets": ["package.json", "**/templates/**"]
+      "assets": [
+        "package.json",
+        "**/templates/**"
+      ]
     },
     "core": {
       "type": "library",
       "location": {
         "root": "modules/core"
       },
-      "assets": ["package.json"]
+      "assets": [
+        "package.json"
+      ]
     },
     "runner": {
       "type": "application",
       "location": {
         "root": "runner"
+      },
+      "assets": []
+    },
+    "properties": {
+      "type": "library",
+      "location": {
+        "root": "/modules/properties/properties"
       },
       "assets": []
     }

@@ -16,12 +16,13 @@
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
-    "@server/cli": "file:dist\\cli\\server-cli-1.0.0.tgz"
+    "@server/cli": "file:dist\\cli\\server-cli-1.0.0.tgz",
+    "@server/core": "file:dist\\core\\server-core-1.0.0.tgz"
   },
   "devDependencies": {
     "@types/node": "^22.15.19",
     "prettier": "^3.5.3",
-    "typescript": "^5.8.3",
-    "reflect-metadata": "^0.2.2"
+    "reflect-metadata": "^0.2.2",
+    "typescript": "^5.8.3"
   }
 }

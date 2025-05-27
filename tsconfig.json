@@ -24,6 +24,12 @@
       "@server/core/*": [
         "modules/core/src/*"
       ],
+      "properties": [
+        "modules/properties"
+      ],
+      "properties/src/*": [
+        "modules/properties/src/*"
+      ]
     }
   }
 }

@@ -11,6 +11,9 @@ importers:
       '@server/cli':
         specifier: file:dist\cli\server-cli-1.0.0.tgz
         version: file:dist/cli/server-cli-1.0.0.tgz
+      '@server/core':
+        specifier: file:dist\core\server-core-1.0.0.tgz
+        version: file:dist/core/server-core-1.0.0.tgz
     devDependencies:
       '@types/node':
         specifier: ^22.15.19
@@ -56,6 +59,18 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
 
+  modules/properties:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.19
+        version: 22.15.19
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
+      typescript:
+        specifier: ^5.8.3
+        version: 5.8.3
+
   runner:
     dependencies:
       '@server/core':
@@ -87,6 +102,10 @@ packages:
     resolution: {integrity: sha512-6x0MucjkaHX8LwJScFIVyrwESce5wJxqvP5Pr/TGnv8f0Z0JQ1bPHKlqmGMH7EeovoavZFws0/eWLrUNA17ehw==, tarball: file:dist/cli/server-cli-1.0.0.tgz}
     version: 1.0.0
     hasBin: true
+
+  '@server/core@file:dist/core/server-core-1.0.0.tgz':
+    resolution: {integrity: sha512-lTNawMdz7F5f2BsSxOSEVq3BZ7/cBq+/ut4GvpCgNUyHqvOZVBi06ti1lSxbb9qslLWo6mllqOHnCFV0GDzihA==, tarball: file:dist/core/server-core-1.0.0.tgz}
+    version: 1.0.0
 
   '@types/js-yaml@4.0.9':
     resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
@@ -192,6 +211,8 @@ snapshots:
     dependencies:
       fast-glob: 3.3.3
       js-yaml: 4.1.0
+
+  '@server/core@file:dist/core/server-core-1.0.0.tgz': {}
 
   '@types/js-yaml@4.0.9': {}
 

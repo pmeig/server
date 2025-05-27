@@ -1,5 +1,5 @@
 {
-  "extends": "../tsconfig.modules.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/cli",
     "declaration": false
