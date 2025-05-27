@@ -1,7 +1,29 @@
 import { Builder } from './builder';
-import { CliRunner } from '../runner';
+import { CliRunner, Runnable } from '../runner';
+import { RunnerParameterConfiguration } from '../runner.helper';
 
-export const buildApplication: CliRunner = (context, rootProject: string, project, ...params) => {
-  const builder = Builder.from(context, rootProject, project, ...params);
-  return builder.build(...params);
+const buildParameter = {
+  prod: {
+    indexes: 0,
+    alias: ['-p'],
+    tilde: 'double'
+  }
+} as RunnerParameterConfiguration;
+
+export type BuildParameter = typeof buildParameter;
+
+const buildRunner: CliRunner<BuildParameter> = (
+  context,
+  parameters: Record<keyof BuildParameter, string[]>,
+  rootProject: string,
+  project,
+  ...params
+) => {
+  const builder = Builder.from(context, rootProject, project);
+  return builder.build(parameters, ...params);
+};
+
+export const buildApplication: Runnable<BuildParameter> = {
+  run: buildRunner,
+  parameters: buildParameter
 };

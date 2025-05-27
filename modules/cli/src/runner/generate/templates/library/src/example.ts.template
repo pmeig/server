@@ -1,0 +1,4 @@
+import { component } from '@server/core';
+
+@Component
+export class Example {}

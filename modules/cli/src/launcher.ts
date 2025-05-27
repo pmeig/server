@@ -18,7 +18,7 @@ export class Launcher {
     const separator = process.platform === 'win32' ? ';' : ':';
     this.env = {
       ...process.env,
-      Path: dirname(process.argv[0]) + separator + process.env.Path,
+      Path: dirname(process.argv[0]) + separator + process.env.Path
     };
     if (!this.manager) {
       let current = process.cwd();
@@ -51,26 +51,24 @@ export class Launcher {
     return new Promise((resolve, reject) => {
       const consoleCommand: ConsoleCommand = {
         error: [],
-        success: [],
+        success: []
       };
       const thread = exec(
         `${this.manager} ${argument} ${args.join(' ')}`,
         {
           cwd: this.workspace,
-          encoding: 'buffer',
+          encoding: 'utf-8'
         },
         (error, stdout, stderr) => {
           if (error) {
-            console.error(error);
             consoleCommand.exception = error;
           }
           if (stderr) {
-            console.error(stderr.toString('utf-8'));
-            consoleCommand.error.push(stderr.toString('utf-8'));
+            consoleCommand.error.push(stderr);
           }
           if (stdout) {
-            console.info(stdout.toString('utf-8'));
-            consoleCommand.success.push(stdout.toString('utf-8'));
+            // console.info(stdout.toString('utf-8'));
+            consoleCommand.success.push(stdout);
           }
         }
       );

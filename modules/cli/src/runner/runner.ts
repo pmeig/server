@@ -1,10 +1,23 @@
 import { startApplication } from './start/start.runner';
 import { buildApplication } from './build/build.runner';
 import { CliContext } from '../server/cli.context';
+import { ParameterConfiguration, RunnerParameterConfiguration } from './runner.helper';
+import { generateApplication } from './generate/generate.runner';
 
-export type CliRunner = (context: CliContext, ...params: string[]) => Promise<void | any>;
+export type CliRunner<T extends RunnerParameterConfiguration> = (
+  context: CliContext,
+  parameters: Record<keyof T, string[]>,
+  rootProject: string,
+  ...params: string[]
+) => Promise<void | any>;
 
-export const Runner = Object.freeze({
+export interface Runnable<T extends Record<string, ParameterConfiguration>> {
+  run: CliRunner<T>;
+  parameters: T;
+}
+
+export const Runner: Readonly<Record<string, Runnable<any>>> = Object.freeze({
   start: startApplication,
   build: buildApplication,
+  generate: generateApplication
 });

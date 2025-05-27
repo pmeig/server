@@ -1,9 +1,9 @@
 {
-  "extends": "../tsconfig.modules.json",
+  "extends": "{ROLLBACK}tsconfig.json",
   "compilerOptions": {
     "declaration": true,
     "declarationMap": true,
-    "outDir": "../../dist/core"
+    "outDir": "{ROLLBACK}dist/{NAME}"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]

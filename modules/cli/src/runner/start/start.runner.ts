@@ -1,10 +1,16 @@
 import { CliContext } from '../../server/cli.context';
 import { Builder } from '../build/builder';
 import { Starter } from './starter';
-import { CliRunner } from '../runner';
+import { CliRunner, Runnable } from '../runner';
+import { Parameters, RunnerParameterConfiguration } from '../runner.helper';
 
-export const startApplication: CliRunner = async (
+const startParameter: RunnerParameterConfiguration = {};
+
+export type StartParameter = typeof startParameter;
+
+const startRun: CliRunner<StartParameter> = async (
   context: CliContext,
+  parameters: Parameters<StartParameter>['cli'],
   rootProject: string,
   project: string,
   ...params: string[]
@@ -13,6 +19,11 @@ export const startApplication: CliRunner = async (
   if (!cliProject || cliProject.type !== 'application') {
     return;
   }
-  await Builder.from(context, rootProject, project, ...params).build('--outDir', './target', '--sourceMap', 'true');
-  return Starter.from(context, rootProject, project).start(...params);
+  await Builder.from(context, rootProject, project).build({}, '--outDir', './target', '--sourceMap', 'true');
+  return Starter.from(context, rootProject, project).start(parameters, ...params);
+};
+
+export const startApplication: Runnable<typeof startParameter> = {
+  run: startRun,
+  parameters: startParameter,
 };

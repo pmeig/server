@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'fs';
-import { dirname, resolve } from 'path';
+import { resolve } from 'path';
+import { findFile } from '../helper/io.helper';
 
 export interface CliProject {
   type: 'library' | 'application' | 'noop';
@@ -9,21 +10,32 @@ export interface CliProject {
   assets: string[];
 }
 
+export interface CliGenerate {
+  prefix: string;
+  root: string;
+}
+
 export interface CliContext extends CliProject {
   name: string;
   projects: Record<string, CliProject>;
+  architecture: {
+    prefix?: string;
+    library?: CliGenerate;
+    application?: CliGenerate;
+    service?: CliGenerate;
+    controller?: CliGenerate;
+    properties?: CliGenerate;
+  };
 }
 
 export const findContext = (cwd: string) => {
-  let context: CliContext | undefined;
-  let current = `${cwd}/deleted`;
-  while (!context && !current.endsWith('\\') && !current.endsWith('/')) {
-    current = dirname(current);
-    context = getContext(current);
-  }
+  let rootProject = cwd;
   return {
-    context: context ?? getContext(current),
-    rootProject: current,
+    context: findFile(cwd, folder => {
+      rootProject = folder;
+      return getContext(folder);
+    }),
+    rootProject
   };
 };
 

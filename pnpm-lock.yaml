@@ -11,9 +11,6 @@ importers:
       '@server/cli':
         specifier: file:dist\cli\server-cli-1.0.0.tgz
         version: file:dist/cli/server-cli-1.0.0.tgz
-      reflect-metadata:
-        specifier: ^0.2.2
-        version: 0.2.2
     devDependencies:
       '@types/node':
         specifier: ^22.15.19
@@ -21,6 +18,9 @@ importers:
       prettier:
         specifier: ^3.5.3
         version: 3.5.3
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -30,7 +30,13 @@ importers:
       fast-glob:
         specifier: ^3.3.3
         version: 3.3.3
+      js-yaml:
+        specifier: ^4.1.0
+        version: 4.1.0
     devDependencies:
+      '@types/js-yaml':
+        specifier: ^4.0.9
+        version: 4.0.9
       '@types/node':
         specifier: ^22.15.19
         version: 22.15.19
@@ -78,12 +84,18 @@ packages:
     engines: {node: '>= 8'}
 
   '@server/cli@file:dist/cli/server-cli-1.0.0.tgz':
-    resolution: {integrity: sha512-xuOpTH29l8lbHQlyNjh3HDIXgmDgsWCHJiTn5uRZZQngeVxJcTo4c0FpDIfOMRVp72+q5d0B3OgN3SfHDl5zhQ==, tarball: file:dist/cli/server-cli-1.0.0.tgz}
+    resolution: {integrity: sha512-6x0MucjkaHX8LwJScFIVyrwESce5wJxqvP5Pr/TGnv8f0Z0JQ1bPHKlqmGMH7EeovoavZFws0/eWLrUNA17ehw==, tarball: file:dist/cli/server-cli-1.0.0.tgz}
     version: 1.0.0
     hasBin: true
 
+  '@types/js-yaml@4.0.9':
+    resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
+
   '@types/node@22.15.19':
     resolution: {integrity: sha512-3vMNr4TzNQyjHcRZadojpRaD9Ofr6LsonZAoQ+HMUa/9ORTPoxVIw0e0mpqWpdjj8xybyCM+oKOUH2vwFu/oEw==}
+
+  argparse@2.0.1:
+    resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
 
   braces@3.0.3:
     resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
@@ -115,6 +127,10 @@ packages:
   is-number@7.0.0:
     resolution: {integrity: sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng==}
     engines: {node: '>=0.12.0'}
+
+  js-yaml@4.1.0:
+    resolution: {integrity: sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==}
+    hasBin: true
 
   merge2@1.4.1:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
@@ -175,10 +191,15 @@ snapshots:
   '@server/cli@file:dist/cli/server-cli-1.0.0.tgz':
     dependencies:
       fast-glob: 3.3.3
+      js-yaml: 4.1.0
+
+  '@types/js-yaml@4.0.9': {}
 
   '@types/node@22.15.19':
     dependencies:
       undici-types: 6.21.0
+
+  argparse@2.0.1: {}
 
   braces@3.0.3:
     dependencies:
@@ -211,6 +232,10 @@ snapshots:
       is-extglob: 2.1.1
 
   is-number@7.0.0: {}
+
+  js-yaml@4.1.0:
+    dependencies:
+      argparse: 2.0.1
 
   merge2@1.4.1: {}
 

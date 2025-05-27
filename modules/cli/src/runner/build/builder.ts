@@ -1,66 +1,69 @@
 import { CliContext, CliProject } from '../../server/cli.context';
-import { resolve } from 'path';
-import { existsSync, readFileSync } from 'fs';
+import { dirname, resolve } from 'path';
+import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { copyFileSync, createReadStream, readdirSync, unlinkSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { ConsoleCommand, launcher } from '../../launcher';
 import { glob } from 'fast-glob';
-import { Configuration } from '../../index';
+import { BuildParameter } from './build.runner';
+import { Parameters } from '../runner.helper';
 
 export abstract class Builder {
   constructor(
     protected readonly context: CliProject,
-    protected readonly rootProject: string,
-    protected readonly params: string[] = []
+    protected readonly rootProject: string
   ) {}
 
-  static from(context: CliContext, rootProject: string, project: string, ...params: string[]): Builder {
+  static from(context: CliContext, rootProject: string, project: string): Builder {
     const cliProject = context.projects?.[project];
     if (cliProject) {
       if (cliProject.type === 'application') {
-        return new ApplicationBuilder(cliProject, rootProject, params);
+        return new ApplicationBuilder(cliProject, rootProject);
       }
-      return new LibraryBuilder(cliProject, rootProject, params);
+      return new LibraryBuilder(cliProject, rootProject);
     }
     return new NoopBuilder(
       {
         location: {
-          root: '',
+          root: ''
         },
         assets: [],
-        type: 'noop',
+        type: 'noop'
       },
-      rootProject,
-      params
+      rootProject
     );
   }
 
-  async build(...options: string[]): Promise<ConsoleCommand> {
+  async build(_: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
     const root = resolve(this.rootProject, this.context.location.root);
     const executor = launcher.cwd(root);
-    const console = await executor.launch('tsc', ...options);
-    let result = Promise.resolve(console);
-    if (console.error.length === 0 && !console.exception && this.context.assets.length > 0) {
+    const command = await executor.launch('tsc', ...options);
+    let result = Promise.resolve(command);
+    if (!command.exception && this.context.assets.length > 0) {
       const outDirConsole = await executor.launch('tsc', '--showConfig', ...options);
       const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
       const outDirPath = resolve(root, outDir);
       const copies = this.context.assets.map(asset => {
         return glob(asset, {
-          cwd: root,
+          cwd: root
         }).then(files => {
-          files.forEach(file => copyFileSync(resolve(root, file), resolve(outDirPath, file)));
+          files.forEach(file => {
+            const outFile = resolve(outDirPath, file.slice(file.indexOf('/') + 1));
+            mkdirSync(dirname(outFile), { recursive: true });
+            copyFileSync(resolve(root, file), outFile);
+          });
         });
       });
-      result = Promise.all(copies).then(() => console);
+      result = Promise.all(copies).then(() => command);
     }
     return result;
   }
 }
 
 class ApplicationBuilder extends Builder {
-  async build(...options: string[]): Promise<ConsoleCommand> {
-    const prepare = await super.build(...options);
-    if (prepare.error.length === 0 && !prepare.exception && Configuration.prod) {
+  async build(parameters: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
+    const prepare = await super.build(parameters, ...options);
+    if (prepare.error.length === 0 && !prepare.exception && typeof parameters.prod !== 'undefined') {
       // bundle
       return prepare;
     }
@@ -69,10 +72,10 @@ class ApplicationBuilder extends Builder {
 }
 
 class NoopBuilder extends Builder {
-  async build(...options: string[]): Promise<ConsoleCommand> {
+  async build(parameters: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
     return Promise.resolve({
       error: [],
-      success: [],
+      success: []
     });
   }
 }
@@ -80,14 +83,14 @@ class NoopBuilder extends Builder {
 class LibraryBuilder extends Builder {
   private regex = new RegExp(`^export [*] from .*;$`);
 
-  constructor(context: CliProject, rootProject: string, params: string[] = []) {
-    super(context, rootProject, params);
-    context.assets.push(...new Set(...context.assets, 'package.json'));
+  constructor(context: CliProject, rootProject: string) {
+    super(context, rootProject);
+    context.assets = [...new Set([...context.assets, 'package.json'])];
   }
 
-  async build(...options: string[]): Promise<ConsoleCommand> {
-    const prepare = await super.build(...options);
-    if (!prepare.exception && prepare.error.length === 0 && Configuration.prod) {
+  async build(parameters: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
+    const prepare = await super.build(parameters, ...options);
+    if (!prepare.exception && prepare.error.length === 0 && typeof parameters.prod !== 'undefined') {
       const src = resolve(this.rootProject, this.context.location.root);
       const outDirConsole = await launcher.cwd(src).launch('tsc', '--showConfig', ...options);
       const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
@@ -106,7 +109,7 @@ class LibraryBuilder extends Builder {
       readdirSync(path, {
         encoding: 'utf-8',
         recursive: true,
-        withFileTypes: true,
+        withFileTypes: true
       })
         .filter(file => file.isFile() && file.name.endsWith('.d.ts'))
         .map(file => `${file.parentPath ?? path}/${file.name}`.replaceAll('\\', '/'))
@@ -142,7 +145,7 @@ class LibraryBuilder extends Builder {
         complete: () => resolve(files),
         error: error => {
           reject(error);
-        },
+        }
       })
     );
     return Promise.all(files.map(file => this.addFileToKeep(parent, file, keep)));
@@ -159,7 +162,7 @@ class LibraryBuilder extends Builder {
     try {
       const rl = createInterface({
         input: createReadStream(path),
-        crlfDelay: Infinity,
+        crlfDelay: Infinity
       });
       return new Promise((resolve, reject) => {
         rl.on('line', line => {

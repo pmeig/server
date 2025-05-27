@@ -1,0 +1,8 @@
+{
+  "extends": "{ROLLBACK}/tsconfig.json",
+  "include": ["./**/*"],
+  "compilerOptions": {
+    "outDir": "{ROLLBACK}/dist/runner",
+  },
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts", "target"]
+}

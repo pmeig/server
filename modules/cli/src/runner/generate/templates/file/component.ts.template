@@ -1,0 +1,4 @@
+import { {DECORATOR} } from '{LIBRARY}'
+
+@{DECORATOR}
+export class {NAME} {}

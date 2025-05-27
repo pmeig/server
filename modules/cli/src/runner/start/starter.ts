@@ -2,6 +2,8 @@ import { CliContext, CliProject } from '../../server/cli.context';
 import { resolve } from 'path';
 import { readdirSync, readFileSync, writeFileSync } from 'fs';
 import { ConsoleCommand, launcher } from '../../launcher';
+import { StartParameter } from './start.runner';
+import { Parameters } from '../runner.helper';
 
 export abstract class Starter {
   protected folderRunner: string;
@@ -23,7 +25,7 @@ export abstract class Starter {
     return new LibraryStarter(context, context.projects[project], rootProject);
   }
 
-  start(...params: string[]) {
+  start(_: Parameters<StartParameter>['cli'], ...params: string[]) {
     const main = (JSON.parse(readFileSync(resolve(this.root, 'package.json'), 'utf8')).main as string) ?? 'index.ts';
     return launcher
       .cwd(this.folderRunner)
@@ -40,9 +42,9 @@ interface RequireMapper {
 }
 
 export class LibraryStarter extends Starter {
-  start(...params: string[]): Promise<ConsoleCommand> {
+  start(parameters: Parameters<StartParameter>['cli'], ...params: string[]): Promise<ConsoleCommand> {
     this.folderRunner = this.replaceRequireProvideInsideProject(this.context.projects);
-    return super.start(...params);
+    return super.start(parameters, ...params);
   }
 
   private replaceRequireProvideInsideProject(projects: CliContext['projects']) {
@@ -51,8 +53,8 @@ export class LibraryStarter extends Starter {
     const folders = new Set([
       {
         path: runner,
-        rollback: 1,
-      },
+        rollback: 1
+      }
     ]);
     const iterator = folders.values();
     let current = iterator.next();
@@ -62,7 +64,7 @@ export class LibraryStarter extends Starter {
         if (file.isDirectory() && file.name != 'node_modules') {
           folders.add({
             path: resolve(parent.path, file.name),
-            rollback: parent.rollback + 1,
+            rollback: parent.rollback + 1
           });
         } else if (file.name.endsWith('.js')) {
           this.replaceRequireByLocalPath(resolve(parent.path, file.name), mapper, parent.rollback);
@@ -87,7 +89,7 @@ export class LibraryStarter extends Starter {
       const name = json.name;
       acc.push({
         from: `= require("${name}")`,
-        to: (rollback: number) => `= require("${'../'.repeat(rollback)}${project.location.root}/src")`,
+        to: (rollback: number) => `= require("${'../'.repeat(rollback)}${project.location.root}/src")`
       });
       return acc;
     }, [] as RequireMapper[]);

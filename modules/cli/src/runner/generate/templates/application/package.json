@@ -1,0 +1,16 @@
+{
+  "name": "{NAME}",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.ts",
+  "scripts": {
+    "start": "pmeig start {NAME}"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "{NODE}",
+    "typescript": "{TYPESCRIPT}"
+  }
+}

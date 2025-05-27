@@ -1,0 +1,21 @@
+{
+  "name": "{NAME}",
+  "version": "1.0.0-SNAPSHOT",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "pmeig build",
+    "build:prod": "pnpm build --prod"
+  },
+  "keywords": [],
+  "author": "{AUTHOR}",
+  "license": "{LICENSE}",
+  "peerDependencies": {
+    "@server/core": "{VERSION}"
+  },
+  "devDependencies": {
+    "@types/node": "{NODE}",
+    "reflect-metadata": "{METADATA}",
+    "typescript": "{TYPESCRIPT}"
+  }
+}

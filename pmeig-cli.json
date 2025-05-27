@@ -7,7 +7,7 @@
       "location": {
         "root": "modules/cli"
       },
-      "assets": ["package.json"]
+      "assets": ["package.json", "**/templates/**"]
     },
     "core": {
       "type": "library",
