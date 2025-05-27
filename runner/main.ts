@@ -1,4 +1,4 @@
-import { Component, Module, Optional, Order, Properties, Service, List, Lifecycle } from '@server/core';
+import { Component, Lifecycle, List, Module, Optional, Order } from '@server/core';
 import { randomBytes } from 'crypto';
 
 interface Named {
@@ -16,7 +16,6 @@ class First implements Named {
   }
 }
 
-@Properties('test')
 class Third implements Named, Lifecycle {
   name = 'third';
   id = randomBytes(16).toString('hex');
@@ -46,7 +45,6 @@ class Third implements Named, Lifecycle {
   }
 }
 
-@Service
 class Second extends First implements Named {
   override name = 'second';
   id = randomBytes(16).toString('hex');
@@ -72,19 +70,14 @@ class Fourth implements Named {
   }
 }
 
+export class Test {
+  constructor(private readonly module: Module) {}
+}
+
 export const main = async () => {
+  new Test(new Module({ providers: [] }));
   const module = new Module({
-    providers: [
-      First,
-      Second,
-      Fourth,
-      {
-        provide: Third,
-        useFactory: () => {
-          return new Promise(resolve => resolve(new Third()));
-        },
-      },
-    ],
+    providers: [First, Fourth]
   });
   console.log(await module.resolveRequired(First));
   console.log(await module.resolveRequired(Second));

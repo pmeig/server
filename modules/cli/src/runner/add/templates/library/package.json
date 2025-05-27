@@ -17,5 +17,15 @@
     "@types/node": "{NODE}",
     "reflect-metadata": "{METADATA}",
     "typescript": "{TYPESCRIPT}"
+  },
+  "typings": "index.d.ts",
+  "exports": {
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
   }
 }

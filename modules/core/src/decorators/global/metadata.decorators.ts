@@ -1,4 +1,4 @@
-import { Type } from '@server/core';
+import { Type } from '../../context/provider/provider.type';
 import { getMetadataReflection, getMultiMetadataReflection } from '../decorators.helper';
 
 const design_parameters = 'design:paramtypes';

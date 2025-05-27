@@ -1,7 +1,7 @@
 import { RunnerParameterConfiguration } from '../runner.helper';
 import { CliRunner, Runnable } from '../runner';
 import { CliContext } from '../../server/cli.context';
-import { Generator } from './generate';
+import { Generator } from './add';
 
 const generatorParameters: RunnerParameterConfiguration = {
   prefix: {
@@ -17,7 +17,7 @@ const generatorParameters: RunnerParameterConfiguration = {
 
 export type GeneratorParameters = typeof generatorParameters;
 
-const generateRunner: CliRunner<GeneratorParameters> = (
+const addRunner: CliRunner<GeneratorParameters> = (
   context: CliContext,
   parameters: Record<keyof GeneratorParameters, any>,
   rootProject: string,
@@ -28,7 +28,7 @@ const generateRunner: CliRunner<GeneratorParameters> = (
   return Generator.from(type, rootProject, name).write(context, parameters, rootProject, ...params);
 };
 
-export const generateApplication: Runnable<GeneratorParameters> = {
-  run: generateRunner,
+export const addApplication: Runnable<GeneratorParameters> = {
+  run: addRunner,
   parameters: generatorParameters
 };

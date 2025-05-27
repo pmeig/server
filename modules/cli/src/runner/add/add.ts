@@ -2,7 +2,7 @@ import { existsSync, mkdirSync } from 'fs';
 import { CliContext } from '../../server/cli.context';
 import { dirname, resolve, basename } from 'path';
 import { copyFileSync } from 'node:fs';
-import { GeneratorParameters } from './generate.runner';
+import { GeneratorParameters } from './add.runner';
 import { Parameters } from '../runner.helper';
 import {
   browseDir,

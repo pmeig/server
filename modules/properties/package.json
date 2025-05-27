@@ -1,5 +1,5 @@
 {
-  "name": "properties",
+  "name": "@server/properties",
   "version": "1.0.0-SNAPSHOT",
   "description": "",
   "main": "src/index.ts",
@@ -10,13 +10,20 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "peerDependencies": {
-    "@server/core": "file:dist\\core\\server-core-1.0.0.tgz"
-  },
   "devDependencies": {
     "@types/node": "^22.15.19",
     "reflect-metadata": "^0.2.2",
     "typescript": "^5.8.3"
   },
-  "packageManager": "pnpm@10.11.0"
+  "packageManager": "pnpm@10.11.0",
+  "typings": "index.d.ts",
+  "exports": {
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
+  }
 }

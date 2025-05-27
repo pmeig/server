@@ -1,5 +1,6 @@
-import { Decorators, ParameterDecorator, ProviderToken } from '@server/core';
 import { getMultiMetadataReflection, reflectMultiMetadataContext } from '../decorators.helper';
+import { ProviderToken } from '../../context/provider/provider.type';
+import { Decorators } from '../decorator.builder';
 
 const optional_key = 'param:optional';
 const list_key = 'param:list';
