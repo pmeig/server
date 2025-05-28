@@ -15,7 +15,10 @@ const decorator_names = 'decorator:names';
 
 export type Decorators = ClassDecorator | ParameterDecorator | FieldDecorator | MethodDecorator | Decorator;
 
-const createDecorator = <T extends Decorators = Decorator>(name: string, decorator: T): T => {
+const createDecorator = <T extends Decorators | ConstructorParameterDecorator | MethodParameterDecorator = Decorator>(
+  name: string,
+  decorator: T
+): T => {
   return ((target: object, propertyKey?: string | symbol, descriptor?: number | TypedPropertyDescriptor<any>) => {
     const context = reflectMultiMetadataContext<string>(decorator_names, target, propertyKey);
     const names = context.get();

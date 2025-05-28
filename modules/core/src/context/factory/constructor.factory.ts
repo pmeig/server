@@ -3,6 +3,7 @@ import { retrieveParameterTypes } from '../../decorators/global/metadata.decorat
 import { ProviderToken, Type } from '../provider/provider.type';
 import { Context } from '../application-context';
 import { ProviderType } from './provider-factory';
+import { BeanHandler } from './bean-handler';
 
 interface FactoryConstructorArgumentContext {
   resolve(context: Context): Promise<any>;
@@ -14,8 +15,6 @@ interface FactoryConstructorContext {
 }
 
 export abstract class ConstructorFactory {
-  abstract build<T extends any>(target: ProviderType<T>, context: Context): Promise<T>;
-
   static from(target: ProviderType<any>) {
     if (target.length > 0) {
       if (target.prototype?.constructor) {
@@ -25,14 +24,38 @@ export abstract class ConstructorFactory {
     }
     return new EmptyConstructorFactory();
   }
+
+  abstract create<T>(target: ProviderType<T>, context: Context): Promise<T>;
+
+  async build<T extends any>(target: ProviderType<T>, context: Context, name: string | symbol): Promise<T> {
+    const bean = await this.create(target, context);
+    return this.postConstruct(target, context, bean, name);
+  }
+
+  private async postConstruct<T>(
+    target: ProviderType<T>,
+    context: Context,
+    bean: T,
+    name: string | symbol
+  ): Promise<T> {
+    if (name !== BeanHandler.name) {
+      const postConstructors = await context.multiResolve(BeanHandler, []);
+      for (const postConstructor of postConstructors) {
+        if (postConstructor.isHandler(target, name, bean)) {
+          bean = (await Promise.resolve(postConstructor.postConstruct(target, name, bean))) as T;
+        }
+      }
+    }
+    return bean;
+  }
 }
 
 class ConstructorInjectorFactory extends ConstructorFactory {
   private context: FactoryConstructorContext = {
-    arguments: [],
+    arguments: []
   };
 
-  async build<T>(target: Type<T>, context: Context): Promise<T> {
+  async create<T>(target: Type<T>, context: Context): Promise<T> {
     const contextConstructor = this.getInjectorArguments(target);
     let index = 0;
     try {
@@ -40,8 +63,8 @@ class ConstructorInjectorFactory extends ConstructorFactory {
         index = indexArgument;
         return await argumentContext.resolve(context);
       });
-      const values_1 = await Promise.all(args);
-      return new target(...values_1) as T;
+      const injectables = await Promise.all(args);
+      return new target(...injectables) as T;
     } catch (error) {
       throw new Error(`Error while injecting ${contextConstructor[index].type} for ${target.name} at index ${index}`);
     }
@@ -60,7 +83,7 @@ class ConstructorInjectorFactory extends ConstructorFactory {
         }
         return {
           resolve,
-          type: type.name,
+          type: type.name
         };
       });
     }
@@ -76,19 +99,20 @@ class ConstructorInjectorFactory extends ConstructorFactory {
     if (optionals.includes(index)) {
       return (context: Context) => context[prefix](type);
     }
+    // @ts-ignore
     return (context: Context) => context[prefix + 'Required'](type);
   }
 }
 
 class EmptyConstructorFactory extends ConstructorFactory {
-  build<T>(target: Type<T>, context: Context): Promise<T> {
+  create<T>(target: Type<T>, context: Context): Promise<T> {
     const item = new target() as T;
     return Promise.resolve(item);
   }
 }
 
 class FunctionConstructorFactory extends ConstructorFactory {
-  build<T extends any>(target: (context: Context) => Promise<T> | T, context: Context): Promise<T> {
+  create<T extends any>(target: (context: Context) => Promise<T> | T, context: Context): Promise<T> {
     return Promise.resolve(target(context));
   }
 }

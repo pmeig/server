@@ -16,6 +16,7 @@ class First implements Named {
   }
 }
 
+@Component
 class Third implements Named, Lifecycle {
   name = 'third';
   id = randomBytes(16).toString('hex');
@@ -45,6 +46,7 @@ class Third implements Named, Lifecycle {
   }
 }
 
+@Component
 class Second extends First implements Named {
   override name = 'second';
   id = randomBytes(16).toString('hex');
@@ -77,7 +79,7 @@ export class Test {
 export const main = async () => {
   new Test(new Module({ providers: [] }));
   const module = new Module({
-    providers: [First, Fourth]
+    providers: [First, Second, Third, Fourth]
   });
   console.log(await module.resolveRequired(First));
   console.log(await module.resolveRequired(Second));

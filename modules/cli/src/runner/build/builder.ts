@@ -121,7 +121,7 @@ class LibraryBuilder extends Builder {
     }
   }
 
-  private async addFileToKeep(parent: string, name: string, keep: Set<string>) {
+  private async addFileToKeep(parent: string, name: string, keep: Set<string>): Promise<any> {
     keep.add(name);
     let prefix = '';
     const indexStartName = name.lastIndexOf('/') + 1;

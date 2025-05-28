@@ -14,10 +14,14 @@ export type MethodParameterDecorator = (target: object, propertyKey: string | sy
 
 export type ConstructorParameterDecorator = (target: Function, propertyKey: undefined, parameterIndex: number) => void;
 
-export type ParameterDecorator = MethodParameterDecorator & ConstructorParameterDecorator;
+export type ParameterDecorator = (
+  target: object | Function,
+  propertyKey: string | symbol | undefined,
+  parameterIndex: number
+) => void;
 
 export type Decorator = (
-  target: object,
+  target: object | Type<any> | Function,
   propertyKey?: string | symbol,
   descriptor?: TypedPropertyDescriptor<any> | number
 ) => void;

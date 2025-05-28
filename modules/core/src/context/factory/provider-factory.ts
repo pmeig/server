@@ -1,7 +1,6 @@
 import { Context } from '../application-context';
 import { CustomProviderFactory, Type } from '../provider/provider.type';
 import { ConstructorFactory } from './constructor.factory';
-import { BeanHandler } from './bean-handler';
 
 export type ProviderType<T> = Type<T> | CustomProviderFactory<T>;
 
@@ -12,23 +11,12 @@ export abstract class ProviderFactory<T extends any = any> {
     this.constructorFactory = ConstructorFactory.from(type);
   }
 
-  protected buildBean(context: Context): Promise<T | undefined> {
-    return this.constructorFactory?.build(this.type as Type<T>, context);
+  protected buildBean(context: Context, name: string | symbol): Promise<T | undefined> {
+    return this.constructorFactory?.build(this.type as Type<T>, context, name);
   }
 
-  async build(context: Context, name: string | symbol): Promise<T | undefined> {
-    let bean = await this.buildBean(context);
-    if (name !== BeanHandler.name) {
-      const postConstructors = await context.multiResolve(BeanHandler, []);
-      for (const postConstructor of postConstructors) {
-        if (postConstructor.isHandler(this.type, name, bean)) {
-          bean = (await Promise.resolve(postConstructor.postConstruct(this.type, name, bean))) as
-            | Awaited<T>
-            | undefined;
-        }
-      }
-    }
-    return bean;
+  build(context: Context, name: string | symbol): Promise<T | undefined> {
+    return this.buildBean(context, name);
   }
 
   valid(target: object): ProviderFactory<T> | undefined {
@@ -57,9 +45,9 @@ export class SingletonProviderFactory<T extends any = any> extends ProviderFacto
     super(type);
   }
 
-  async buildBean(context: Context): Promise<T | undefined> {
+  async buildBean(context: Context, name: string | symbol): Promise<T | undefined> {
     if (!this.singleton) {
-      this.singleton = await this.constructorFactory.build(this.type as Type<T>, context);
+      this.singleton = await this.constructorFactory.build(this.type as Type<T>, context, name);
     }
     return this.singleton;
   }

@@ -13,7 +13,8 @@ export class Launcher {
   private env: Record<string, string> = {};
   constructor(
     private readonly manager?: 'pnpm' | 'npm' | string,
-    private readonly workspace = process.cwd()
+    private readonly workspace = process.cwd(),
+    private readonly printCommand = false
   ) {
     const separator = process.platform === 'win32' ? ';' : ':';
     this.env = {
@@ -38,11 +39,15 @@ export class Launcher {
   }
 
   cwd(cwd: string): Launcher {
-    return new Launcher(this.manager, cwd);
+    return new Launcher(this.manager, cwd, this.printCommand);
   }
 
   bin(bin: string): Launcher {
-    return new Launcher(bin, this.workspace);
+    return new Launcher(bin, this.workspace, this.printCommand);
+  }
+
+  print(): Launcher {
+    return new Launcher(this.manager, this.workspace, true);
   }
 
   launch(...args: any[]): Promise<ConsoleCommand>;
@@ -69,6 +74,9 @@ export class Launcher {
           if (stdout) {
             // console.info(stdout.toString('utf-8'));
             consoleCommand.success.push(stdout);
+          }
+          if (this.printCommand) {
+            console.info(stdout ?? stderr ?? error);
           }
         }
       );

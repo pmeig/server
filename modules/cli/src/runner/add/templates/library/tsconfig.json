@@ -1,5 +1,5 @@
 {
-  "extends": "{ROLLBACK}tsconfig.json",
+  "extends": "{ROLLBACK}tsconfig.lib.json",
   "compilerOptions": {
     "declaration": true,
     "declarationMap": true,

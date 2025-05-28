@@ -4,8 +4,7 @@
   "description": "",
   "main": "main.ts",
   "scripts": {
-    "tsc": "tsc",
-    "build": "tsc",
+    "start": "pmeig start runner",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,10 +12,11 @@
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
-    "@server/core": "workspace:*"
+    "@server/core": "link:..\\node_modules\\@server\\core"
   },
   "devDependencies": {
     "@types/node": "^22.15.19",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "reflect-metadata": "^0.2.2"
   }
 }

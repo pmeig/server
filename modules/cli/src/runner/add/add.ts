@@ -157,7 +157,7 @@ class ModuleGenerator extends Generator {
     context.projects[this.name] = {
       type: this.type as 'application' | 'library',
       location: {
-        root: path.replace(this.rootProject, '').replaceAll('\\', '/')
+        root: path.replace(this.rootProject, '').replaceAll('\\', '/').slice(1)
       },
       assets: []
     };
