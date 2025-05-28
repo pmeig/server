@@ -5,9 +5,15 @@ import { createComponentDecorator, Scope } from '../decorators/components/compon
 import { PutDesignParam } from '../decorators/global/metadata.decorators';
 import { provideLifecycle } from './lifecycle/init-handler.lifecycle';
 import { Module, retrieveModuleContext } from './context.decorators';
+import { Decorator } from '../decorators/type.decorators';
+import { BeanHandler } from './factory/bean-handler';
 
 type DefaultValue<T> = Nullable<T> | Promise<Nullable<T>> | (() => Nullable<T> | Promise<Nullable<T>>);
 type MultiDefaultValue<T> = T[] | Promise<T[]> | (() => T[] | Promise<T[]>);
+
+const DEFAULT_PROVIDERS: Record<string, Provider[]> = Object.freeze({
+  [BeanHandler.name]: [...provideLifecycle()]
+});
 
 export interface Context {
   resolve: <T extends any = any>(key: ProviderToken<T>, defaultValue?: DefaultValue<T>) => Promise<Nullable<T>>;
@@ -15,6 +21,7 @@ export interface Context {
   multiResolve: <T extends any = any>(key: ProviderToken<T>, defaultValue?: MultiDefaultValue<T>) => Promise<T[]>;
   multiResolveRequired: <T extends any = any>(key: ProviderToken<T>) => Promise<T[]>;
   has: (key: ProviderToken<any>) => boolean;
+  withDecorator: (decorator: Decorator | string) => any[];
 }
 
 export interface ModuleContext {
@@ -61,9 +68,28 @@ export class ApplicationContext implements Context {
   ): Promise<T[]> {
     const token = this.extractToken(key);
     if ([ApplicationContext.name, Module.name].includes(token.toString())) return [this as unknown as T];
-    const factories = this.factories[token];
-    return Promise.all(
-      factories.map(factory => this.applyDefault(factory.factory?.build(this.contextReference, token), defaultValue))
+    const factories = this.factories[token] ?? [];
+    const beans = this.applyDefault<T>(
+      Promise.all(factories.map(factory => factory.factory?.build(this.contextReference, token))).then(build =>
+        build.filter(test => !!test)
+      ),
+      () => []
+    );
+    let removeDefault = (values: T[]) => values;
+    const defaultValues = DEFAULT_PROVIDERS[token.toString()].map(defaultProvider =>
+      typeof defaultProvider === 'function' ? defaultProvider.name : defaultProvider.provide
+    );
+    if (defaultValues) {
+      removeDefault = (values: T[]) =>
+        values.filter(value => !defaultValues.includes(Object.getPrototypeOf(value).constructor.name));
+    }
+    return this.applyDefault(
+      beans.then(async values => {
+        const others = await Promise.all(this.children.map(module => module.multiResolve<T>(token, () => [])));
+        const all = removeDefault(others.flatMap(value => value));
+        return values.concat(all);
+      }),
+      defaultValue
     );
   }
 
@@ -71,6 +97,10 @@ export class ApplicationContext implements Context {
     const retrieve = await this.multiResolve(key);
     if (retrieve.length === 0) throw new Error(`No provider found for ${this.extractToken(key).toString()}`);
     return retrieve;
+  }
+
+  withDecorator(decorator: Decorator | string): any[] {
+    return [];
   }
 
   private init(context: ModuleContext) {
@@ -151,20 +181,29 @@ export class ApplicationContext implements Context {
     });
   }
 
+  private applyDefault<T = any, U = T[]>(
+    injectable: Promise<U> | undefined,
+    defaultValue: MultiDefaultValue<T>
+  ): Promise<U>;
   private applyDefault<T extends any>(
-    injectable: Promise<any> | undefined,
+    injectable: Promise<T> | undefined,
+    defaultValue: DefaultValue<T>
+  ): Promise<Nullable<T>>;
+  private async applyDefault<T extends any>(
+    injectable: Promise<T> | Promise<T[]> | undefined,
     defaultValue: DefaultValue<T> | MultiDefaultValue<T>
-  ) {
+  ): Promise<T[] | Nullable<T>> {
+    let bean: T[] | T | undefined = undefined;
     if (injectable) {
-      return injectable;
+      bean = await injectable;
     }
-    if (defaultValue) {
+    if ((!bean || (Array.isArray(bean) && bean.length === 0)) && defaultValue) {
       if (typeof defaultValue !== 'function') {
         defaultValue = () => defaultValue as Nullable<T> | Promise<Nullable<T>>;
       }
-      return (defaultValue as () => Nullable<T>)();
+      return (defaultValue as () => T)();
     }
-    return undefined;
+    return bean;
   }
 
   private putDefaultHandler(providers: Provider[] = []) {

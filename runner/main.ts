@@ -91,7 +91,7 @@ export const main = async () => {
   console.log(await module.resolveRequired(First));
   console.log(await module.resolveRequired(Second));
   console.log(await module.resolve(Third));
-  console.log(await module.resolveRequired(Fourth));
+  // console.log(await module.resolveRequired(Fourth));
 };
 
 main();
