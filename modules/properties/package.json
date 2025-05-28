@@ -28,6 +28,7 @@
     }
   },
   "dependencies": {
+    "@server/vault": "link:..\\..\\dist\\vault",
     "js-yaml": "^4.1.0"
   }
 }

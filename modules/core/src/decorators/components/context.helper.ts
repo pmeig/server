@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { ProviderFactory, SingletonProviderFactory } from '../../context/factory/provider.factory';
 import { ScopeType, Type } from '../../context/provider/provider.type';
 import { FactoryProviderScoped } from '../../context/provider-scope';

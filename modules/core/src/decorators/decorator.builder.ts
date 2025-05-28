@@ -55,7 +55,7 @@ const concatDecoratorFunction = <T extends Decorators>(...decorators: T[]) => {
           decorator(subTarget, subPropertyKey, subDescriptor);
         },
         (_target, _propertyKey, _descriptor) => {
-          isDecorator(_target as Type<any>, Component);
+          hasDecorator(_target as Type<any>, Component);
         }
       );
     return handlers as T;
@@ -76,7 +76,7 @@ export const Decorators = Object.freeze({
     createDecorator('concat', concatDecoratorFunction(...decorators))
 });
 
-export const isDecorator = <T extends Decorators>(bean: Type<any>, decorator: T) => {
+export const hasDecorator = <T extends Decorators>(bean: Type<any>, decorator: T | string) => {
   const names = getMultiMetadataReflection<string>(decorator_names, bean);
-  return names.includes(decorator.name);
+  return names.includes(typeof decorator === 'string' ? decorator : decorator.name);
 };

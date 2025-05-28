@@ -7,7 +7,7 @@ export type ProviderType<T> = Type<T> | CustomProviderFactory<T>;
 export abstract class ProviderFactory<T extends any = any> {
   protected readonly constructorFactory: ConstructorFactory;
 
-  protected constructor(protected readonly type: ProviderType<T>) {
+  protected constructor(public readonly type: ProviderType<T>) {
     this.constructorFactory = ConstructorFactory.from(type);
   }
 

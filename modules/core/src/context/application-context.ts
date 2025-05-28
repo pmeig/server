@@ -5,8 +5,9 @@ import { createComponentDecorator, Scope } from '../decorators/components/compon
 import { PutDesignParam } from '../decorators/global/metadata.decorators';
 import { provideLifecycle } from './lifecycle/init-handler.lifecycle';
 import { Module, retrieveModuleContext } from './context.decorators';
-import { Decorator } from '../decorators/type.decorators';
 import { BeanHandler } from './factory/bean-handler';
+import { Decorators, hasDecorator } from '../decorators/decorator.builder';
+import { Bootable } from './bootable';
 
 type DefaultValue<T> = Nullable<T> | Promise<Nullable<T>> | (() => Nullable<T> | Promise<Nullable<T>>);
 type MultiDefaultValue<T> = T[] | Promise<T[]> | (() => T[] | Promise<T[]>);
@@ -21,7 +22,7 @@ export interface Context {
   multiResolve: <T extends any = any>(key: ProviderToken<T>, defaultValue?: MultiDefaultValue<T>) => Promise<T[]>;
   multiResolveRequired: <T extends any = any>(key: ProviderToken<T>) => Promise<T[]>;
   has: (key: ProviderToken<any>) => boolean;
-  withDecorator: (decorator: Decorator | string) => any[];
+  withDecorator: (decorator: Decorators | string) => Promise<any[]>;
 }
 
 export interface ModuleContext {
@@ -33,11 +34,23 @@ export class ApplicationContext implements Context {
   private factories: Record<string | symbol, ComponentContext[]> = {};
   private readonly children: Context[] = [];
 
+  static run(boot: Type<any> | ModuleContext, ...args: any[]) {
+    if (typeof boot === 'function') {
+      boot = retrieveModuleContext(boot) ?? {};
+    }
+    return new ApplicationContext(boot).start(...args);
+  }
+
   constructor(
     context: ModuleContext,
     private readonly contextReference: Context = this
   ) {
     this.init(context);
+  }
+
+  async start(...args: any[]) {
+    const boots = await this.multiResolve(Bootable);
+    return Promise.all(boots.map(value => value.run(this.contextReference, ...args)));
   }
 
   has(key: any): boolean {
@@ -99,8 +112,23 @@ export class ApplicationContext implements Context {
     return retrieve;
   }
 
-  withDecorator(decorator: Decorator | string): any[] {
-    return [];
+  async withDecorator(decorator: Decorators | string): Promise<any[]> {
+    const beans = await Promise.all(
+      Object.values(this.factories)
+        .flatMap(factories => factories)
+        .filter(factory => {
+          const type = factory.factory?.type;
+          if (typeof type === 'function') {
+            return hasDecorator(type as Type<any>, decorator);
+          }
+          return false;
+        })
+        .map(factory => factory.factory!.build(this.contextReference, factory.factory!.type.name))
+    );
+    const others = (await Promise.all(this.children.map(module => module.withDecorator(decorator)))).flatMap(
+      value => value
+    );
+    return beans.concat(others);
   }
 
   private init(context: ModuleContext) {
