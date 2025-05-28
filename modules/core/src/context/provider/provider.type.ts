@@ -1,4 +1,4 @@
-import { FactoryProviderScoped } from '../factory/provider-scope';
+import { FactoryProviderScoped } from '../provider-scope';
 import { Context } from '../application-context';
 
 export interface Type<T> extends Function {

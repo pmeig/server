@@ -4,29 +4,32 @@ import { ComponentContext, retrieveContext, updateContext } from '../decorators/
 import { createComponentDecorator, Scope } from '../decorators/components/component.decorator';
 import { PutDesignParam } from '../decorators/global/metadata.decorators';
 import { provideLifecycle } from './lifecycle/init-handler.lifecycle';
+import { Module, retrieveModuleContext } from './context.decorators';
+
+type DefaultValue<T> = Nullable<T> | Promise<Nullable<T>> | (() => Nullable<T> | Promise<Nullable<T>>);
+type MultiDefaultValue<T> = T[] | Promise<T[]> | (() => T[] | Promise<T[]>);
 
 export interface Context {
-  resolve: <T extends any = any>(
-    key: ProviderToken<T>,
-    defaultValue?: Nullable<T> | Promise<Nullable<T>> | (() => Nullable<T> | Promise<Nullable<T>>)
-  ) => Promise<Nullable<T>>;
+  resolve: <T extends any = any>(key: ProviderToken<T>, defaultValue?: DefaultValue<T>) => Promise<Nullable<T>>;
   resolveRequired: <T extends any = any>(key: ProviderToken<T>) => Promise<T>;
-  multiResolve: <T extends any = any>(
-    key: ProviderToken<T>,
-    defaultValue?: T[] | Promise<T[]> | (() => T[] | Promise<T[]>)
-  ) => Promise<T[]>;
-  multiResolveRequired: <T extends any = any>(key: Type<T>) => Promise<T[]>;
-  has: (key: Type<any>) => boolean;
+  multiResolve: <T extends any = any>(key: ProviderToken<T>, defaultValue?: MultiDefaultValue<T>) => Promise<T[]>;
+  multiResolveRequired: <T extends any = any>(key: ProviderToken<T>) => Promise<T[]>;
+  has: (key: ProviderToken<any>) => boolean;
 }
 
 export interface ModuleContext {
-  providers: Provider[];
+  providers?: Provider[];
+  imports?: Type<any>[];
 }
 
-export class Module implements Context {
+export class ApplicationContext implements Context {
   private factories: Record<string | symbol, ComponentContext[]> = {};
+  private readonly children: Context[] = [];
 
-  constructor(context: ModuleContext) {
+  constructor(
+    context: ModuleContext,
+    private readonly contextReference: Context = this
+  ) {
     this.init(context);
   }
 
@@ -39,11 +42,11 @@ export class Module implements Context {
     defaultValue: Nullable<T> | Promise<Nullable<T>> | (() => Nullable<T> | Promise<T>) = undefined
   ): Promise<Nullable<T>> {
     const token = this.extractToken(key);
-    if (token === Module.name) {
+    if ([ApplicationContext.name, Module.name].includes(token.toString())) {
       return this as unknown as T;
     }
-    const injectable = await (this.factories[token] ?? [])[0]?.factory?.build(this, token);
-    return this.applyDefault(injectable, defaultValue);
+    const injectable = await (this.factories[token] ?? [])[0]?.factory?.build(this.contextReference, token);
+    return this.useChildren(injectable, token, defaultValue);
   }
 
   async resolveRequired<T>(key: ProviderToken<T>): Promise<T> {
@@ -57,9 +60,11 @@ export class Module implements Context {
     defaultValue: T[] | Promise<T[]> | (() => T[] | Promise<T[]>) = []
   ): Promise<T[]> {
     const token = this.extractToken(key);
-    if (token === Module.name) return [this as unknown as T];
+    if ([ApplicationContext.name, Module.name].includes(token.toString())) return [this as unknown as T];
     const factories = this.factories[token];
-    return Promise.all(factories.map(factory => this.applyDefault(factory.factory?.build(this, token), defaultValue)));
+    return Promise.all(
+      factories.map(factory => this.applyDefault(factory.factory?.build(this.contextReference, token), defaultValue))
+    );
   }
 
   async multiResolveRequired<T>(key: ProviderToken<T>): Promise<T[]> {
@@ -69,7 +74,20 @@ export class Module implements Context {
   }
 
   private init(context: ModuleContext) {
-    this.initProviders(context.providers);
+    this.initProviders(context.providers ?? []);
+    this.initImports(context.imports ?? []);
+  }
+
+  private initImports(imports: Type<any>[]) {
+    imports
+      .sort(module => retrieveContext(module)?.order ?? Number.MAX_SAFE_INTEGER * 0.9)
+      .forEach(module => {
+        const context = retrieveModuleContext(module);
+        if (context) {
+          const child = new ApplicationContext(context, this.contextReference);
+          this.children.push(child);
+        }
+      });
   }
 
   private initProviders(providers: Provider[]) {
@@ -99,7 +117,7 @@ export class Module implements Context {
     if (factory.length === 0) {
       target = ((_: Context) => (factory as Function)()) as unknown as Type<any>;
     }
-    PutDesignParam(target, Module);
+    PutDesignParam(target, ApplicationContext);
     createComponentDecorator('provider')(target);
     updateContext(
       {
@@ -120,9 +138,22 @@ export class Module implements Context {
     return (key as { name: string }).name;
   }
 
+  private useChildren<T>(
+    injectable: Promise<any> | undefined,
+    token: string | symbol,
+    defaultValue: DefaultValue<T> | MultiDefaultValue<T>
+  ) {
+    return this.applyDefault(injectable, () => {
+      return this.applyDefault(
+        this.children.find(child => child.has(token))?.resolve(token, defaultValue),
+        defaultValue
+      );
+    });
+  }
+
   private applyDefault<T extends any>(
     injectable: Promise<any> | undefined,
-    defaultValue: Nullable<T> | Promise<Nullable<T>> | (() => Nullable<T> | Promise<Nullable<T>>)
+    defaultValue: DefaultValue<T> | MultiDefaultValue<T>
   ) {
     if (injectable) {
       return injectable;

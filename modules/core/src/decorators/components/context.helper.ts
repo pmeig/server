@@ -1,7 +1,7 @@
 import 'reflect-metadata';
-import { ProviderFactory, SingletonProviderFactory } from '../../context/factory/provider-factory';
+import { ProviderFactory, SingletonProviderFactory } from '../../context/factory/provider.factory';
 import { ScopeType, Type } from '../../context/provider/provider.type';
-import { FactoryProviderScoped } from '../../context/factory/provider-scope';
+import { FactoryProviderScoped } from '../../context/provider-scope';
 import { getMultiMetadataReflection, reflectMetadataContext, reflectMultiMetadataContext } from '../decorators.helper';
 
 const context_key = 'components:context';

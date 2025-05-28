@@ -14,7 +14,6 @@
         "root": "modules/cli"
       },
       "assets": [
-        "package.json",
         "**/templates/**"
       ]
     },
@@ -23,9 +22,7 @@
       "location": {
         "root": "modules/core"
       },
-      "assets": [
-        "package.json"
-      ]
+      "assets": []
     },
     "runner": {
       "type": "application",
@@ -34,10 +31,17 @@
       },
       "assets": []
     },
+    "vault": {
+      "type": "library",
+      "location": {
+        "root": "modules/vault"
+      },
+      "assets": []
+    },
     "properties": {
       "type": "library",
       "location": {
-        "root": "/modules/properties/properties"
+        "root": "modules/properties"
       },
       "assets": []
     }

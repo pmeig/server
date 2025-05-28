@@ -7,10 +7,10 @@ import {
   isInitializable,
   Disposable,
   isRefreshable,
-  Refreshable,
+  Refreshable
 } from '../..';
 import { BeanHandler } from '../factory/bean-handler';
-import { ProviderType } from '../factory/provider-factory';
+import { ProviderType } from '../factory/provider.factory';
 
 @Configuration
 export class InitHandlerLifecycle extends BeanHandler<Initializable> {
@@ -76,5 +76,5 @@ export const provideLifecycle = () => [
   InitHandlerLifecycle,
   DisposeHandlerLifecycle,
   DestroyHandlerLifecycle,
-  RefreshHandlerLifecycle,
+  RefreshHandlerLifecycle
 ];

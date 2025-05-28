@@ -1,4 +1,4 @@
-import { ProviderType } from './provider-factory';
+import { ProviderType } from './provider.factory';
 
 export abstract class BeanHandler<T = any> {
   isHandler(target: ProviderType<T>, name: string | symbol, bean: T): boolean {

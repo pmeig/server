@@ -1,4 +1,4 @@
-import { Component, Lifecycle, List, Module, Optional, Order } from '@server/core';
+import { Component, Lifecycle, List, Module, Optional, Order, ApplicationContext } from '@server/core';
 import { randomBytes } from 'crypto';
 
 interface Named {
@@ -21,6 +21,8 @@ class Third implements Named, Lifecycle {
   name = 'third';
   id = randomBytes(16).toString('hex');
 
+  constructor(private readonly first: First) {}
+
   destroy(): Promise<void> {
     console.log('destroy');
     return Promise.resolve(undefined);
@@ -42,18 +44,16 @@ class Third implements Named, Lifecycle {
   }
 
   toString(): string {
-    return this.name;
+    return this.name + ', first: ' + this.first.name;
   }
 }
 
 @Component
-class Second extends First implements Named {
-  override name = 'second';
+class Second implements Named {
+  name = 'second';
   id = randomBytes(16).toString('hex');
 
-  constructor(@Optional private readonly third?: Third) {
-    super();
-  }
+  constructor(@Optional private readonly third?: Third) {}
 
   toString(): string {
     return `me: ${this.name}, param: ${this.third ?? 'undefined'}`;
@@ -72,14 +72,21 @@ class Fourth implements Named {
   }
 }
 
-export class Test {
-  constructor(private readonly module: Module) {}
+@Component
+export class OverrideFirst extends First {
+  override name = 'override';
+  id = randomBytes(16).toString('hex');
 }
 
+@Module({
+  providers: [Third, First]
+})
+export class ThirdFourthModule {}
+
 export const main = async () => {
-  new Test(new Module({ providers: [] }));
-  const module = new Module({
-    providers: [First, Second, Third, Fourth]
+  const module = new ApplicationContext({
+    providers: [OverrideFirst, Second],
+    imports: [ThirdFourthModule]
   });
   console.log(await module.resolveRequired(First));
   console.log(await module.resolveRequired(Second));

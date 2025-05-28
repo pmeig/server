@@ -2,7 +2,7 @@ import { retrieveElementTypes, retrieveOptionals } from '../../decorators/global
 import { retrieveParameterTypes } from '../../decorators/global/metadata.decorators';
 import { ProviderToken, Type } from '../provider/provider.type';
 import { Context } from '../application-context';
-import { ProviderType } from './provider-factory';
+import { ProviderType } from './provider.factory';
 import { BeanHandler } from './bean-handler';
 
 interface FactoryConstructorArgumentContext {
