@@ -1,12 +1,21 @@
 import { CliContext, CliProject } from '../../server/cli.context';
 import { dirname, resolve } from 'path';
-import { existsSync, mkdirSync, readFileSync } from 'fs';
-import { copyFileSync, createReadStream, readdirSync, unlinkSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  copyFileSync,
+  createReadStream,
+  readdirSync,
+  rmSync,
+  unlinkSync
+} from 'fs';
 import { createInterface } from 'node:readline';
 import { ConsoleCommand, launcher } from '../../launcher';
 import { glob } from 'fast-glob';
 import { BuildParameter } from './build.runner';
 import { Parameters } from '../runner.helper';
+import { updateContent } from '../../helper/io.helper';
 
 export abstract class Builder {
   constructor(
@@ -37,12 +46,13 @@ export abstract class Builder {
   async build(_: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
     const root = resolve(this.rootProject, this.context.location.root);
     const executor = launcher.cwd(root);
+    const outDirConsole = await executor.launch('tsc', '--showConfig', ...options);
+    const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
+    const outDirPath = resolve(root, outDir);
+    this.removeDist(outDirPath);
     const command = await executor.launch('tsc', ...options);
     let result = Promise.resolve(command);
     if (!command.exception && this.context.assets.length > 0) {
-      const outDirConsole = await executor.launch('tsc', '--showConfig', ...options);
-      const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
-      const outDirPath = resolve(root, outDir);
       const copies = this.context.assets.map(asset => {
         return glob(asset, {
           cwd: root
@@ -57,6 +67,21 @@ export abstract class Builder {
       result = Promise.all(copies).then(() => command);
     }
     return result;
+  }
+
+  private removeDist(outDirPath: string) {
+    if (existsSync(outDirPath)) {
+      readdirSync(outDirPath, {
+        withFileTypes: true,
+        encoding: 'utf-8'
+      }).forEach(file => {
+        if (file.isDirectory()) {
+          rmSync(resolve(outDirPath, file.name), { recursive: true, force: true });
+        } else {
+          unlinkSync(resolve(outDirPath, file.name));
+        }
+      });
+    }
   }
 }
 
@@ -89,13 +114,20 @@ class LibraryBuilder extends Builder {
   }
 
   async build(parameters: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
+    const isProd = typeof parameters.prod !== 'undefined';
+    if (isProd) {
+      options.push('--sourceMap', 'false');
+    }
     const prepare = await super.build(parameters, ...options);
-    if (!prepare.exception && prepare.error.length === 0 && typeof parameters.prod !== 'undefined') {
+    if (!prepare.exception && isProd) {
       const src = resolve(this.rootProject, this.context.location.root);
       const outDirConsole = await launcher.cwd(src).launch('tsc', '--showConfig', ...options);
       const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
       const outDirPath = resolve(src, outDir);
       await this.exposeOnlyPublicApi(outDirPath);
+      updateContent(resolve(outDirPath, 'package.json'), content =>
+        content.replaceAll('src/index.d.ts', 'index.d.ts').replaceAll('src/index.js', 'index.js')
+      );
     }
     return prepare;
   }

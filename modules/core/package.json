@@ -15,14 +15,14 @@
     "reflect-metadata": "^0.2.2",
     "typescript": "^5.8.3"
   },
-  "typings": "index.d.ts",
+  "typings": "src/index.d.ts",
   "exports": {
     "./package.json": {
       "default": "./package.json"
     },
     ".": {
-      "types": "./index.d.ts",
-      "default": "./index.js"
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
     }
   }
 }

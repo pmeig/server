@@ -14,13 +14,16 @@ export type BuildParameter = typeof buildParameter;
 
 const buildRunner: CliRunner<BuildParameter> = (
   context,
-  parameters: Record<keyof BuildParameter, string[]>,
+  parameters: Record<keyof BuildParameter | 'projects', string[]>,
   rootProject: string,
-  project,
   ...params
 ) => {
-  const builder = Builder.from(context, rootProject, project);
-  return builder.build(parameters, ...params);
+  return Promise.all(
+    parameters.projects.map(project => {
+      const builder = Builder.from(context, rootProject, project);
+      return builder.build(parameters, ...params);
+    })
+  );
 };
 
 export const buildApplication: Runnable<BuildParameter> = {

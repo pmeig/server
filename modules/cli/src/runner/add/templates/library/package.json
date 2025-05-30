@@ -2,7 +2,6 @@
   "name": "{NAME}",
   "version": "1.0.0-SNAPSHOT",
   "description": "",
-  "main": "src/index.ts",
   "scripts": {
     "build": "pmeig build {PMEIG_NAME}",
     "build:prod": "pnpm build --prod"
@@ -18,14 +17,14 @@
     "reflect-metadata": "{METADATA}",
     "typescript": "{TYPESCRIPT}"
   },
-  "typings": "index.d.ts",
+  "typings": "src/index.d.ts",
   "exports": {
     "./package.json": {
       "default": "./package.json"
     },
     ".": {
-      "types": "./index.d.ts",
-      "default": "./index.js"
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
     }
   }
 }

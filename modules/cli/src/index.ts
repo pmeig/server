@@ -21,7 +21,7 @@ const main = async (params: string[]) => {
       }
       const runner = Runner[request as keyof typeof Runner];
       if (runner) {
-        const parameters = extractParameters(params, runner.parameters);
+        const parameters = extractParameters(params, runner.parameters, contextMetadata.context.projects ?? {});
         return runner.run(contextMetadata.context, parameters.cli, contextMetadata.rootProject, ...parameters.command);
       }
     }

@@ -1,3 +1,5 @@
+import { CliContext } from '../server/cli.context';
+
 export interface ParameterConfiguration {
   indexes: number;
   alias?: string[];
@@ -7,7 +9,7 @@ export interface ParameterConfiguration {
 export type RunnerParameterConfiguration = Record<string, ParameterConfiguration>;
 
 export interface Parameters<T extends RunnerParameterConfiguration> {
-  cli: Record<keyof T, string[]>;
+  cli: Record<keyof T | 'projects', string[]>;
   command: string[];
 }
 
@@ -40,7 +42,8 @@ const createParameterMapper = <T extends RunnerParameterConfiguration>(configura
 
 export const extractParameters = <T extends RunnerParameterConfiguration>(
   args: string[],
-  configurations: T
+  configurations: T,
+  projects: CliContext['projects']
 ): Parameters<T> => {
   let max = args.length;
   const numberArguments = max;
@@ -49,7 +52,12 @@ export const extractParameters = <T extends RunnerParameterConfiguration>(
   const command: string[] = [];
   while (max-- > 0) {
     const value = args[max];
-    const config = mapper[value];
+    const config = projects[value]
+      ? {
+          indexes: 0,
+          key: 'projects'
+        }
+      : mapper[value];
     if (config) {
       let adjust = config.indexes;
       if (max + adjust > numberArguments) {
@@ -57,7 +65,10 @@ export const extractParameters = <T extends RunnerParameterConfiguration>(
           `Missing argument for ${config.key.toString()}, expected ${config.indexes} but got ${numberArguments - max} instead.`
         );
       }
-      const content: string[] = [];
+      const content: string[] = parameters[config.key] ?? [];
+      if (adjust === 0) {
+        content.push(args[max]);
+      }
       while (adjust > 0) {
         command.shift();
         content.unshift(args[max + adjust--]);

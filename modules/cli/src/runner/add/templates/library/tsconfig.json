@@ -1,8 +1,6 @@
 {
   "extends": "{ROLLBACK}tsconfig.lib.json",
   "compilerOptions": {
-    "declaration": true,
-    "declarationMap": true,
     "outDir": "{ROLLBACK}dist/{NAME}"
   },
   "include": ["src/**/*"],

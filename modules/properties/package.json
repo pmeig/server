@@ -10,6 +10,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.15.19",
@@ -28,7 +29,8 @@
     }
   },
   "dependencies": {
-    "@server/vault": "link:..\\..\\dist\\vault",
+    "@server/vault": "workspace:*",
+    "@server/core": "workspace:*",
     "js-yaml": "^4.1.0"
   }
 }
