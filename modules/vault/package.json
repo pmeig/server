@@ -2,7 +2,6 @@
   "name": "@server/vault",
   "version": "1.0.0-SNAPSHOT",
   "description": "",
-  "main": "src/index.ts",
   "scripts": {
     "build": "pmeig build vault",
     "build:prod": "pnpm build --prod"
@@ -15,12 +14,10 @@
     "reflect-metadata": "^0.2.2",
     "typescript": "^5.8.3"
   },
-  "peerDependencies": {
-    "@server/core": "workspace:*"
-  },
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
-    "axios": "^1.9.0"
+    "axios": "^1.9.0",
+    "@server/core": "workspace:*"
   },
   "typings": "src/index.d.ts",
   "exports": {
@@ -29,7 +26,7 @@
     },
     ".": {
       "types": "./src/index.d.ts",
-      "default": "./src/index.js"
+      "default": "./src/index.ts"
     }
   }
 }

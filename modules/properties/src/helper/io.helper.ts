@@ -1,6 +1,6 @@
-import { readdirSync, readFileSync } from 'fs';
+import { readdirSync, readFileSync, unwatchFile, watchFile, existsSync } from 'fs';
 import { load } from 'js-yaml';
-import { resolve, basename } from 'path';
+import { basename, resolve } from 'path';
 import { PropertiesFile } from '../properties.type';
 import { mergeRecord } from './properties.helper';
 import * as process from 'node:process';
@@ -47,9 +47,15 @@ export const readAllProperties = <T extends Record<string, any> = Record<string,
   profiles: string[],
   location: string
 ): PropertiesFile<T> => {
+  if (!existsSync(location)) {
+    return {
+      properties: {} as T,
+      sources: [] as string[]
+    };
+  }
   const mainFiles = toFileYamlExtensionAccepted(type);
   const accepted = mainFiles.concat(profiles.flatMap(profile => toFileYamlExtensionAccepted(`${type}-${profile}`)));
-  const folders = [resolve('.', location)];
+  const folders = [location];
   const sources: string[] = [];
   let properties: Record<string, any> = {};
   while (folders.length > 0) {
@@ -105,6 +111,23 @@ export const readAllEnv = <T extends Record<string, any> = Record<string, any>>(
     properties: mergeRecord(env, properties) as T,
     sources
   };
+};
+
+export const watchSources = (mode: string, sources: readonly string[], refresh: () => void) => {
+  let unwatch = () => {};
+  if (mode === 'WATCH') {
+    sources.forEach(source => {
+      watchFile(source, () => {
+        refresh();
+      });
+      const prev = unwatch;
+      unwatch = () => {
+        unwatchFile(source);
+        prev();
+      };
+    });
+  }
+  return unwatch;
 };
 
 const toFileYamlExtensionAccepted = (name: string) => {

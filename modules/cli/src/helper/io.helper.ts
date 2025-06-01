@@ -36,18 +36,18 @@ export const updateYaml = <T extends Record<string, any> = Record<string, any>>(
 export const browseDir = (
   path: string,
   handler: {
-    file?: (file: string) => void;
-    folder?: (folder: string) => void;
+    file?: (file: string) => boolean;
+    folder?: (folder: string) => boolean;
     continue?: (path: string) => boolean;
   } = {
-    file: () => {},
-    folder: () => {},
+    file: () => true,
+    folder: () => true,
     continue: () => true
   }
 ) => {
   const use = {
-    file: handler.file || (() => {}),
-    folder: handler.folder || (() => {}),
+    file: handler.file || (() => true),
+    folder: handler.folder || (() => true),
     continue: handler.continue || (() => true)
   };
   const folders = [path];
@@ -60,15 +60,16 @@ export const browseDir = (
     while (continueBrowse && folders.length > 0) {
       const folder = folders.pop()!;
       readdirSync(folder, { encoding: 'utf-8', withFileTypes: true }).forEach(file => {
+        const path = `${folder}/${file.name}`;
         if (file.isDirectory()) {
-          contents.folders.push(file.name);
-          use.folder(`${folder}/${file.name}`);
-          folders.push(`${folder}/${file.name}`);
-        } else {
-          contents.files.push(file.name);
-          use.file(`${folder}/${file.name}`);
+          if (use.folder(path)) {
+            contents.folders.push(file.name);
+            folders.push(`${folder}/${file.name}`);
+          }
+        } else if (use.file(path)) {
+          contents.files.push(path);
         }
-        continueBrowse = use.continue(`${folder}/${file.name}`);
+        continueBrowse = use.continue(path);
       });
     }
   }

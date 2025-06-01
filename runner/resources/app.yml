@@ -1,0 +1,7 @@
+variables:
+  change:
+    popo: is changing by key
+
+test:
+  properties:
+    popo: replacing key variables.change.popo by ${variables.change.popo}

@@ -1,10 +1,19 @@
+import { AsyncSync, Nullable, OptionalAsyncSync, TooArray } from '@server/core';
+
 export interface Env {
-  get: <T>(key: string) => Promise<T>;
-  find<T>(key: string, defaultValue: T | Promise<T> | (() => T | Promise<T>)): Promise<T>;
-  find<T>(key: string): Promise<T | undefined>;
-  find<T>(
+  get<T extends TooArray<Record<string, any> | number | string | boolean>>(key: string): Promise<T>;
+  find<T extends Record<string, any> | number | string | boolean>(
     key: string,
-    defaultValue?: (() => T | Promise<T | undefined> | undefined) | T | Promise<T | undefined> | undefined
-  ): Promise<T | undefined>;
+    defaultValue: AsyncSync<T[]> | (() => AsyncSync<T[]>)
+  ): Promise<T[]>;
+  find<T extends Record<string, any> | number | string | boolean>(
+    key: string,
+    defaultValue: AsyncSync<T> | (() => AsyncSync<T>)
+  ): Promise<T>;
+  find<T extends Record<string, any> | number | string | boolean>(key: string): Promise<Nullable<T>>;
+  find<T extends Record<string, any> | number | string | boolean>(
+    key: string,
+    defaultValue?: (() => OptionalAsyncSync<T | T[]>) | OptionalAsyncSync<T | T[]>
+  ): Promise<Nullable<T> | T[]>;
   readonly sources: Readonly<string[]>;
 }

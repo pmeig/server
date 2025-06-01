@@ -1,4 +1,6 @@
 import { CliContext } from '../server/cli.context';
+import { readJson } from '../helper/io.helper';
+import { resolve } from 'path';
 
 export interface ParameterConfiguration {
   indexes: number;
@@ -7,6 +9,13 @@ export interface ParameterConfiguration {
 }
 
 export type RunnerParameterConfiguration = Record<string, ParameterConfiguration>;
+
+export interface RunnerAlias {
+  path: string;
+  name: string;
+  project: string;
+  root: string;
+}
 
 export interface Parameters<T extends RunnerParameterConfiguration> {
   cli: Record<keyof T | 'projects', string[]>;
@@ -82,3 +91,22 @@ export const extractParameters = <T extends RunnerParameterConfiguration>(
     command
   };
 };
+
+export const findAliases = (projects: CliContext['projects'], root: string) =>
+  Object.entries(projects).reduce(
+    (acc, [name, cliProject]) => {
+      const path = resolve(root, cliProject.location.root);
+      const projectName = readJson(resolve(path, 'package.json')).name;
+      const item = {
+        project: projectName,
+        name,
+        path,
+        root: cliProject.location.root
+      };
+      [name, projectName, cliProject.location.root].forEach(key => {
+        acc[key] = item;
+      });
+      return acc;
+    },
+    {} as Record<string, RunnerAlias>
+  );

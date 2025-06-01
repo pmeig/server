@@ -1,7 +1,7 @@
-import { ModuleContext } from './application-context';
 import { Decorators } from '../decorators/decorator.builder';
 import { Type } from './provider/provider.type';
 import { getMetadataReflection } from '../decorators/decorators.helper';
+import { ModuleContext } from './context.model';
 
 const module_context = 'module:context';
 

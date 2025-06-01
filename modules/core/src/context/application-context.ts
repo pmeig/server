@@ -1,38 +1,30 @@
 import { Nullable } from '../helper/type.helper';
 import { CustomProvider, Provider, ProviderToken, Type } from './provider/provider.type';
-import { ComponentContext, retrieveContext, updateContext } from '../decorators/components/context.helper';
+import {
+  affectApplicationContext,
+  ComponentContext,
+  isVisible,
+  retrieveContext,
+  updateContext
+} from '../decorators/components/component.helper';
 import { createComponentDecorator, Scope } from '../decorators/components/component.decorator';
 import { PutDesignParam } from '../decorators/global/metadata.decorators';
 import { provideLifecycle } from './lifecycle/init-handler.lifecycle';
-import { Module, retrieveModuleContext } from './context.decorators';
-import { BeanHandler } from './factory/bean-handler';
+import { retrieveModuleContext } from './context.decorators';
+import { BeanPost } from './bean/bean.post';
 import { Decorators, hasDecorator } from '../decorators/decorator.builder';
 import { Bootable } from './bootable';
-
-type DefaultValue<T> = Nullable<T> | Promise<Nullable<T>> | (() => Nullable<T> | Promise<Nullable<T>>);
-type MultiDefaultValue<T> = T[] | Promise<T[]> | (() => T[] | Promise<T[]>);
+import { Context, DefaultValue, ModuleContext, MultiDefaultValue } from './context.model';
+import { randomUUID } from 'crypto';
 
 const DEFAULT_PROVIDERS: Record<string, Provider[]> = Object.freeze({
-  [BeanHandler.name]: [...provideLifecycle()]
+  [BeanPost.name]: [...provideLifecycle()]
 });
-
-export interface Context {
-  resolve: <T extends any = any>(key: ProviderToken<T>, defaultValue?: DefaultValue<T>) => Promise<Nullable<T>>;
-  resolveRequired: <T extends any = any>(key: ProviderToken<T>) => Promise<T>;
-  multiResolve: <T extends any = any>(key: ProviderToken<T>, defaultValue?: MultiDefaultValue<T>) => Promise<T[]>;
-  multiResolveRequired: <T extends any = any>(key: ProviderToken<T>) => Promise<T[]>;
-  has: (key: ProviderToken<any>) => boolean;
-  withDecorator: (decorator: Decorators | string) => Promise<any[]>;
-}
-
-export interface ModuleContext {
-  providers?: Provider[];
-  imports?: Type<any>[];
-}
 
 export class ApplicationContext implements Context {
   private factories: Record<string | symbol, ComponentContext[]> = {};
   private readonly children: Context[] = [];
+  readonly id: string = randomUUID();
 
   static run(boot: Type<any> | ModuleContext, ...args: any[]) {
     if (typeof boot === 'function') {
@@ -54,7 +46,7 @@ export class ApplicationContext implements Context {
   }
 
   has(key: any): boolean {
-    return !!this.factories[key];
+    return (this.factories[key]?.filter(factory => isVisible(factory.factory!.type as Type<any>)) ?? []).length > 0;
   }
 
   async resolve<T>(
@@ -62,10 +54,12 @@ export class ApplicationContext implements Context {
     defaultValue: Nullable<T> | Promise<Nullable<T>> | (() => Nullable<T> | Promise<T>) = undefined
   ): Promise<Nullable<T>> {
     const token = this.extractToken(key);
-    if ([ApplicationContext.name, Module.name].includes(token.toString())) {
+    if ([ApplicationContext.name, 'Context'].includes(token.toString())) {
       return this as unknown as T;
     }
-    const injectable = await (this.factories[token] ?? [])[0]?.factory?.build(this.contextReference, token);
+    const factory = await (this.factories[token]?.filter(factory => isVisible(factory.factory!.type as Type<any>)) ??
+      [])[0];
+    const injectable = factory?.factory?.build(this.contextReference, token);
     return this.useChildren(injectable, token, defaultValue);
   }
 
@@ -80,8 +74,8 @@ export class ApplicationContext implements Context {
     defaultValue: T[] | Promise<T[]> | (() => T[] | Promise<T[]>) = []
   ): Promise<T[]> {
     const token = this.extractToken(key);
-    if ([ApplicationContext.name, Module.name].includes(token.toString())) return [this as unknown as T];
-    const factories = this.factories[token] ?? [];
+    if ([ApplicationContext.name, 'Context'].includes(token.toString())) return [this as unknown as T];
+    const factories = this.factories[token]?.filter(factory => isVisible(factory.factory!.type as Type<any>)) ?? [];
     const beans = this.applyDefault<T>(
       Promise.all(factories.map(factory => factory.factory?.build(this.contextReference, token))).then(build =>
         build.filter(test => !!test)
@@ -155,8 +149,10 @@ export class ApplicationContext implements Context {
       if (typeof provider !== 'function') {
         targetProvider = this.prepareCustomProvider(provider);
       }
+      affectApplicationContext(targetProvider as Type<any>, this);
       const metadata = retrieveContext(targetProvider);
       metadata.names?.forEach(name => {
+        affectApplicationContext(name, this);
         const context = this.factories[name] ?? [];
         context.push(metadata);
         this.factories[name] = context;
@@ -206,7 +202,7 @@ export class ApplicationContext implements Context {
         this.children.find(child => child.has(token))?.resolve(token, defaultValue),
         defaultValue
       );
-    });
+    }) as Promise<T>;
   }
 
   private applyDefault<T = any, U = T[]>(

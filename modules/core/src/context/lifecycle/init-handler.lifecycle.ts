@@ -1,19 +1,20 @@
+import { BeanPost } from '../bean/bean.post';
+import { AsyncSync } from '../../helper/type.helper';
+import { Configuration } from '../../decorators/components/component.decorator';
+import { ProviderType } from '../provider/provider.type';
 import {
-  Configuration,
   Destroyable,
   Initializable,
   isDestroyable,
   isDisposable,
   isInitializable,
-  Disposable,
   isRefreshable,
-  Refreshable
-} from '../..';
-import { BeanHandler } from '../factory/bean-handler';
-import { ProviderType } from '../factory/provider.factory';
+  Refreshable,
+  Disposable
+} from './lifecycle';
 
 @Configuration
-export class InitHandlerLifecycle extends BeanHandler<Initializable> {
+export class InitHandlerLifecycle extends BeanPost<Initializable> {
   isHandler(target: ProviderType<any>, name: string | symbol, bean: any): boolean {
     return isInitializable(bean);
   }
@@ -22,52 +23,40 @@ export class InitHandlerLifecycle extends BeanHandler<Initializable> {
     target: ProviderType<Initializable>,
     name: string | symbol,
     bean: Initializable
-  ): Promise<Initializable> | Initializable {
+  ): AsyncSync<Initializable> {
     return bean.initialize().then(() => bean);
   }
 }
 
 @Configuration
-export class DisposeHandlerLifecycle extends BeanHandler<Disposable> {
+export class DisposeHandlerLifecycle extends BeanPost<Disposable> {
   isHandler(target: ProviderType<any>, name: string | symbol, bean: any): boolean {
     return isDisposable(bean);
   }
 
-  postConstruct(
-    target: ProviderType<Disposable>,
-    name: string | symbol,
-    bean: Disposable
-  ): Promise<Disposable> | Disposable {
+  postConstruct(target: ProviderType<Disposable>, name: string | symbol, bean: Disposable): AsyncSync<Disposable> {
     return bean.dispose().then(() => bean);
   }
 }
 
 @Configuration
-export class DestroyHandlerLifecycle extends BeanHandler<Destroyable> {
+export class DestroyHandlerLifecycle extends BeanPost<Destroyable> {
   isHandler(target: ProviderType<any>, name: string | symbol, bean: any): boolean {
     return isDestroyable(bean);
   }
 
-  postConstruct(
-    target: ProviderType<Destroyable>,
-    name: string | symbol,
-    bean: Destroyable
-  ): Promise<Destroyable> | Destroyable {
+  postConstruct(target: ProviderType<Destroyable>, name: string | symbol, bean: Destroyable): AsyncSync<Destroyable> {
     return bean.destroy().then(() => bean);
   }
 }
 
 @Configuration
-export class RefreshHandlerLifecycle extends BeanHandler<Refreshable> {
+export class RefreshHandlerLifecycle extends BeanPost<Refreshable> {
   isHandler(target: ProviderType<any>, name: string | symbol, bean: any): boolean {
     return isRefreshable(bean);
   }
 
-  postConstruct(
-    target: ProviderType<Refreshable>,
-    name: string | symbol,
-    bean: Refreshable
-  ): Promise<Refreshable> | Refreshable {
+  postConstruct(target: ProviderType<Refreshable>, name: string | symbol, bean: Refreshable): AsyncSync<Refreshable> {
     return bean.refresh().then(() => bean);
   }
 }

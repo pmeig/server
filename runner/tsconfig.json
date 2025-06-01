@@ -1,8 +1,9 @@
 {
-  "extends": "../tsconfig.json",
+  "extends": "../tsconfig.app.json",
   "include": ["./**/*"],
   "compilerOptions": {
-    "outDir": "../dist/runner",
+    "outDir": "./target"
   },
-  "exclude": ["node_modules", "dist", "test", "**/*spec.ts", "target"]
+  "exclude": [
+    "../node_modules", "dist", "test", "**/*spec.ts", "target"]
 }

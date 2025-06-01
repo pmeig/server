@@ -1,4 +1,4 @@
-import { Context } from './application-context';
+import { Context } from './context.model';
 
 export abstract class Bootable {
   abstract run(context: Context, ...args: any[]): Promise<void>;

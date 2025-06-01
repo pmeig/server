@@ -1,3 +1,4 @@
+inject-workspace-packages: true
 packages:
   - runner
   - modules/*

@@ -2,6 +2,7 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { existsSync, readFileSync } from 'fs';
 import { VaultKubernetesPlugin, VaultProperties } from './vault.properties';
 import { VaultHealth } from './vault-health';
+import { Nullable, Component } from '@server/core';
 
 export type VaultNode = { [key: string]: string | undefined };
 
@@ -9,6 +10,7 @@ interface VaultLogin {
   auth: { client_token: string; lease_duration: number };
 }
 
+@Component
 export class VaultClient {
   private ttl = new Date();
   private vaultClient: AxiosInstance;
@@ -34,7 +36,7 @@ export class VaultClient {
     });
   }
 
-  health(): Promise<VaultHealth | undefined> {
+  health(): Promise<Nullable<VaultHealth>> {
     return this.getResponseBody(
       this.vaultClient.get<VaultHealth>('sys/health', {
         headers: { 'X-Vault-Namespace': '', 'X-Vault-Token': '' }
@@ -42,7 +44,7 @@ export class VaultClient {
     );
   }
 
-  private getData<T extends VaultNode>(path: string): Promise<T | undefined> {
+  private getData<T extends VaultNode>(path: string): Promise<Nullable<T>> {
     return this.apply(() =>
       this.getResponseBody<{ data: { data: T } }>(this.vaultClient.get('secret/data/' + path)).then(
         response => response?.data?.data
@@ -54,7 +56,7 @@ export class VaultClient {
     return new Date().getTime() > this.ttl.getTime();
   }
 
-  private apply<T = unknown>(func: () => Promise<T>): Promise<T | undefined> {
+  private apply<T = unknown>(func: () => Promise<T>): Promise<Nullable<T>> {
     return (this.isTokenExpired() ? this.initVaultClient().then(() => func()) : func()).catch(() => {
       return undefined;
     });
@@ -64,31 +66,49 @@ export class VaultClient {
     const kubernetes: VaultKubernetesPlugin = this.vaultProperties?.plugins?.kubernetes ?? {
       enable: false
     };
-    let login: Promise<VaultLogin | undefined> | undefined;
-    if (kubernetes.enable && kubernetes.token_path && existsSync(kubernetes.token_path)) {
-      const jwt = readFileSync(kubernetes.token_path).toString();
-      login = this.getResponseBody(
-        this.vaultClient.post<VaultLogin>(`auth/${process.env.VAULT_K8S_AUTH_PATH}/login`, {
-          jwt,
-          role: process.env.VAULT_ROLE_NAME
-        })
-      );
-    } else {
-      login = this.getResponseBody(
-        this.vaultClient.post<VaultLogin>('auth/approle/login', {
-          role_id: this.vaultProperties?.credentials?.role,
-          secret_id: this.vaultProperties?.credentials?.secret
-        })
-      );
+    let login: Promise<Nullable<VaultLogin>> | undefined;
+    try {
+      if (kubernetes.enable && kubernetes.token_path && existsSync(kubernetes.token_path)) {
+        const jwt = readFileSync(kubernetes.token_path).toString();
+        login = this.getResponseBody(
+          this.vaultClient.post<VaultLogin>(`auth/${process.env.VAULT_K8S_AUTH_PATH}/login`, {
+            jwt,
+            role: process.env.VAULT_ROLE_NAME
+          })
+        );
+      } else {
+        login = this.getResponseBody(
+          this.vaultClient.post<VaultLogin>('auth/approle/login', {
+            role_id: this.vaultProperties?.credentials?.role,
+            secret_id: this.vaultProperties?.credentials?.secret
+          })
+        );
+      }
+    } catch (error) {
+      return Promise.reject(error);
     }
-    return login.then(response => {
+
+    return login?.then(response => {
       this.ttl = new Date();
       this.ttl.setSeconds(this.ttl.getSeconds() + (response?.auth?.lease_duration ?? 0));
       this.vaultClient.defaults.headers.common['X-Vault-Token'] = response?.auth?.client_token;
     });
   }
 
-  private getResponseBody<T = any>(response: Promise<AxiosResponse<T | undefined>>): Promise<T | undefined> {
-    return response.then(value => (value.status < 300 ? value.data : Promise.reject()));
+  private getResponseBody<T = any>(response: Promise<AxiosResponse<Nullable<T>>>): Promise<Nullable<T>> {
+    try {
+      return response.then(value => (value.status < 300 ? value.data : Promise.reject()));
+    } catch (error) {
+      return Promise.reject(error);
+    }
   }
 }
+
+export const createVaultClient = async (vaultProperties?: VaultProperties) => {
+  const vaultClient = new VaultClient(vaultProperties);
+  const health = await vaultClient.health();
+  if (!health || !health.initialized) {
+    return undefined;
+  }
+  return vaultClient;
+};

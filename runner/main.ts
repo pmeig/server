@@ -1,5 +1,6 @@
-import { Component, Lifecycle, List, Module, Optional, Order, ApplicationContext } from '@server/core';
+import { ApplicationContext, Component, Lifecycle, List, Module, Optional, Order } from '@server/core';
 import { randomBytes } from 'crypto';
+import { Bootstrap, Properties, PropertiesModule } from '@server/properties';
 
 interface Named {
   name: string;
@@ -78,6 +79,14 @@ export class OverrideFirst extends First {
   id = randomBytes(16).toString('hex');
 }
 
+@Properties('test.properties')
+export class Props {
+  test = 'test';
+  toto = 'toto';
+  popo = 'popo';
+  lolo = 'lolo';
+}
+
 @Module({
   providers: [Third, First]
 })
@@ -85,13 +94,14 @@ export class ThirdFourthModule {}
 
 export const main = async () => {
   const module = new ApplicationContext({
-    providers: [OverrideFirst, Second],
-    imports: [ThirdFourthModule]
+    providers: [OverrideFirst, Second, Props],
+    imports: [ThirdFourthModule, PropertiesModule]
   });
   console.log(await module.resolveRequired(First));
   console.log(await module.resolveRequired(Second));
   console.log(await module.resolve(Third));
-  // console.log(await module.resolveRequired(Fourth));
+  console.log(await module.resolve(Props));
+  console.log(await module.resolve(Bootstrap));
 };
 
 main();

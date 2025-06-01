@@ -76,7 +76,9 @@ export abstract class Builder {
         encoding: 'utf-8'
       }).forEach(file => {
         if (file.isDirectory()) {
-          rmSync(resolve(outDirPath, file.name), { recursive: true, force: true });
+          if (file.name !== 'node_modules') {
+            rmSync(resolve(outDirPath, file.name), { recursive: true, force: true });
+          }
         } else {
           unlinkSync(resolve(outDirPath, file.name));
         }
@@ -114,12 +116,8 @@ class LibraryBuilder extends Builder {
   }
 
   async build(parameters: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
-    const isProd = typeof parameters.prod !== 'undefined';
-    if (isProd) {
-      options.push('--sourceMap', 'false');
-    }
     const prepare = await super.build(parameters, ...options);
-    if (!prepare.exception && isProd) {
+    if (!prepare.exception && typeof parameters.prod !== 'undefined') {
       const src = resolve(this.rootProject, this.context.location.root);
       const outDirConsole = await launcher.cwd(src).launch('tsc', '--showConfig', ...options);
       const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;

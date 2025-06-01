@@ -1,8 +1,7 @@
-import { Context } from '../application-context';
-import { CustomProviderFactory, Type } from '../provider/provider.type';
+import { ProviderType, Type } from '../provider/provider.type';
 import { ConstructorFactory } from './constructor.factory';
-
-export type ProviderType<T> = Type<T> | CustomProviderFactory<T>;
+import { Nullable } from '../../helper/type.helper';
+import { Context } from '../context.model';
 
 export abstract class ProviderFactory<T extends any = any> {
   protected readonly constructorFactory: ConstructorFactory;
@@ -11,11 +10,11 @@ export abstract class ProviderFactory<T extends any = any> {
     this.constructorFactory = ConstructorFactory.from(type);
   }
 
-  protected buildBean(context: Context, name: string | symbol): Promise<T | undefined> {
+  protected buildBean(context: Context, name: string | symbol): Promise<Nullable<T>> {
     return this.constructorFactory?.build(this.type as Type<T>, context, name);
   }
 
-  build(context: Context, name: string | symbol): Promise<T | undefined> {
+  build(context: Context, name: string | symbol): Promise<Nullable<T>> {
     return this.buildBean(context, name);
   }
 
@@ -45,7 +44,7 @@ export class SingletonProviderFactory<T extends any = any> extends ProviderFacto
     super(type);
   }
 
-  async buildBean(context: Context, name: string | symbol): Promise<T | undefined> {
+  async buildBean(context: Context, name: string | symbol): Promise<Nullable<T>> {
     if (!this.singleton) {
       this.singleton = await this.constructorFactory.build(this.type as Type<T>, context, name);
     }

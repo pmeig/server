@@ -1,5 +1,6 @@
 import { FactoryProviderScoped } from '../provider-scope';
-import { Context } from '../application-context';
+import { AsyncSync } from '../../helper/type.helper';
+import { Context } from '../context.model';
 
 export interface Type<T> extends Function {
   new (...args: any[]): T;
@@ -14,7 +15,7 @@ export type ScopeType = keyof typeof FactoryProviderScoped;
 
 export type ProviderToken<T> = Type<T> | string | symbol | Abstract<T>;
 
-export type CustomProviderFactory<T> = (context: Context) => T | Promise<T>;
+export type CustomProviderFactory<T> = (context: Context) => AsyncSync<T>;
 
 export interface CustomProvider<T> {
   provide: ProviderToken<T>;
@@ -23,3 +24,5 @@ export interface CustomProvider<T> {
 }
 
 export type Provider<T extends any = any> = Type<T> | CustomProvider<T>;
+
+export type ProviderType<T> = Type<T> | CustomProviderFactory<T>;

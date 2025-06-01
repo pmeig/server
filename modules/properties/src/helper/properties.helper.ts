@@ -1,3 +1,9 @@
+import { VaultCredentials, VaultPlugins, VaultProperties } from '@server/vault';
+import { Env } from '../environment/env';
+import { readAllProperties } from './io.helper';
+import { EnvironmentItem } from '../environment/environment.item';
+import { PropertiesFile } from '../properties.type';
+
 const REGEX_INJECTOR_KEY = new RegExp('\\${(.*?)}', 'g');
 
 export const mergeArray = (origin: any[], newValue: any[]) => {
@@ -27,4 +33,30 @@ export const extractKeys = (value: string) => {
     match = matches.next();
   }
   return keys;
+};
+
+export const initProperties = (
+  env: PropertiesFile,
+  type: 'bootstrap' | 'app',
+  profiles: string[],
+  sourcesLocation: string = './resources'
+) => {
+  const properties = readAllProperties(type, profiles, sourcesLocation);
+  return {
+    sources: Object.freeze([...env.sources, ...properties.sources]),
+    properties: EnvironmentItem.from(mergeRecord(env.properties, properties.properties))
+  };
+};
+
+export const findVaultProperties = async (bootstrap: Env) => {
+  const properties = await bootstrap.find<Record<string, any>>('secrets.vault', () => {});
+  const vaultProperties = new VaultProperties(new VaultCredentials(), new VaultPlugins());
+  if (properties) {
+    vaultProperties.endpoint = properties['endpoint'] ?? vaultProperties.endpoint;
+    vaultProperties.namespace = properties['namespace'] ?? vaultProperties.namespace;
+    vaultProperties.credentials.role = properties['credentials']?.['role'] ?? vaultProperties.credentials.role;
+    vaultProperties.credentials.secret = properties['credentials']?.['secret'] ?? vaultProperties.credentials.secret;
+    vaultProperties.plugins.kubernetes = properties['plugins']?.['kubernetes'] ?? vaultProperties.plugins.kubernetes;
+  }
+  return vaultProperties;
 };

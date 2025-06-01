@@ -1,0 +1,29 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@server/core": [
+        "modules/core"
+      ],
+      "@server/core/*": [
+        "modules/core/src/*"
+      ],
+      "@server/vault": [
+        "modules/vault"
+      ],
+      "@server/vault/*": [
+        "modules/vault/src/*"
+      ],
+      "@server/properties": [
+        "modules/properties"
+      ],
+      "@server/properties/*": [
+        "modules/properties/src/*"
+      ]
+    }
+  }
+}

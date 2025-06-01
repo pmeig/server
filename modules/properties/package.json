@@ -2,7 +2,6 @@
   "name": "@server/properties",
   "version": "1.0.0-SNAPSHOT",
   "description": "",
-  "main": "src/index.ts",
   "scripts": {
     "build": "pmeig build properties",
     "build:prod": "pnpm build --prod"
@@ -10,7 +9,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.15.19",
@@ -18,19 +16,20 @@
     "typescript": "^5.8.3"
   },
   "packageManager": "pnpm@10.11.0",
-  "typings": "index.d.ts",
+  "typings": "src/index.d.ts",
   "exports": {
     "./package.json": {
       "default": "./package.json"
     },
     ".": {
-      "types": "./index.d.ts",
-      "default": "./index.js"
+      "types": "./src/index.d.ts",
+      "default": "./src/index.ts"
     }
   },
   "dependencies": {
+    "js-yaml": "^4.1.0",
+    "rxjs": "^7.8.2",
     "@server/vault": "workspace:*",
-    "@server/core": "workspace:*",
-    "js-yaml": "^4.1.0"
+    "@server/core": "workspace:*"
   }
 }

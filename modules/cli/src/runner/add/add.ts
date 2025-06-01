@@ -132,7 +132,7 @@ class FileGenerator extends Generator {
 class ModuleGenerator extends Generator {
   protected generate(context: CliContext, path: string, prefix: string, ...params: string[]): Promise<void> {
     this.createSrcRoot(path, prefix);
-    this.updateConfigWithNewModule(context, path, prefix);
+    this.updateConfigWithNewModule(context, path);
     return launcher
       .cwd(path)
       .launch('install')
@@ -147,13 +147,14 @@ class ModuleGenerator extends Generator {
         const destination = file.replace(templatePath, path).replace('.template', '');
         mkdirSync(dirname(destination), { recursive: true });
         copyFileSync(file, destination);
+        return true;
       }
     });
     this.updatePackage(path, prefix);
     this.updateTsConfig(path);
   }
 
-  private updateConfigWithNewModule(context: CliContext, path: string, prefix: string) {
+  private updateConfigWithNewModule(context: CliContext, path: string) {
     context.projects[this.name] = {
       type: this.type as 'application' | 'library',
       location: {
@@ -162,16 +163,6 @@ class ModuleGenerator extends Generator {
       assets: []
     };
     writeJson(resolve(this.rootProject, 'pmeig-cli.json'), context);
-    let pathLibrary = path.replace(this.rootProject, '').replaceAll('\\', '/');
-    pathLibrary = pathLibrary.startsWith('/') ? pathLibrary.slice(1) : pathLibrary;
-    updateJson(resolve(this.rootProject, 'tsconfig.json'), (tsconfig: Record<string, any>) => {
-      const paths = tsconfig.compilerOptions.paths ?? {};
-      const name = prefix + this.name;
-      paths[name] = [pathLibrary];
-      paths[`${name}/src/*`] = [pathLibrary + '/src/*'];
-      tsconfig.compilerOptions.paths = paths;
-      return tsconfig;
-    });
     const workspace = resolve(this.rootProject, 'pnpm-workspace.yaml');
     if (existsSync(workspace)) {
       const packageAdd =

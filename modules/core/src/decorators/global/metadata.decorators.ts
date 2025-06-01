@@ -28,7 +28,7 @@ export const PutDesignParam = (
   }
   const params = retrieveParameterTypes(target as Type<any>, propertyKey);
   if (propertyKey) {
-    Reflect.defineMetadata(design_parameters, insert(params), target, propertyKey);
+    Reflect.defineMetadata(design_parameters, insert(params), target, propertyKey as string | symbol);
   } else Reflect.defineMetadata(design_parameters, insert(params), target);
 };
 

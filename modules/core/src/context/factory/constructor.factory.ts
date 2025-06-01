@@ -1,9 +1,10 @@
 import { retrieveElementTypes, retrieveOptionals } from '../../decorators/global/parameter.decorators';
 import { retrieveParameterTypes } from '../../decorators/global/metadata.decorators';
-import { ProviderToken, Type } from '../provider/provider.type';
-import { Context } from '../application-context';
-import { ProviderType } from './provider.factory';
-import { BeanHandler } from './bean-handler';
+import { ProviderToken, ProviderType, Type } from '../provider/provider.type';
+import { BeanPost } from '../bean/bean.post';
+import { AsyncSync } from '../../helper/type.helper';
+import { Context } from '../context.model';
+import { putRequester } from '../../decorators/components/component.helper';
 
 interface FactoryConstructorArgumentContext {
   resolve(context: Context): Promise<any>;
@@ -28,7 +29,9 @@ export abstract class ConstructorFactory {
   abstract create<T>(target: ProviderType<T>, context: Context): Promise<T>;
 
   async build<T extends any>(target: ProviderType<T>, context: Context, name: string | symbol): Promise<T> {
+    putRequester(name);
     const bean = await this.create(target, context);
+    putRequester();
     return this.postConstruct(target, context, bean, name);
   }
 
@@ -38,8 +41,8 @@ export abstract class ConstructorFactory {
     bean: T,
     name: string | symbol
   ): Promise<T> {
-    if (name !== BeanHandler.name) {
-      const postConstructors = await context.multiResolve(BeanHandler, []);
+    if (name !== BeanPost.name) {
+      const postConstructors = await context.multiResolve(BeanPost, []);
       for (const postConstructor of postConstructors) {
         if (postConstructor.isHandler(target, name, bean)) {
           bean = (await Promise.resolve(postConstructor.postConstruct(target, name, bean))) as T;
@@ -112,7 +115,7 @@ class EmptyConstructorFactory extends ConstructorFactory {
 }
 
 class FunctionConstructorFactory extends ConstructorFactory {
-  create<T extends any>(target: (context: Context) => Promise<T> | T, context: Context): Promise<T> {
+  create<T extends any>(target: (context: Context) => AsyncSync<T>, context: Context): Promise<T> {
     return Promise.resolve(target(context));
   }
 }
