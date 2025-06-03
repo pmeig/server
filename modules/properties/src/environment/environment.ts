@@ -1,14 +1,19 @@
-import { Configuration, Optional, AsyncSync, Nullable, OptionalAsyncSync, TooArray } from '@server/core';
-import { Env } from './env';
+import { AsyncSync, Configuration, Nullable, Optional, OptionalAsyncSync, TooArray } from '@server/core';
+import { Env } from './model/env';
 import { EnvironmentItem } from './environment.item';
 import { VaultClient } from '@server/vault';
 import { readAllProperties } from '../helper/io.helper';
 import { EnvironmentConfiguration } from './environment.configuration';
-import { contextRefresh } from '../bootstrap-refresh';
+import { propertiesRefresh, watchSources } from '../refresh/properties.refresh';
+import { filter } from 'rxjs';
+import { isEnvConfig } from './model/env-config';
+import { mergeRecord } from '../helper/properties.helper';
 
 @Configuration
 export class Environment implements Env {
   private properties: EnvironmentItem;
+  private unwatch = () => {};
+  private lastMode?: 'WATCH';
   sources: Readonly<string[]>;
 
   constructor(
@@ -16,7 +21,10 @@ export class Environment implements Env {
     @Optional private readonly vaultClient?: VaultClient
   ) {
     this.initWithContext(context);
-    contextRefresh.subscribe(context => this.initWithContext(context));
+    propertiesRefresh.pipe(filter(env => env === this || isEnvConfig(env))).subscribe(env => {
+      const newContext = isEnvConfig(env) ? env : context;
+      this.initWithContext(newContext);
+    });
   }
 
   async get<T extends TooArray<Record<string, any> | number | string | boolean>>(key: string) {
@@ -59,10 +67,16 @@ export class Environment implements Env {
   }
 
   private initWithContext(context: EnvironmentConfiguration) {
+    this.initProperties(context);
+    this.unwatch = watchSources(context, this.sources, () => this.unwatch(), this, this.lastMode);
+    this.lastMode = context.watch ? 'WATCH' : undefined;
+  }
+
+  private initProperties(context: EnvironmentConfiguration) {
     const profiles = context.profiles;
     const location = context.location;
     const { properties, sources } = readAllProperties('app', profiles, location);
-    this.properties = EnvironmentItem.from(properties);
+    this.properties = EnvironmentItem.from(mergeRecord({ ...process.env }, properties));
     this.sources = Object.freeze(sources);
   }
 }

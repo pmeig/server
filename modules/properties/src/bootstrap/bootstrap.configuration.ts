@@ -1,18 +1,18 @@
 import { createVaultClient, VaultClient, VaultProperties } from '@server/vault';
 import { findVaultProperties, mergeRecord } from '../helper/properties.helper';
-import { readAllEnv, readAllProperties, watchSources } from '../helper/io.helper';
+import { readAllEnv, readAllProperties } from '../helper/io.helper';
 import { EnvironmentItem } from '../environment/environment.item';
-import { Env } from '../environment/env';
+import { Env } from '../environment/model/env';
 import { AsyncSync, Configuration, Internal, Nullable, OptionalAsyncSync, TooArray } from '@server/core';
-import { PropertiesFile } from '../properties.type';
-import { bootstrapRefresh } from '../bootstrap-refresh';
+import { propertiesRefresh, watchSources } from '../refresh/properties.refresh';
+import { filter } from 'rxjs';
 
 @Configuration
 @Internal
 export class Bootstrap implements Env {
   private properties: EnvironmentItem;
-  readonly sources: Readonly<string[]>;
-  private lastMode = '';
+  sources: Readonly<string[]>;
+  private lastMode?: 'WATCH';
   private unwatch = () => {};
   private readonly vault = {
     client: undefined as Nullable<VaultClient>,
@@ -23,7 +23,10 @@ export class Bootstrap implements Env {
     const { env, sources } = this.refreshSources();
     let uniqueSources = new Set(env.sources);
     sources.forEach(source => (uniqueSources = uniqueSources.add(source)));
-    this.sources = [...uniqueSources];
+    this.sources = Object.freeze([...uniqueSources]);
+    propertiesRefresh.pipe(filter(env => env === this)).subscribe(() => {
+      this.refreshSources();
+    });
   }
 
   async get<T extends TooArray<Record<string, any> | number | string | boolean>>(key: string) {
@@ -70,17 +73,6 @@ export class Bootstrap implements Env {
     return createVaultClient(this.vault.properties);
   }
 
-  private watchSources(env: PropertiesFile) {
-    const mode = env['MODE']?.toString()?.toUpperCase();
-    if (this.lastMode !== mode) {
-      this.unwatch();
-      this.unwatch = watchSources(mode, this.sources, () => {
-        this.refreshSources();
-      });
-      this.lastMode = mode;
-    }
-  }
-
   private refreshSources() {
     let env = readAllEnv([]);
     const profilesFromEnv: string = env.properties['APP_PROFILES'];
@@ -89,13 +81,27 @@ export class Bootstrap implements Env {
       env = readAllEnv(profiles);
     }
     const { properties, sources } = readAllProperties('bootstrap', profiles, env['SOURCES_LOCATION'] ?? './resources');
-    this.properties = EnvironmentItem.from(mergeRecord(env, properties));
+    const record = mergeRecord(env.properties, properties);
+    this.properties = EnvironmentItem.from(record);
     this.createVault().then(vault => (this.vault.client = vault));
-    this.watchSources(env);
-    bootstrapRefresh.next(this);
+    const mode = record['APP_MODE']?.toUpperCase();
+    const files = [...env.sources, ...sources];
+    this.unwatch = watchSources(
+      {
+        profiles,
+        location: '.',
+        watch: mode === 'WATCH',
+        vault: false
+      },
+      files,
+      () => this.unwatch(),
+      this,
+      this.lastMode
+    );
+    this.lastMode = mode;
     return {
       env,
-      sources
+      sources: files
     };
   }
 }

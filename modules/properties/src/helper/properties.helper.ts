@@ -1,5 +1,5 @@
 import { VaultCredentials, VaultPlugins, VaultProperties } from '@server/vault';
-import { Env } from '../environment/env';
+import { Env } from '../environment/model/env';
 import { readAllProperties } from './io.helper';
 import { EnvironmentItem } from '../environment/environment.item';
 import { PropertiesFile } from '../properties.type';

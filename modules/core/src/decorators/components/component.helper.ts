@@ -1,19 +1,10 @@
 import { ProviderFactory, SingletonProviderFactory } from '../../context/factory/provider.factory';
-import { ProviderToken, ScopeType, Type } from '../../context/provider/provider.type';
+import { ScopeType, Type } from '../../context/provider/provider.type';
 import { FactoryProviderScoped } from '../../context/provider-scope';
-import {
-  getMetadataReflection,
-  getMultiMetadataReflection,
-  reflectMetadataContext,
-  reflectMultiMetadataContext
-} from '../decorators.helper';
-import { Context } from '../../context/context.model';
+import { getMultiMetadataReflection, reflectMetadataContext, reflectMultiMetadataContext } from '../decorators.helper';
 
 const context_key = 'components:context';
 const context_name = 'components:name';
-const context_providers: Record<string, string[]> = {};
-let context_requester: string[] = [];
-export const internal_key = 'component:internal';
 
 export interface ComponentContext {
   names?: (string | symbol)[];
@@ -69,40 +60,6 @@ export const updateContext = (context: Partial<ComponentContext>, target: object
     },
     target
   );
-};
-
-export const isInternal = (target: object) => {
-  return getMetadataReflection<boolean>(internal_key, target);
-};
-
-export const affectApplicationContext = (target: ProviderToken<any>, applicationContext: Context) => {
-  const providers = context_providers[applicationContext.id] ?? [];
-  const name = typeof target === 'function' ? target.name : target.toString();
-  providers.push(name);
-  context_providers[applicationContext.id] = providers;
-  const app = context_providers[name] ?? [];
-  app.push(applicationContext.id);
-  context_providers[name] = app;
-};
-
-export const retrieveMyOwnContext = (target: Type<any>) => {
-  return context_providers[target.name] ?? [];
-};
-
-export const isVisible = (target: Type<any>) => {
-  return !isInternal(target) || context_providers[retrieveMyOwnContext(target)[0]]?.includes(retrieveRequester());
-};
-
-export const putRequester = (token?: string | symbol) => {
-  if (token) {
-    context_requester.push(token.toString());
-  } else {
-    context_requester.pop();
-  }
-};
-
-export const retrieveRequester = () => {
-  return context_requester[context_requester.length - 1];
 };
 
 const getNameProvider = (target: object) => {

@@ -1,16 +1,29 @@
-import { exec } from 'child_process';
 import { dirname, resolve } from 'path';
 import { existsSync } from 'fs';
-import * as process from 'node:process';
+import pino from 'pino';
+import { spawn } from 'node:child_process';
 
 export interface ConsoleCommand {
   success: string[];
   error: string[];
+  code: number;
   exception?: Error;
 }
 
 export class Launcher {
   private env: Record<string, string> = {};
+  private static readonly logger = pino({
+    level: 'info',
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        colorize: true,
+        translateTime: 'HH:MM:ss',
+        ignore: 'pid,hostname'
+      }
+    }
+  });
+
   constructor(
     private readonly manager?: 'pnpm' | 'npm' | string,
     private readonly workspace = process.cwd(),
@@ -56,32 +69,44 @@ export class Launcher {
     return new Promise((resolve, reject) => {
       const consoleCommand: ConsoleCommand = {
         error: [],
-        success: []
+        success: [],
+        code: 0
       };
-      const thread = exec(
-        `${this.manager} ${argument} ${args.join(' ')}`,
-        {
-          cwd: this.workspace,
-          encoding: 'utf-8'
-        },
-        (error, stdout, stderr) => {
-          if (error) {
-            consoleCommand.exception = error;
+      const log = this.printCommand
+        ? {
+            info: (message: string) => Launcher.logger.info(message),
+            error: (message: string | Error) => Launcher.logger.error(message)
           }
-          if (stderr) {
-            consoleCommand.error.push(stderr);
-          }
-          if (stdout) {
-            // console.info(stdout.toString('utf-8'));
-            consoleCommand.success.push(stdout);
-          }
-          if (this.printCommand) {
-            console.info(stdout ?? stderr ?? error);
-          }
+        : {
+            info: (_: string) => {},
+            error: (_: string | Error) => {}
+          };
+      const thread = spawn(this.manager!, [argument, ...args], {
+        cwd: this.workspace,
+        shell: true
+      });
+
+      thread.on('error', error => {
+        log.error(error);
+        consoleCommand.exception = error;
+        reject(consoleCommand);
+      });
+      thread.stderr?.on('data', data => {
+        consoleCommand.error.push(data.toString());
+        log.error(data.toString());
+      });
+      thread.stdout?.on('data', data => {
+        consoleCommand.success.push(data.toString());
+        log.info(data.toString());
+      });
+      thread.on('close', code => {
+        consoleCommand.code = code ?? 0;
+        if (consoleCommand.code !== 0) {
+          reject(consoleCommand);
+        } else {
+          resolve(consoleCommand);
         }
-      );
-      thread.on('close', () => resolve(consoleCommand));
-      thread.on('error', () => reject(consoleCommand));
+      });
     });
   }
 }

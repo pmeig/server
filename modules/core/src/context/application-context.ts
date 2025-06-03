@@ -1,12 +1,6 @@
-import { Nullable } from '../helper/type.helper';
+import { Nullable, promiseFind } from '../helper/type.helper';
 import { CustomProvider, Provider, ProviderToken, Type } from './provider/provider.type';
-import {
-  affectApplicationContext,
-  ComponentContext,
-  isVisible,
-  retrieveContext,
-  updateContext
-} from '../decorators/components/component.helper';
+import { ComponentContext, retrieveContext, updateContext } from '../decorators/components/component.helper';
 import { createComponentDecorator, Scope } from '../decorators/components/component.decorator';
 import { PutDesignParam } from '../decorators/global/metadata.decorators';
 import { provideLifecycle } from './lifecycle/init-handler.lifecycle';
@@ -16,6 +10,8 @@ import { Decorators, hasDecorator } from '../decorators/decorator.builder';
 import { Bootable } from './bootable';
 import { Context, DefaultValue, ModuleContext, MultiDefaultValue } from './context.model';
 import { randomUUID } from 'crypto';
+import { affectApplicationContext } from '../decorators/conditional/internal.conditional';
+import { ProviderFactory } from './factory/provider.factory';
 
 const DEFAULT_PROVIDERS: Record<string, Provider[]> = Object.freeze({
   [BeanPost.name]: [...provideLifecycle()]
@@ -45,8 +41,10 @@ export class ApplicationContext implements Context {
     return Promise.all(boots.map(value => value.run(this.contextReference, ...args)));
   }
 
-  has(key: any): boolean {
-    return (this.factories[key]?.filter(factory => isVisible(factory.factory!.type as Type<any>)) ?? []).length > 0;
+  async has(key: any): Promise<boolean> {
+    const token = this.extractToken(key);
+    const factories = await this.findFactories(token);
+    return factories.length > 0;
   }
 
   async resolve<T>(
@@ -57,9 +55,8 @@ export class ApplicationContext implements Context {
     if ([ApplicationContext.name, 'Context'].includes(token.toString())) {
       return this as unknown as T;
     }
-    const factory = await (this.factories[token]?.filter(factory => isVisible(factory.factory!.type as Type<any>)) ??
-      [])[0];
-    const injectable = factory?.factory?.build(this.contextReference, token);
+    const factory = (await this.findFactories(token))[0];
+    const injectable = factory?.build(this.contextReference, token);
     return this.useChildren(injectable, token, defaultValue);
   }
 
@@ -75,9 +72,9 @@ export class ApplicationContext implements Context {
   ): Promise<T[]> {
     const token = this.extractToken(key);
     if ([ApplicationContext.name, 'Context'].includes(token.toString())) return [this as unknown as T];
-    const factories = this.factories[token]?.filter(factory => isVisible(factory.factory!.type as Type<any>)) ?? [];
+    const factories = await this.findFactories(token);
     const beans = this.applyDefault<T>(
-      Promise.all(factories.map(factory => factory.factory?.build(this.contextReference, token))).then(build =>
+      Promise.all(factories.map(factory => factory.build(this.contextReference, token))).then(build =>
         build.filter(test => !!test)
       ),
       () => []
@@ -123,6 +120,16 @@ export class ApplicationContext implements Context {
       value => value
     );
     return beans.concat(others);
+  }
+
+  private async findFactories(token: string | symbol) {
+    const factories: ProviderFactory[] = [];
+    for (const factory of (this.factories[token] ?? []).map(factory => factory.factory)) {
+      if (await (factory?.isAccessible(this) ?? Promise.resolve(false))) {
+        factories.push(factory!);
+      }
+    }
+    return factories;
   }
 
   private init(context: ModuleContext) {
@@ -197,11 +204,9 @@ export class ApplicationContext implements Context {
     token: string | symbol,
     defaultValue: DefaultValue<T> | MultiDefaultValue<T>
   ) {
-    return this.applyDefault(injectable, () => {
-      return this.applyDefault(
-        this.children.find(child => child.has(token))?.resolve(token, defaultValue),
-        defaultValue
-      );
+    return this.applyDefault(injectable, async () => {
+      const context = await promiseFind(this.children, child => child.has(token));
+      return this.applyDefault(context?.resolve(token, defaultValue), defaultValue);
     }) as Promise<T>;
   }
 

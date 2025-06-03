@@ -10,7 +10,7 @@ export interface Context {
   resolveRequired: <T extends any = any>(key: ProviderToken<T>) => Promise<T>;
   multiResolve: <T extends any = any>(key: ProviderToken<T>, defaultValue?: MultiDefaultValue<T>) => Promise<T[]>;
   multiResolveRequired: <T extends any = any>(key: ProviderToken<T>) => Promise<T[]>;
-  has: (key: ProviderToken<any>) => boolean;
+  has: (key: ProviderToken<any>) => Promise<boolean>;
   withDecorator: (decorator: Decorators | string) => Promise<any[]>;
   id: string;
 }

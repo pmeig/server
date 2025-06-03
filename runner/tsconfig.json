@@ -2,8 +2,8 @@
   "extends": "../tsconfig.app.json",
   "include": ["./**/*"],
   "compilerOptions": {
-    "outDir": "./target"
+    "outDir": "./target",
   },
   "exclude": [
-    "../node_modules", "dist", "test", "**/*spec.ts", "target"]
+    "../node_modules", "dist", "test", "**/*spec.ts", "target", "vite.config.ts"]
 }

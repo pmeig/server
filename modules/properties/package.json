@@ -2,6 +2,7 @@
   "name": "@server/properties",
   "version": "1.0.0-SNAPSHOT",
   "description": "",
+  "main": "src/index.ts",
   "scripts": {
     "build": "pmeig build properties",
     "build:prod": "pnpm build --prod"

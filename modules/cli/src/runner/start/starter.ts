@@ -5,7 +5,7 @@ import { ConsoleCommand, launcher } from '../../launcher';
 import { StartParameter } from './start.runner';
 import { findAliases, Parameters, RunnerAlias } from '../runner.helper';
 import { BuildParameter } from '../build/build.runner';
-import { browseDir, readJson, updateContent } from '../../helper/io.helper';
+import { browseDir, readJson, updateContent, updateJson } from '../../helper/io.helper';
 import { Builder } from '../build/builder';
 
 export abstract class Starter {
@@ -59,7 +59,12 @@ export class LibraryStarter extends Starter {
     const runner = resolve(this.root, 'target');
     const aliases = findAliases(projects, this.rootProject);
     const dependencies = this.retrieveDependencies(aliases);
-    await this.buildDependencies(dependencies, aliases);
+    try {
+      await this.buildDependencies(dependencies, aliases);
+    } catch (error) {
+      console.error(error);
+      return Promise.reject(error);
+    }
     return {
       dependencies,
       runner,
@@ -80,6 +85,15 @@ export class LibraryStarter extends Starter {
             '--sourceMap',
             'true'
           );
+          updateJson(resolve(this.rootProject, config.root, 'target', 'package.json'), json => {
+            json.dependencies = Object.entries(json.dependencies ?? {})
+              .filter(([key]) => !dependencies.includes(key))
+              .reduce((acc, entry) => {
+                acc[entry[0]] = entry[1];
+                return acc;
+              }, {});
+            return json;
+          });
           return npm.cwd(resolve(this.root, config.path, 'target')).launch('install');
         }
         return Promise.resolve();

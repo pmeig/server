@@ -1,3 +1,2 @@
-export * from './env';
+export * from './model/env';
 export * from './environment';
-export * from './environment.configuration';

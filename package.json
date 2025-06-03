@@ -19,10 +19,9 @@
     "@types/node": "^22.15.19",
     "prettier": "^3.5.3",
     "reflect-metadata": "^0.2.2",
-    "typescript": "^5.8.3"
-  },
-  "dependencies": {
-    "@server/cli": "link:dist\\cli",
-    "@server/core": "link:dist\\core"
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vite-plugin-node": "^5.0.1",
+    "vite-plugin-node-polyfills": "^0.23.0"
   }
 }

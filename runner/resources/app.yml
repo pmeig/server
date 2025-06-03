@@ -1,7 +1,9 @@
 variables:
   change:
     popo: is changing by key
+check:
+  continue: false
 
 test:
   properties:
-    popo: replacing key variables.change.popo by ${variables.change.popo}
+    popo: replacing key variables.change.popo by ${variables.change.popo} with ENV ${USERPROFILE}

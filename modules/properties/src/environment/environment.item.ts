@@ -1,6 +1,6 @@
 import { extractKeys } from '../helper/properties.helper';
 import { VaultClient, VaultNode } from '@server/vault';
-import { Env } from './env';
+import { Env } from './model/env';
 
 export type EnvironmentValue =
   | string

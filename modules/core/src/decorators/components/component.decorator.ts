@@ -1,4 +1,4 @@
-import { internal_key, PutName, PutOrder, PutScope, PutType } from './component.helper';
+import { PutName, PutOrder, PutScope, PutType } from './component.helper';
 import { ScopeType } from '../../context/provider/provider.type';
 import { ClassDecorator } from '../type.decorators';
 import { Decorators } from '../decorator.builder';
@@ -13,10 +13,6 @@ export const Scope = (scope: ScopeType) => Decorators.class('Scope', target => P
 
 export const Named: (...names: string[]) => ClassDecorator = names =>
   Decorators.class('Named', target => PutName(target, names));
-
-export const Internal = Decorators.class('Internal', target => {
-  Reflect.defineMetadata(internal_key, true, target);
-});
 
 export function createComponentDecorator(name: string, handler: ClassDecorator = () => {}) {
   return Decorators.class(name, target => {

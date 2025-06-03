@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, unwatchFile, watchFile, existsSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
 import { load } from 'js-yaml';
 import { basename, resolve } from 'path';
 import { PropertiesFile } from '../properties.type';
@@ -30,16 +30,19 @@ const createUpdaterEnv = (env: {}, keys: string[]) => {
 
 export const readEnv = <T extends Record<string, any> = Record<string, any>>(path: string) => {
   const content = readFileSync(path, 'utf-8');
-  return content.split(/\r?\n/).reduce(
-    (acc, line) => {
-      const [key, value] = line.split('=');
-      const keys = key.split('.');
-      const updater = createUpdaterEnv(acc, keys);
-      acc = updater(value, acc);
-      return acc;
-    },
-    {} as Record<string, any>
-  ) as T;
+  return content
+    .split(/\r?\n/)
+    .filter(line => line.trim().length > 0)
+    .reduce(
+      (acc, line) => {
+        const [key, value] = line.split('=');
+        const keys = key.split('.');
+        const updater = createUpdaterEnv(acc, keys);
+        acc = updater(value, acc);
+        return acc;
+      },
+      {} as Record<string, any>
+    ) as T;
 };
 
 export const readAllProperties = <T extends Record<string, any> = Record<string, any>>(
@@ -108,26 +111,9 @@ export const readAllEnv = <T extends Record<string, any> = Record<string, any>>(
       {} as Record<string, any>
     ) as T;
   return {
-    properties: mergeRecord(env, properties) as T,
+    properties: mergeRecord({ ...env }, properties) as T,
     sources
   };
-};
-
-export const watchSources = (mode: string, sources: readonly string[], refresh: () => void) => {
-  let unwatch = () => {};
-  if (mode === 'WATCH') {
-    sources.forEach(source => {
-      watchFile(source, () => {
-        refresh();
-      });
-      const prev = unwatch;
-      unwatch = () => {
-        unwatchFile(source);
-        prev();
-      };
-    });
-  }
-  return unwatch;
 };
 
 const toFileYamlExtensionAccepted = (name: string) => {

@@ -52,7 +52,7 @@ export abstract class Builder {
     this.removeDist(outDirPath);
     const command = await executor.launch('tsc', ...options);
     let result = Promise.resolve(command);
-    if (!command.exception && this.context.assets.length > 0) {
+    if (command.code === 0 && this.context.assets.length > 0) {
       const copies = this.context.assets.map(asset => {
         return glob(asset, {
           cwd: root
@@ -102,7 +102,8 @@ class NoopBuilder extends Builder {
   async build(parameters: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
     return Promise.resolve({
       error: [],
-      success: []
+      success: [],
+      code: 0
     });
   }
 }
@@ -117,7 +118,7 @@ class LibraryBuilder extends Builder {
 
   async build(parameters: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
     const prepare = await super.build(parameters, ...options);
-    if (!prepare.exception && typeof parameters.prod !== 'undefined') {
+    if (prepare.code === 0 && typeof parameters.prod !== 'undefined') {
       const src = resolve(this.rootProject, this.context.location.root);
       const outDirConsole = await launcher.cwd(src).launch('tsc', '--showConfig', ...options);
       const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;

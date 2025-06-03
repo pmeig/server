@@ -5,12 +5,13 @@ import { findVaultProperties } from './helper/properties.helper';
 import { PropertiesPost } from './properties.decorators';
 import { Environment } from './environment/environment';
 import { EnvironmentConfiguration } from './environment/environment.configuration';
-import { vaultRefresh } from './bootstrap-refresh';
+import { VaultRefresh } from './refresh/vault.refresh';
 
 @Module({
   providers: [
     Bootstrap,
     PropertiesPost,
+    VaultRefresh,
     {
       provide: VaultProperties,
       useFactory: async context => {
@@ -22,19 +23,7 @@ import { vaultRefresh } from './bootstrap-refresh';
       provide: VaultClient,
       useFactory: async context => {
         const vaultProperties = await context.resolveRequired(VaultProperties);
-        const vault = await createVaultClient(vaultProperties);
-        if (vault) {
-          vaultRefresh.subscribe(value => {
-            createVaultClient(value).then(client => {
-              if (client) {
-                Object.entries(client).forEach(([key, value]) => {
-                  vault[key] = value;
-                });
-              }
-            });
-          });
-        }
-        return vault;
+        return await createVaultClient(vaultProperties);
       }
     },
     {

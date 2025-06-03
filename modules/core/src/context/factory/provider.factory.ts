@@ -2,12 +2,16 @@ import { ProviderType, Type } from '../provider/provider.type';
 import { ConstructorFactory } from './constructor.factory';
 import { Nullable } from '../../helper/type.helper';
 import { Context } from '../context.model';
+import { PromiseConditionalExecutor } from '../../decorators/conditional/conditional.decorators';
+import { retrieveConditionals } from '../../decorators/conditional/conditional.helper';
 
 export abstract class ProviderFactory<T extends any = any> {
   protected readonly constructorFactory: ConstructorFactory;
+  protected readonly conditional: PromiseConditionalExecutor;
 
   protected constructor(public readonly type: ProviderType<T>) {
     this.constructorFactory = ConstructorFactory.from(type);
+    this.conditional = retrieveConditionals(type) ?? (() => Promise.resolve(true));
   }
 
   protected buildBean(context: Context, name: string | symbol): Promise<Nullable<T>> {
@@ -23,6 +27,16 @@ export abstract class ProviderFactory<T extends any = any> {
       return this.type.name === (target as { name: string }).name ? this : undefined;
     }
     return target === this.type ? this : undefined;
+  }
+
+  isAccessible(context: Context) {
+    let type: ProviderType<T> | { name: string } = this.type;
+    if (typeof type !== 'function') {
+      type = {
+        name: this.type.toString()
+      };
+    }
+    return this.conditional(type as Type<any>, context);
   }
 }
 

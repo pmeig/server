@@ -3,5 +3,25 @@
   "compilerOptions": {
     "declaration": true,
     "declarationMap": true
+  },
+  "paths": {
+    "@server/core": [
+      "modules/core"
+    ],
+    "@server/core/*": [
+      "modules/core/src/*"
+    ],
+    "@server/vault": [
+      "modules/vault"
+    ],
+    "@server/vault/*": [
+      "modules/vault/src/*"
+    ],
+    "@server/properties": [
+      "modules/properties"
+    ],
+    "@server/properties/*": [
+      "modules/properties/src/*"
+    ]
   }
 }

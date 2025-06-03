@@ -1,14 +1,13 @@
 import {
   ClassDecorator,
+  ConstructorParameterDecorator,
   Decorator,
-  ParameterDecorator,
   FieldDecorator,
   MethodDecorator,
-  ConstructorParameterDecorator,
-  MethodParameterDecorator
+  MethodParameterDecorator,
+  ParameterDecorator
 } from './type.decorators';
 import { Type } from '../context/provider/provider.type';
-import { Component } from './components/component.decorator';
 import { getMultiMetadataReflection, reflectMultiMetadataContext } from './decorators.helper';
 
 const decorator_names = 'decorator:names';
@@ -37,29 +36,25 @@ const constructorParameterDecorator = createDecorator<ConstructorParameterDecora
 const methodParameterDecorator = createDecorator<MethodParameterDecorator>;
 
 const concatDecoratorFunction = <T extends Decorators>(...decorators: T[]) => {
-  return () => {
-    const handlers = decorators
-      .map<Decorator>(decorator => {
-        const numberArgumentsNeeded = decorator.length;
-        if (numberArgumentsNeeded === 1) {
-          return target => (decorator as ClassDecorator)(target as Type<any>);
-        }
-        if (numberArgumentsNeeded === 2) {
-          return (target, propertyKey) => (decorator as FieldDecorator)(target, propertyKey!);
-        }
-        return decorator as Decorator;
-      })
-      .reduce(
-        (acc, decorator) => (subTarget, subPropertyKey, subDescriptor) => {
-          acc(subTarget, subPropertyKey, subDescriptor);
-          decorator(subTarget, subPropertyKey, subDescriptor);
-        },
-        (_target, _propertyKey, _descriptor) => {
-          hasDecorator(_target as Type<any>, Component);
-        }
-      );
-    return handlers as T;
-  };
+  const handlers = decorators
+    .map<Decorator>(decorator => {
+      const numberArgumentsNeeded = decorator.length;
+      if (numberArgumentsNeeded === 1) {
+        return target => (decorator as ClassDecorator)(target as Type<any>);
+      }
+      if (numberArgumentsNeeded === 2) {
+        return (target, propertyKey) => (decorator as FieldDecorator)(target, propertyKey!);
+      }
+      return decorator as Decorator;
+    })
+    .reduce(
+      (acc, decorator) => (subTarget, subPropertyKey, subDescriptor) => {
+        acc(subTarget, subPropertyKey, subDescriptor);
+        decorator(subTarget, subPropertyKey, subDescriptor);
+      },
+      (_target, _propertyKey, _descriptor) => {}
+    );
+  return handlers as T;
 };
 
 export const Decorators = Object.freeze({
@@ -71,9 +66,9 @@ export const Decorators = Object.freeze({
   field: fieldDecorator,
   method: methodDecorator,
   class: classDecorator,
-  all: createDecorator,
+  all: createDecorator<Decorator>,
   concat: <T extends Decorators>(...decorators: T[]) =>
-    createDecorator('concat', concatDecoratorFunction(...decorators))
+    createDecorator<Decorator>('concat', concatDecoratorFunction(...decorators))
 });
 
 export const hasDecorator = <T extends Decorators>(bean: Type<any>, decorator: T | string) => {

@@ -1,6 +1,7 @@
 import { ApplicationContext, Component, Lifecycle, List, Module, Optional, Order } from '@server/core';
 import { randomBytes } from 'crypto';
 import { Bootstrap, Properties, PropertiesModule } from '@server/properties';
+import express from 'express';
 
 interface Named {
   name: string;
@@ -87,6 +88,11 @@ export class Props {
   lolo = 'lolo';
 }
 
+@Properties('check')
+export class CheckContinue {
+  continue = true;
+}
+
 @Module({
   providers: [Third, First]
 })
@@ -94,14 +100,33 @@ export class ThirdFourthModule {}
 
 export const main = async () => {
   const module = new ApplicationContext({
-    providers: [OverrideFirst, Second, Props],
+    providers: [Second, Props, CheckContinue, OverrideFirst],
     imports: [ThirdFourthModule, PropertiesModule]
   });
   console.log(await module.resolveRequired(First));
   console.log(await module.resolveRequired(Second));
   console.log(await module.resolve(Third));
   console.log(await module.resolve(Props));
+
   console.log(await module.resolve(Bootstrap));
+  const checkContinue = await module.resolve(CheckContinue);
+  while (checkContinue?.continue) {
+    await new Promise(resolve => setTimeout(resolve, 5000));
+  }
 };
 
-main();
+try {
+  main();
+} catch (error) {
+  console.log(error);
+}
+
+export const server = express();
+
+server.get('/', (req, res) => {
+  res.json(process.env);
+});
+
+server.listen(3000, () => {
+  console.log('Example app listening on port 3000!');
+});

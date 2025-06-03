@@ -9,7 +9,8 @@ import {
   Type
 } from '@server/core';
 import { Environment } from './environment/environment';
-import { envRefresh } from './bootstrap-refresh';
+import { propertiesRefresh } from './refresh/properties.refresh';
+import { filter } from 'rxjs';
 
 const prefix_key = 'properties:prefix';
 
@@ -33,10 +34,10 @@ export class PropertiesPost extends BeanPost {
   async postConstruct(target: ProviderType<any>, name: string | symbol, bean: any): Promise<any> {
     const prefix = getMetadataReflection<string>(prefix_key, target)!;
     const env = await this.environment;
-    const properties = await env.find<Record<string, any>>(prefix)!;
-    this.insertInRecord(bean, properties ?? {});
-    envRefresh.subscribe(value => {
-      this.insertInRecord(bean, value);
+    const properties = await env.find<Record<string, any>>(prefix, {});
+    this.insertInRecord(bean, properties);
+    propertiesRefresh.pipe(filter(env => env instanceof Environment)).subscribe(async value => {
+      this.insertInRecord(bean, await value.find(prefix, {}));
     });
     return bean;
   }
