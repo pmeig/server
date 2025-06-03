@@ -15,7 +15,7 @@ import { ConsoleCommand, launcher } from '../../launcher';
 import { glob } from 'fast-glob';
 import { BuildParameter } from './build.runner';
 import { Parameters } from '../runner.helper';
-import { updateContent } from '../../helper/io.helper';
+import { updateContent, updateJson } from '../../helper/io.helper';
 
 export abstract class Builder {
   constructor(
@@ -124,6 +124,10 @@ class LibraryBuilder extends Builder {
       const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
       const outDirPath = resolve(src, outDir);
       await this.exposeOnlyPublicApi(outDirPath);
+      updateJson(resolve(outDirPath, 'package.json'), content => {
+        content.scripts = undefined;
+        return content;
+      });
       updateContent(resolve(outDirPath, 'package.json'), content =>
         content.replaceAll('src/index.d.ts', 'index.d.ts').replaceAll('src/index.js', 'index.js')
       );

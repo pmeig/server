@@ -11,7 +11,7 @@ export type TooArray<T> = T | T[];
 export function toPromise<T>(value: OptionalAsyncSync<T>): Promise<T | undefined>;
 export function toPromise<T>(value: OptionalAsyncSync<T>, defaultValue: AsyncSync<T>): Promise<T>;
 export function toPromise<T>(value: OptionalAsyncSync<T>, defaultValue?: AsyncSync<T>): Promise<T | undefined> {
-  return Promise.resolve(value ?? defaultValue);
+  return typeof value === 'undefined' ? Promise.resolve(defaultValue) : Promise.resolve(value);
 }
 
 export const promiseFind = async <T extends any>(

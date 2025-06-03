@@ -4,13 +4,22 @@
   "description": "",
   "main": "main.ts",
   "scripts": {
-    "start": "pmeig start {NAME}"
+    "start": "vite",
+    "build": "vite build"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "{NODE}",
-    "typescript": "{TYPESCRIPT}"
+    "typescript": "{TYPESCRIPT}",
+    "@types/express": "{TYPE_EXPRESS}",
+    "reflect-metadata": "{REFLECT}",
+    "@swc/core": "{SWC_CORE}",
+    "vite": "{VITE}",
+    "vite-plugin-node": "{VITE_PLUGIN_NODE}"
+  },
+  "dependencies": {
+    "express": "{EXPRESS}"
   }
 }

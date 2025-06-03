@@ -15,6 +15,7 @@ export class Environment implements Env {
   private unwatch = () => {};
   private lastMode?: 'WATCH';
   sources: Readonly<string[]>;
+  private profiles: string[];
 
   constructor(
     context: EnvironmentConfiguration,
@@ -59,6 +60,10 @@ export class Environment implements Env {
     return this.applyDefault(item, replace as () => OptionalAsyncSync<T>);
   }
 
+  hasProfiles(...profiles: string[]) {
+    return this.profiles.some(profile => profiles.includes(profile));
+  }
+
   private async applyDefault<T>(item: OptionalAsyncSync<T>, replace: () => OptionalAsyncSync<T>): Promise<Nullable<T>> {
     if (item) {
       item = await item;
@@ -73,9 +78,9 @@ export class Environment implements Env {
   }
 
   private initProperties(context: EnvironmentConfiguration) {
-    const profiles = context.profiles;
+    this.profiles = context.profiles;
     const location = context.location;
-    const { properties, sources } = readAllProperties('app', profiles, location);
+    const { properties, sources } = readAllProperties('app', this.profiles, location);
     this.properties = EnvironmentItem.from(mergeRecord({ ...process.env }, properties));
     this.sources = Object.freeze(sources);
   }

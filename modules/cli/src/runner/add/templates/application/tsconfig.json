@@ -1,5 +1,5 @@
 {
-  "extends": "{ROLLBACK}/tsconfig.json",
+  "extends": "{ROLLBACK}/tsconfig.app.json",
   "include": ["./**/*"],
   "compilerOptions": {
     "outDir": "{ROLLBACK}/dist/runner",

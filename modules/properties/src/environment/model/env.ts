@@ -15,5 +15,6 @@ export interface Env {
     key: string,
     defaultValue?: (() => OptionalAsyncSync<T | T[]>) | OptionalAsyncSync<T | T[]>
   ): Promise<Nullable<T> | T[]>;
+  hasProfiles(...profiles: string[]): boolean;
   sources: Readonly<string[]>;
 }

@@ -15,7 +15,7 @@ import {
 } from '../../helper/io.helper';
 import { launcher } from '../../launcher';
 
-const templates = resolve(dirname(process.argv[1]), 'runner', 'generate', 'templates');
+const templates = resolve(dirname(process.argv[1]), 'runner', 'add', 'templates');
 const fileImportReference = Object.freeze({
   service: '@server/mvc',
   component: '@server/core',
@@ -140,7 +140,7 @@ class ModuleGenerator extends Generator {
   }
 
   private createSrcRoot(path: string, prefix: string) {
-    mkdirSync(dirname(path), { recursive: true });
+    mkdirSync(path, { recursive: true });
     const templatePath = resolve(templates, this.type);
     browseDir(templatePath, {
       file: file => {
@@ -190,12 +190,14 @@ class ModuleGenerator extends Generator {
       json.license = packageJson.license ?? '';
       json.packageManager = packageJson.packageManager;
       json.author = packageJson.author;
-      json.scripts.build = json.scripts.build.replace('{PMEIG_NAME}', this.name);
-      Object.keys(json.peerDependencies).forEach(dependency => {
+      Object.keys(json.peerDependencies ?? {}).forEach(dependency => {
         json.peerDependencies[dependency] = packageJson.dependencies[dependency];
       });
-      Object.keys(json.devDependencies).forEach(dependency => {
+      Object.keys(json.devDependencies ?? {}).forEach(dependency => {
         json.devDependencies[dependency] = packageJson.devDependencies[dependency];
+      });
+      Object.keys(json.dependencies ?? {}).forEach(dependency => {
+        json.dependencies[dependency] = packageJson.dependencies[dependency];
       });
       return json;
     });

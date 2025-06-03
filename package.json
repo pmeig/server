@@ -16,12 +16,17 @@
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
   "devDependencies": {
+    "@swc/core": "^1.11.29",
+    "@types/express": "^5.0.2",
     "@types/node": "^22.15.19",
     "prettier": "^3.5.3",
     "reflect-metadata": "^0.2.2",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
-    "vite-plugin-node": "^5.0.1",
-    "vite-plugin-node-polyfills": "^0.23.0"
+    "vite-plugin-node": "^5.0.1"
+  },
+  "dependencies": {
+    "@server/cli": "link:dist\\cli",
+    "express": "^5.1.0"
   }
 }

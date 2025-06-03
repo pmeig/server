@@ -44,6 +44,13 @@
         "root": "modules/properties"
       },
       "assets": []
+    },
+    "mvc": {
+      "type": "library",
+      "location": {
+        "root": "modules/mvc"
+      },
+      "assets": []
     }
   }
 }

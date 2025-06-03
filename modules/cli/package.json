@@ -7,11 +7,16 @@
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
+  "scripts": {
+    "tsc": "tsc",
+    "build": "pmeig build"
+  },
   "dependencies": {
     "fast-glob": "^3.3.3",
     "js-yaml": "^4.1.0",
     "pino": "^9.7.0",
-    "pino-pretty": "^13.0.0"
+    "pino-pretty": "^13.0.0",
+    "vite-plugin-node": "^5.0.1"
   },
   "bin": {
     "pmeig": "./index.js"

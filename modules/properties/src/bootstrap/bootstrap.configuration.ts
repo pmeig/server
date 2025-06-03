@@ -82,6 +82,7 @@ export class Bootstrap implements Env {
     }
     const { properties, sources } = readAllProperties('bootstrap', profiles, env['SOURCES_LOCATION'] ?? './resources');
     const record = mergeRecord(env.properties, properties);
+    record['APP_PROFILES'] = profiles;
     this.properties = EnvironmentItem.from(record);
     this.createVault().then(vault => (this.vault.client = vault));
     const mode = record['APP_MODE']?.toUpperCase();

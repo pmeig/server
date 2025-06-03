@@ -1,3 +1,16 @@
+export const reflectMultiUpdate = <T = any>(
+  handler: (items: T[]) => T[],
+  key: string,
+  target: object,
+  propertyKey?: string | symbol
+) => {
+  const metadata = reflectMetadataContext<T[]>(key, target, propertyKey);
+  const items = metadata.get() ?? [];
+  const updated = handler(items);
+  metadata.set(updated);
+  return updated;
+};
+
 export const reflectMultiMetadataContext = <T = any>(key: string, target: object, propertyKey?: string | symbol) => {
   const handler = reflectMetadataContext<T[]>(key, target, propertyKey);
   return {

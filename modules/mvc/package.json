@@ -1,5 +1,5 @@
 {
-  "name": "{NAME}",
+  "name": "@server/mvc",
   "version": "1.0.0-SNAPSHOT",
   "description": "",
   "scripts": {
@@ -7,16 +7,19 @@
     "build": "pmeig build"
   },
   "keywords": [],
-  "author": "{AUTHOR}",
-  "license": "{LICENSE}",
-  "peerDependencies": {
-    "@server/core": "{VERSION}"
+  "author": "",
+  "license": "ISC",
+  "peerDependencies": {},
+  "dependencies": {
+    "@server/core": "workspace:*",
+    "@server/properties": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "{NODE}",
-    "reflect-metadata": "{METADATA}",
-    "typescript": "{TYPESCRIPT}"
+    "@types/node": "^22.15.19",
+    "reflect-metadata": "^0.2.2",
+    "typescript": "^5.8.3"
   },
+
   "typings": "src/index.d.ts",
   "exports": {
     "./package.json": {
@@ -26,5 +29,6 @@
       "types": "./src/index.d.ts",
       "default": "./src/index.js"
     }
-  }
+  },
+  "packageManager": "pnpm@10.11.0"
 }

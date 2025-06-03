@@ -1,4 +1,3 @@
-import { startApplication } from './start/start.runner';
 import { buildApplication } from './build/build.runner';
 import { CliContext } from '../server/cli.context';
 import { ParameterConfiguration, RunnerParameterConfiguration } from './runner.helper';
@@ -17,7 +16,6 @@ export interface Runnable<T extends Record<string, ParameterConfiguration>> {
 }
 
 export const Runner: Readonly<Record<string, Runnable<any>>> = Object.freeze({
-  start: startApplication,
   build: buildApplication,
   add: addApplication,
   generate: addApplication,
