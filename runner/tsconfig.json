@@ -5,5 +5,5 @@
     "outDir": "./target",
   },
   "exclude": [
-    "../node_modules", "dist", "test", "**/*spec.ts", "target", "vite.config.ts"]
+    "node_modules", "dist", "test", "**/*spec.ts", "target", "vite.config.ts"]
 }

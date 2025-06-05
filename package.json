@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no runner specified\" && exit 1",
     "pmeig": "pmeig",
-    "start": "pmeig start",
+    "start": "vite",
     "build:cli": "pnpm --filter @server/cli build",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -22,8 +22,7 @@
     "prettier": "^3.5.3",
     "reflect-metadata": "^0.2.2",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5",
-    "vite-plugin-node": "^5.0.1"
+    "vite": "^6.3.5"
   },
   "dependencies": {
     "@server/cli": "link:dist\\cli",

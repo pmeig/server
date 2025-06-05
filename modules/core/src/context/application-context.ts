@@ -6,12 +6,13 @@ import { PutDesignParam } from '../decorators/global/metadata.decorators';
 import { provideLifecycle } from './lifecycle/init-handler.lifecycle';
 import { retrieveModuleContext } from './context.decorators';
 import { BeanPost } from './bean/bean.post';
-import { Decorators, hasDecorator } from '../decorators/decorator.builder';
+import { hasDecorator } from '../decorators/decorator.builder';
 import { Bootable } from './bootable';
 import { Context, DefaultValue, ModuleContext, MultiDefaultValue } from './context.model';
 import { randomUUID } from 'crypto';
 import { affectApplicationContext } from '../decorators/conditional/internal.conditional';
 import { ProviderFactory } from './factory/provider.factory';
+import { Decorator } from '../decorators/type.decorators';
 
 const DEFAULT_PROVIDERS: Record<string, Provider[]> = Object.freeze({
   [BeanPost.name]: [...provideLifecycle()]
@@ -36,7 +37,7 @@ export class ApplicationContext implements Context {
     this.init(context);
   }
 
-  async start(...args: any[]) {
+  private async start(...args: any[]) {
     const boots = await this.multiResolve(Bootable);
     return Promise.all(boots.map(value => value.run(this.contextReference, ...args)));
   }
@@ -80,7 +81,7 @@ export class ApplicationContext implements Context {
       () => []
     );
     let removeDefault = (values: T[]) => values;
-    const defaultValues = DEFAULT_PROVIDERS[token.toString()].map(defaultProvider =>
+    const defaultValues = DEFAULT_PROVIDERS[token.toString()]?.map(defaultProvider =>
       typeof defaultProvider === 'function' ? defaultProvider.name : defaultProvider.provide
     );
     if (defaultValues) {
@@ -103,7 +104,7 @@ export class ApplicationContext implements Context {
     return retrieve;
   }
 
-  async withDecorator(decorator: Decorators | string): Promise<any[]> {
+  async withDecorator(decorator: Decorator | string): Promise<any[]> {
     const beans = await Promise.all(
       Object.values(this.factories)
         .flatMap(factories => factories)

@@ -1,3 +1,5 @@
+import { Nullable } from '../helper/type.helper';
+
 export const reflectMultiUpdate = <T = any>(
   handler: (items: T[]) => T[],
   key: string,
@@ -9,6 +11,18 @@ export const reflectMultiUpdate = <T = any>(
   const updated = handler(items);
   metadata.set(updated);
   return updated;
+};
+
+export const reflectUpdate = <T>(
+  handler: (item: Nullable<T>) => Nullable<T>,
+  key: string,
+  target: object,
+  propertyKey?: string | symbol
+) => {
+  const metadata = reflectMetadataContext<T>(key, target, propertyKey);
+  const item = metadata.get();
+  const updated = handler(item);
+  metadata.set(updated);
 };
 
 export const reflectMultiMetadataContext = <T = any>(key: string, target: object, propertyKey?: string | symbol) => {
@@ -23,12 +37,14 @@ export const reflectMetadataContext = <T = any>(key: string, target: object, pro
   if (propertyKey) {
     return {
       get: () => getMetadataReflection<T>(key, target, propertyKey),
-      set: (metadata: T) => Reflect.defineMetadata(key, metadata, target, propertyKey)
+      set: (metadata: Nullable<T>) => {
+        Reflect.defineMetadata(key, metadata, target, propertyKey);
+      }
     };
   }
   return {
     get: () => getMetadataReflection<T>(key, target, propertyKey),
-    set: (metadata: T) => Reflect.defineMetadata(key, metadata, target)
+    set: (metadata: Nullable<T>) => Reflect.defineMetadata(key, metadata, target)
   };
 };
 
@@ -38,6 +54,6 @@ export const getMultiMetadataReflection = <T = any>(key: string, target: object,
 
 export const getMetadataReflection = <T = any>(key: string, target: object, propertyKey?: string | symbol) => {
   return (
-    ((propertyKey ? Reflect.getMetadata(key, target, propertyKey) : Reflect.getMetadata(key, target)) as T) ?? undefined
-  );
+    propertyKey ? Reflect.getMetadata(key, target, propertyKey) : Reflect.getMetadata(key, target)
+  ) as Nullable<T>;
 };

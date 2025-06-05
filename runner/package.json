@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@server/core": "workspace:*",
+    "@server/mvc": "workspace:*",
     "@server/properties": "workspace:*",
     "@server/vault": "workspace:*",
     "express": "^5.1.0"

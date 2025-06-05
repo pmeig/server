@@ -1,7 +1,8 @@
 import { ApplicationContext, Component, Lifecycle, List, Module, Optional, Order } from '@server/core';
 import { randomBytes } from 'crypto';
-import { Bootstrap, Properties, PropertiesModule } from '@server/properties';
-import express from 'express';
+import { Properties, PropertiesModule } from '@server/properties';
+import * as process from 'node:process';
+import { Controller, Delete, Get, MvcModule, Put } from '@server/mvc';
 
 interface Named {
   name: string;
@@ -93,40 +94,26 @@ export class CheckContinue {
   continue = true;
 }
 
+@Controller('test')
+export class TestController {
+  constructor(private readonly props: Props) {}
+
+  @Get('test')
+  test() {
+    return this.props;
+  }
+
+  @Put('test')
+  put() {}
+
+  @Delete('delete')
+  delete() {}
+}
+
 @Module({
-  providers: [Third, First]
+  imports: [PropertiesModule, MvcModule],
+  providers: [Third, First, TestController, Props]
 })
 export class ThirdFourthModule {}
 
-export const main = async () => {
-  const module = new ApplicationContext({
-    providers: [Second, Props, CheckContinue, OverrideFirst],
-    imports: [ThirdFourthModule, PropertiesModule]
-  });
-  console.log(await module.resolveRequired(First));
-  console.log(await module.resolveRequired(Second));
-  console.log(await module.resolve(Third));
-  console.log(await module.resolve(Props));
-
-  console.log(await module.resolve(Bootstrap));
-  const checkContinue = await module.resolve(CheckContinue);
-  while (checkContinue?.continue) {
-    await new Promise(resolve => setTimeout(resolve, 5000));
-  }
-};
-
-try {
-  main();
-} catch (error) {
-  console.log(error);
-}
-
-export const server = express();
-
-server.get('/', (req, res) => {
-  res.json(process.env);
-});
-
-server.listen(3000, () => {
-  console.log('Example app listening on port 3000!');
-});
+export const main = ApplicationContext.run(ThirdFourthModule, process.argv.slice(2));

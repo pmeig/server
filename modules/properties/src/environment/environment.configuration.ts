@@ -18,7 +18,7 @@ export class EnvironmentConfiguration implements EnvConfig {
 
   private static configFromBootstrap(bootstrap: Bootstrap) {
     return Promise.all([
-      bootstrap.find<string>('APP_PROFILES').then(profiles => profiles?.split(',') ?? []),
+      bootstrap.find<string>('APP_PROFILES', []),
       bootstrap.find<string>('SOURCES_LOCATION', './resources'),
       bootstrap.find<string>('APP_MODE', '')
     ]).then(([profiles, path, mode]) => {

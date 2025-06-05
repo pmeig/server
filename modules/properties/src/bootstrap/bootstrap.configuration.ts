@@ -18,6 +18,7 @@ export class Bootstrap implements Env {
     client: undefined as Nullable<VaultClient>,
     properties: undefined as Nullable<VaultProperties>
   };
+  private profiles: string[] = [];
 
   constructor() {
     const { env, sources } = this.refreshSources();
@@ -27,6 +28,10 @@ export class Bootstrap implements Env {
     propertiesRefresh.pipe(filter(env => env === this)).subscribe(() => {
       this.refreshSources();
     });
+  }
+
+  hasProfiles(...profiles: string[]): boolean {
+    return this.profiles.some(profile => profiles.includes(profile));
   }
 
   async get<T extends TooArray<Record<string, any> | number | string | boolean>>(key: string) {
@@ -83,6 +88,7 @@ export class Bootstrap implements Env {
     const { properties, sources } = readAllProperties('bootstrap', profiles, env['SOURCES_LOCATION'] ?? './resources');
     const record = mergeRecord(env.properties, properties);
     record['APP_PROFILES'] = profiles;
+    this.profiles = profiles;
     this.properties = EnvironmentItem.from(record);
     this.createVault().then(vault => (this.vault.client = vault));
     const mode = record['APP_MODE']?.toUpperCase();

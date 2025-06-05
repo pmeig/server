@@ -1,31 +1,34 @@
-import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import { VitePluginNode } from 'vite-plugin-node';
 
-const lib = resolve(__dirname, '../modules');
-
 export default defineConfig({
   build: {
-    rollupOptions: {
-      external: ['process']
-    },
-    watch: {
-      include: [`${lib}/**/src/**`],
-      chokidar: {}
-    }
+    sourcemap: true,
+    minify: true
   },
-  resolve: {
-    alias: {
-      '@server/core': resolve(lib, 'core')
-    }
+  server: {
+    host: 'localhost',
+    port: 3000,
+    strictPort: true,
+    hmr: true
   },
+  appType: 'custom',
   plugins: [
     ...VitePluginNode({
-      initAppOnBoot: true,
-      adapter: 'marble',
-      appPath: './main.ts',
+      appPath: 'main.ts',
+      tsCompiler: 'swc',
       exportName: 'server',
-      tsCompiler: 'swc'
+      initAppOnBoot: true,
+      adapter: 'express'
+    }).map(value => {
+      value.configureServer = server => {
+        server.httpServer?.once('listening', async () => {
+          const module = await server.ssrLoadModule('main.ts');
+          await server.close();
+          await module['main'];
+        });
+      };
+      return value;
     })
   ]
 });
