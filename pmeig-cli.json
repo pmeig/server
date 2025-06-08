@@ -46,10 +46,10 @@
       },
       "assets": []
     },
-    "mvc": {
+    "rest": {
       "type": "library",
       "location": {
-        "root": "modules/mvc"
+        "root": "modules/rest"
       },
       "assets": []
     },

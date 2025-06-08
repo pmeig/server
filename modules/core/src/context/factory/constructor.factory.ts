@@ -2,7 +2,7 @@ import { retrieveElementTypes, retrieveOptionals } from '../../decorators/global
 import { retrieveParameterTypes } from '../../decorators/global/metadata.decorators';
 import { ProviderToken, ProviderType, Type } from '../provider/provider.type';
 import { BeanPost } from '../bean/bean.post';
-import { AsyncSync } from '../../helper/type.helper';
+import { AsyncSync, toPromise } from '../../helper/type.helper';
 import { Context } from '../context.model';
 import { putRequester } from '../../decorators/conditional/internal.conditional';
 
@@ -45,7 +45,7 @@ export abstract class ConstructorFactory {
       const postConstructors = await context.multiResolve(BeanPost, []);
       for (const postConstructor of postConstructors) {
         if (postConstructor.isHandler(target, name, bean)) {
-          bean = (await Promise.resolve(postConstructor.postConstruct(target, name, bean))) as T;
+          bean = (await toPromise(postConstructor.postConstruct(target, name, bean))) as T;
         }
       }
     }

@@ -29,6 +29,12 @@
       ],
       "@server/properties/*": [
         "modules/properties/src/*"
+      ],
+      "@server/rest": [
+        "modules/rest"
+      ],
+      "@server/rest/*": [
+        "modules/rest/src/*"
       ]
     }
   }

@@ -3,6 +3,7 @@ import express, { Express, Request, Response, Router } from 'express';
 import { RestMapper, retrieveRestConfig } from './rest';
 import { Controller } from './rest.decorators';
 import { Server } from 'http';
+import { RestMiddleware, toExpressMiddleware } from './rest.middleware';
 
 @Configuration
 @Internal
@@ -19,7 +20,17 @@ export class RestBootable extends Bootable {
   }> {
     this.server.use(express.json());
     this.server.use(express.urlencoded({ extended: true }));
-    await this.configurePath(context);
+    const middlewares = await context.multiResolve<RestMiddleware>(RestMiddleware.name);
+    await this.configurePath(
+      context,
+      middlewares.filter(value => {
+        if (value.global) {
+          this.server.use((req, res, next) => value.use(req, res, next));
+          return false;
+        }
+        return true;
+      })
+    );
     return new Promise((resolve, reject) => {
       this.runner = this.server.listen(3000, error => {
         if (error) {
@@ -38,31 +49,45 @@ export class RestBootable extends Bootable {
     this.runner.close();
   }
 
-  private async configurePath(context: Context) {
+  private async configurePath(context: Context, middlewares: RestMiddleware[]) {
     const controllers = await context.withDecorator(Controller.name);
     controllers.forEach(controller => {
       const prototype = Object.getPrototypeOf(controller);
       const mapper = retrieveRestConfig(prototype.constructor);
       const router = Router();
-
+      const parent = '/' + (mapper?.path ?? '');
       Object.getOwnPropertyNames(prototype)
         .filter(key => key !== 'constructor')
         .forEach(key => {
           const config = retrieveRestConfig(controller, key);
           if (config) {
-            this.applyPath(config, router, controller[key].bind(controller));
+            this.applyPath(
+              config,
+              router,
+              middlewares.filter(
+                middleware => middleware.accept(parent + (config.path ? '/' + config.path : ''), config.method),
+                controller[key]
+              ),
+              controller[key].bind(controller)
+            );
           }
         });
-      this.server.use('/' + (mapper?.path ?? ''), router);
+      this.server.use(parent, router);
     });
   }
 
-  private applyPath(config: RestMapper, router: Router, controllerElement: Function) {
-    router[config.method.toLowerCase()]('/' + config.path, async (request: Request, response: Response) => {
-      const value = await toPromise(controllerElement());
-      if (value) {
-        response.json(value);
+  private applyPath(config: RestMapper, router: Router, middlewares: RestMiddleware[], controllerElement: Function) {
+    router[config.method.toLowerCase()](
+      '/' + config.path,
+      ...middlewares.map(value => toExpressMiddleware(value)),
+      async (request: Request, response: Response) => {
+        const value = await toPromise(controllerElement());
+        if (typeof value !== 'undefined') {
+          response.json(value);
+        } else {
+          response.status(204).send();
+        }
       }
-    });
+    );
   }
 }

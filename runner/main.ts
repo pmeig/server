@@ -1,7 +1,7 @@
 import { ApplicationContext, Component, Lifecycle, List, Module, Optional, Order, Scope } from '@server/core';
 import { randomBytes } from 'crypto';
 import { Properties, PropertiesModule } from '@server/properties';
-import { Controller, Delete, Get, MvcModule, Put } from '@server/mvc';
+import { Controller, Delete, Get, RestModule, Put } from '@server/rest';
 
 interface Named {
   name: string;
@@ -93,22 +93,23 @@ export class CheckContinue {
   continue = true;
 }
 
-@Properties('check')
+@Component
 @Scope('request')
-export class CheckBreak {
-  break = '';
+export class ScopedRequest {
+  message = 0;
 }
 
 @Controller('test')
 export class TestController {
   constructor(
     private readonly props: Props,
-    private readonly context: ApplicationContext
+    private readonly context: ApplicationContext,
+    private readonly testScopedRequest: ScopedRequest
   ) {}
 
   @Get('test')
   async test() {
-    return 'testing';
+    return this.testScopedRequest.message++;
   }
 
   @Put('test')
@@ -119,8 +120,8 @@ export class TestController {
 }
 
 @Module({
-  imports: [PropertiesModule, MvcModule],
-  providers: [Third, First, TestController, Props]
+  imports: [PropertiesModule, RestModule],
+  providers: [Third, First, TestController, Props, ScopedRequest]
 })
 export class ThirdFourthModule {}
 

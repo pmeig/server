@@ -1,5 +1,5 @@
 {
-  "name": "@server/mvc",
+  "name": "@server/rest",
   "version": "1.0.0-SNAPSHOT",
   "description": "",
   "scripts": {
