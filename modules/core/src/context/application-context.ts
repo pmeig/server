@@ -10,9 +10,10 @@ import { hasDecorator } from '../decorators/decorator.builder';
 import { Bootable } from './bootable';
 import { Context, DefaultValue, ModuleContext, MultiDefaultValue } from './context.model';
 import { randomUUID } from 'crypto';
-import { affectApplicationContext } from '../decorators/conditional/internal.conditional';
+import { affectApplicationContext, putRequester } from '../decorators/conditional/internal.conditional';
 import { ProviderFactory } from './factory/provider.factory';
 import { Decorator } from '../decorators/type.decorators';
+import { PMEIG_ADMIN_TOKEN } from '../decorators/conditional/conditional.helper';
 
 const DEFAULT_PROVIDERS: Record<string, Provider[]> = Object.freeze({
   [BeanPost.name]: [...provideLifecycle()]
@@ -20,7 +21,7 @@ const DEFAULT_PROVIDERS: Record<string, Provider[]> = Object.freeze({
 
 export class ApplicationContext implements Context {
   private factories: Record<string | symbol, ComponentContext[]> = {};
-  private readonly children: Context[] = [];
+  private children: Context[] = [];
   readonly id: string = randomUUID();
 
   static run(boot: Type<any> | ModuleContext, ...args: any[]) {
@@ -31,15 +32,32 @@ export class ApplicationContext implements Context {
   }
 
   constructor(
-    context: ModuleContext,
+    private readonly configuration: ModuleContext,
     private readonly contextReference: Context = this
   ) {
-    this.init(context);
+    this.init(configuration);
   }
 
-  private async start(...args: any[]) {
+  async start(...args: any[]) {
+    putRequester(PMEIG_ADMIN_TOKEN);
     const boots = await this.multiResolve(Bootable);
-    return Promise.all(boots.map(value => value.run(this.contextReference, ...args)));
+    putRequester();
+    return Promise.all(boots.map(value => value.run(this.contextReference, ...args))).then(() => this);
+  }
+
+  async restart() {
+    await this.close();
+    this.init(this.configuration);
+    return this.start();
+  }
+
+  async close() {
+    putRequester(PMEIG_ADMIN_TOKEN);
+    const beans = await this.multiResolve(Bootable, []);
+    putRequester();
+    for (const bean of beans) {
+      bean.close(this);
+    }
   }
 
   async has(key: any): Promise<boolean> {
@@ -48,10 +66,7 @@ export class ApplicationContext implements Context {
     return factories.length > 0;
   }
 
-  async resolve<T>(
-    key: ProviderToken<T>,
-    defaultValue: Nullable<T> | Promise<Nullable<T>> | (() => Nullable<T> | Promise<T>) = undefined
-  ): Promise<Nullable<T>> {
+  async resolve<T>(key: ProviderToken<T>, defaultValue: DefaultValue<T> = undefined): Promise<Nullable<T>> {
     const token = this.extractToken(key);
     if ([ApplicationContext.name, 'Context'].includes(token.toString())) {
       return this as unknown as T;
@@ -62,23 +77,20 @@ export class ApplicationContext implements Context {
   }
 
   async resolveRequired<T>(key: ProviderToken<T>): Promise<T> {
-    const retrieve = await this.resolve(key);
-    if (!retrieve) throw new Error(`No provider found for ${this.extractToken(key).toString()}`);
-    return retrieve;
+    const resolved = await this.resolve(key);
+    if (!resolved) throw new Error(`No provider found for ${this.extractToken(key).toString()}`);
+    return resolved;
   }
 
-  async multiResolve<T>(
-    key: ProviderToken<T>,
-    defaultValue: T[] | Promise<T[]> | (() => T[] | Promise<T[]>) = []
-  ): Promise<T[]> {
+  async multiResolve<T>(key: ProviderToken<T>, defaultValue: MultiDefaultValue<T> = []): Promise<T[]> {
     const token = this.extractToken(key);
     if ([ApplicationContext.name, 'Context'].includes(token.toString())) return [this as unknown as T];
     const factories = await this.findFactories(token);
-    const beans = this.applyDefault<T>(
-      Promise.all(factories.map(factory => factory.build(this.contextReference, token))).then(build =>
-        build.filter(test => !!test)
+    const beans = await this.applyDefault<T>(
+      Promise.all(factories.map(factory => factory.build(this.contextReference, token))).then(resolved =>
+        resolved.filter(bean => !!bean)
       ),
-      () => []
+      defaultValue
     );
     let removeDefault = (values: T[]) => values;
     const defaultValues = DEFAULT_PROVIDERS[token.toString()]?.map(defaultProvider =>
@@ -88,14 +100,9 @@ export class ApplicationContext implements Context {
       removeDefault = (values: T[]) =>
         values.filter(value => !defaultValues.includes(Object.getPrototypeOf(value).constructor.name));
     }
-    return this.applyDefault(
-      beans.then(async values => {
-        const others = await Promise.all(this.children.map(module => module.multiResolve<T>(token, () => [])));
-        const all = removeDefault(others.flatMap(value => value));
-        return values.concat(all);
-      }),
-      defaultValue
-    );
+    const others = await Promise.all(this.children.map(module => module.multiResolve<T>(token, [])));
+    const all = removeDefault(others.flat());
+    return this.applyDefault(Promise.resolve(beans.concat(all)), defaultValue);
   }
 
   async multiResolveRequired<T>(key: ProviderToken<T>): Promise<T[]> {
@@ -134,8 +141,11 @@ export class ApplicationContext implements Context {
   }
 
   private init(context: ModuleContext) {
-    this.initProviders(context.providers ?? []);
-    this.initImports(context.imports ?? []);
+    const instance = { ...context };
+    this.factories = {};
+    this.children = [];
+    this.initProviders(instance.providers ?? []);
+    this.initImports(instance.imports ?? []);
   }
 
   private initImports(imports: Type<any>[]) {
@@ -227,11 +237,8 @@ export class ApplicationContext implements Context {
     if (injectable) {
       bean = await injectable;
     }
-    if ((!bean || (Array.isArray(bean) && bean.length === 0)) && defaultValue) {
-      if (typeof defaultValue !== 'function') {
-        defaultValue = () => defaultValue as Nullable<T> | Promise<Nullable<T>>;
-      }
-      return (defaultValue as () => T)();
+    if (defaultValue && (typeof bean === 'undefined' || (Array.isArray(bean) && bean!.length === 0))) {
+      return typeof defaultValue === 'function' ? (defaultValue as () => Promise<T | Nullable<T>>)() : defaultValue;
     }
     return bean;
   }

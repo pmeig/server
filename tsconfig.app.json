@@ -6,6 +6,12 @@
     "declarationMap": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
+      "@pmeig/vite-plugin": [
+        "modules/vite-plugin-pmeig"
+      ],
+      "@pmeig/vite-plugin/*": [
+        "modules/vite-plugin-pmeig/src/*"
+      ],
       "@server/core": [
         "modules/core"
       ],

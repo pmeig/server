@@ -14,7 +14,8 @@
         "root": "modules/cli"
       },
       "assets": [
-        "**/templates/**"
+        "**/templates/**",
+        "target/plugins/**"
       ]
     },
     "core": {
@@ -49,6 +50,13 @@
       "type": "library",
       "location": {
         "root": "modules/mvc"
+      },
+      "assets": []
+    },
+    "vite-plugin-pmeig": {
+      "type": "library",
+      "location": {
+        "root": "modules/vite-plugin-pmeig"
       },
       "assets": []
     }

@@ -1,4 +1,4 @@
-import { ProviderType, Type } from '../provider/provider.type';
+import { ProviderType, ScopeType, Type } from '../provider/provider.type';
 import { ConstructorFactory } from './constructor.factory';
 import { Nullable } from '../../helper/type.helper';
 import { Context } from '../context.model';
@@ -9,7 +9,10 @@ export abstract class ProviderFactory<T extends any = any> {
   protected readonly constructorFactory: ConstructorFactory;
   protected readonly conditional: PromiseConditionalExecutor;
 
-  protected constructor(public readonly type: ProviderType<T>) {
+  protected constructor(
+    public readonly type: ProviderType<T>,
+    public readonly scope: ScopeType
+  ) {
     this.constructorFactory = ConstructorFactory.from(type);
     this.conditional = retrieveConditionals(type) ?? (() => Promise.resolve(true));
   }
@@ -42,20 +45,20 @@ export abstract class ProviderFactory<T extends any = any> {
 
 export class RequestProviderFactory<T extends any = any> extends ProviderFactory<T> {
   constructor(type: ProviderType<T>) {
-    super(type);
+    super(type, 'request');
   }
 }
 
 export class TransientProviderFactory<T extends any = any> extends ProviderFactory<T> {
   constructor(type: ProviderType<T>) {
-    super(type);
+    super(type, 'transient');
   }
 }
 
 export class SingletonProviderFactory<T extends any = any> extends ProviderFactory<T> {
   private singleton?: T;
   constructor(type: ProviderType<T>) {
-    super(type);
+    super(type, 'singleton');
   }
 
   async buildBean(context: Context, name: string | symbol): Promise<Nullable<T>> {

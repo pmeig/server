@@ -50,7 +50,12 @@ export abstract class Builder {
     const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
     const outDirPath = resolve(root, outDir);
     this.removeDist(outDirPath);
-    const command = await executor.launch('tsc', ...options);
+    let command;
+    try {
+      command = await executor.launch('tsc', ...options);
+    } catch (error) {
+      throw error;
+    }
     let result = Promise.resolve(command);
     if (command.code === 0 && this.context.assets.length > 0) {
       const copies = this.context.assets.map(asset => {

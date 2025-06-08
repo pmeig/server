@@ -1,6 +1,7 @@
 import { findContext } from './server/cli.context';
 import { Runner } from './runner/runner';
 import { extractParameters } from './runner/runner.helper';
+import { exit } from 'node:process';
 
 const main = async (params: string[]) => {
   const request = params.shift();
@@ -28,4 +29,4 @@ const main = async (params: string[]) => {
   }
 };
 
-(async () => await main(process.argv.slice(2)))();
+(async () => await main(process.argv.slice(2)).then(() => exit(0)))();

@@ -2,9 +2,11 @@
   "extends": "../../tsconfig.lib.json",
   "compilerOptions": {
     "outDir": "../../dist/cli",
+    "skipDefaultLibCheck": true,
+    "skipLibCheck": true,
     "declaration": false,
     "declarationMap": false
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts", "**/templates/**"]
 }

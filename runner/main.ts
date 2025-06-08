@@ -1,7 +1,6 @@
-import { ApplicationContext, Component, Lifecycle, List, Module, Optional, Order } from '@server/core';
+import { ApplicationContext, Component, Lifecycle, List, Module, Optional, Order, Scope } from '@server/core';
 import { randomBytes } from 'crypto';
 import { Properties, PropertiesModule } from '@server/properties';
-import * as process from 'node:process';
 import { Controller, Delete, Get, MvcModule, Put } from '@server/mvc';
 
 interface Named {
@@ -94,13 +93,22 @@ export class CheckContinue {
   continue = true;
 }
 
+@Properties('check')
+@Scope('request')
+export class CheckBreak {
+  break = '';
+}
+
 @Controller('test')
 export class TestController {
-  constructor(private readonly props: Props) {}
+  constructor(
+    private readonly props: Props,
+    private readonly context: ApplicationContext
+  ) {}
 
   @Get('test')
-  test() {
-    return this.props;
+  async test() {
+    return 'testing';
   }
 
   @Put('test')
@@ -116,4 +124,4 @@ export class TestController {
 })
 export class ThirdFourthModule {}
 
-export const main = ApplicationContext.run(ThirdFourthModule, process.argv.slice(2));
+export const server = ApplicationContext.run(ThirdFourthModule, process.argv.slice(2));

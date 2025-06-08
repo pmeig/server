@@ -1,20 +1,50 @@
-import { Bootable, Configuration, Context } from '@server/core';
+import { Bootable, Configuration, Context, Internal, toPromise } from '@server/core';
 import express, { Express, Request, Response, Router } from 'express';
 import { RestMapper, retrieveRestConfig } from './rest';
 import { Controller } from './rest.decorators';
+import { Server } from 'http';
 
 @Configuration
+@Internal
 export class RestBootable extends Bootable {
-  protected server: Express = express();
+  private readonly server: Express = express();
+  private runner: Server;
 
-  async run(context: Context, ...args: any[]): Promise<void> {
+  async run(
+    context: Context,
+    ...args: any[]
+  ): Promise<{
+    runner: Server;
+    port: number;
+  }> {
     this.server.use(express.json());
     this.server.use(express.urlencoded({ extended: true }));
+    await this.configurePath(context);
+    return new Promise((resolve, reject) => {
+      this.runner = this.server.listen(3000, error => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve({
+            runner: this.runner,
+            port: 3000
+          });
+        }
+      });
+    });
+  }
+
+  close(context: Context): Promise<void> | void {
+    this.runner.close();
+  }
+
+  private async configurePath(context: Context) {
     const controllers = await context.withDecorator(Controller.name);
     controllers.forEach(controller => {
       const prototype = Object.getPrototypeOf(controller);
       const mapper = retrieveRestConfig(prototype.constructor);
       const router = Router();
+
       Object.getOwnPropertyNames(prototype)
         .filter(key => key !== 'constructor')
         .forEach(key => {
@@ -25,15 +55,11 @@ export class RestBootable extends Bootable {
         });
       this.server.use('/' + (mapper?.path ?? ''), router);
     });
-    return new Promise(resolve => {
-      const server = this.server.listen(3000, () => console.log('Server started on port 3000'));
-      server.on('close', () => resolve());
-    });
   }
 
   private applyPath(config: RestMapper, router: Router, controllerElement: Function) {
     router[config.method.toLowerCase()]('/' + config.path, async (request: Request, response: Response) => {
-      const value = await Promise.resolve(controllerElement());
+      const value = await toPromise(controllerElement());
       if (value) {
         response.json(value);
       }
