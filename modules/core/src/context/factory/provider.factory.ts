@@ -4,9 +4,10 @@ import { Nullable } from '../../helper/type.helper';
 import { Context } from '../context.model';
 import { PromiseConditionalExecutor } from '../../decorators/conditional/conditional.decorators';
 import { retrieveConditionals } from '../../decorators/conditional/conditional.helper';
+import { UUID } from 'crypto';
 
 export abstract class ProviderFactory<T extends any = any> {
-  protected readonly constructorFactory: ConstructorFactory;
+  protected constructorFactory: ConstructorFactory;
   protected readonly conditional: PromiseConditionalExecutor;
 
   protected constructor(
@@ -44,8 +45,31 @@ export abstract class ProviderFactory<T extends any = any> {
 }
 
 export class RequestProviderFactory<T extends any = any> extends ProviderFactory<T> {
+  private requests: Record<UUID, Nullable<T>> = {};
+  private context: Context;
+  private name: string | symbol;
   constructor(type: ProviderType<T>) {
     super(type, 'request');
+  }
+
+  getInstance(uuid: UUID): Nullable<T> {
+    return this.requests[uuid];
+  }
+
+  async createInstance(uuid: UUID): Promise<void> {
+    const instance = this.requests[uuid];
+    if (!instance) {
+      const factory = this.constructorFactory;
+      const builder = new Proxy(factory, {
+        get(target: ConstructorFactory, p: string | symbol, receiver: any): any {
+          if (p === 'postConstruct') {
+            return (_target: ProviderType<T>, _context: Context, bean: any, _name: string | symbol) => bean;
+          }
+          return Reflect.get(target, p, receiver);
+        }
+      });
+      this.requests[uuid] = await builder.build(this.type, this.context, this.name);
+    }
   }
 }
 

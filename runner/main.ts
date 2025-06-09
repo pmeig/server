@@ -97,6 +97,14 @@ export class CheckContinue {
 @Scope('request')
 export class ScopedRequest {
   message = 0;
+  sub = {
+    testing: 10
+  };
+}
+
+@Component
+export class TestService {
+  constructor(public readonly test: ScopedRequest) {}
 }
 
 @Controller('test')
@@ -104,12 +112,15 @@ export class TestController {
   constructor(
     private readonly props: Props,
     private readonly context: ApplicationContext,
-    private readonly testScopedRequest: ScopedRequest
+    private readonly testScopedRequest: ScopedRequest,
+    private readonly testService: TestService
   ) {}
 
   @Get('test')
   async test() {
-    return this.testScopedRequest.message++;
+    this.testService.test.sub.testing++;
+    this.testService.test.message += 5;
+    return this.testScopedRequest.message;
   }
 
   @Put('test')
@@ -121,7 +132,7 @@ export class TestController {
 
 @Module({
   imports: [PropertiesModule, RestModule],
-  providers: [Third, First, TestController, Props, ScopedRequest]
+  providers: [Third, First, TestController, Props, ScopedRequest, TestService]
 })
 export class ThirdFourthModule {}
 
