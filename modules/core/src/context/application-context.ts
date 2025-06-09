@@ -133,7 +133,7 @@ export class ApplicationContext implements Context {
   private async findFactories(token: string | symbol) {
     const factories: ProviderFactory[] = [];
     for (const factory of (this.factories[token] ?? []).map(factory => factory.factory)) {
-      if (await (factory?.isAccessible(this) ?? Promise.resolve(false))) {
+      if ((await factory?.isAccessible(this)) ?? false) {
         factories.push(factory!);
       }
     }

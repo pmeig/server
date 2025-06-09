@@ -29,6 +29,7 @@ export class Launcher {
     private readonly workspace = process.cwd(),
     private readonly printCommand = false
   ) {
+    // noinspection JSDeprecatedSymbols
     const separator = process.platform === 'win32' ? ';' : ':';
     this.env = {
       ...process.env,

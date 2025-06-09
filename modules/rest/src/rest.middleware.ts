@@ -1,5 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { Method } from './rest.type';
+import { AsyncSync } from '@server/core';
+
+export type ExpressMiddleware = (req: Request, res: Response, next: NextFunction) => AsyncSync<void>;
 
 export const toExpressMiddleware =
   async (middleware: RestMiddleware) => async (request: Request, response: Response, next: NextFunction) => {

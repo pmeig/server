@@ -23,7 +23,7 @@ export class RequestFactoryScoped extends BeanPost {
     super();
   }
 
-  isHandler(target: ProviderType<any>, name: string | symbol, bean: any): boolean {
+  isHandler(target: ProviderType<any>): boolean {
     return retrieveContext(target).factory?.scope === 'request';
   }
 

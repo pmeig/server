@@ -41,7 +41,7 @@ export class EnvironmentRef extends EnvironmentItem<number | boolean | undefined
     super(value);
   }
 
-  get<T>(properties: Env, vaultClient?: VaultClient): Promise<T> {
+  get<T>(_properties: Env, _vaultClient?: VaultClient): Promise<T> {
     return Promise.resolve(this.value as T);
   }
 }

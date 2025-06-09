@@ -27,7 +27,7 @@ export class PropertiesPost extends BeanPost {
     super();
   }
 
-  isHandler(target: ProviderType<any>, name: string | symbol, bean: any): boolean {
+  isHandler(target: ProviderType<any>, _name: string | symbol, _bean: any): boolean {
     return hasDecorator(target as Type<any>, Properties.name);
   }
 

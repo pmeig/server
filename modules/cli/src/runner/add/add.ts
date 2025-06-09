@@ -90,7 +90,7 @@ class NoopGenerator extends Generator {
 }
 
 class FileGenerator extends Generator {
-  protected generate(context: CliContext, path: string, prefix: string, ...params: string[]): Promise<void> {
+  protected generate(_context: CliContext, path: string, _prefix: string, ..._params: string[]): Promise<void> {
     const nameFile = (!this.name.includes('-') ? this.toTildeName() : this.name).toLowerCase();
     const file = resolve(dirname(path), `${nameFile}.${this.type}.ts`);
     const name = this.name
@@ -130,7 +130,7 @@ class FileGenerator extends Generator {
 }
 
 class ModuleGenerator extends Generator {
-  protected generate(context: CliContext, path: string, prefix: string, ...params: string[]): Promise<void> {
+  protected generate(context: CliContext, path: string, prefix: string, ..._params: string[]): Promise<void> {
     this.createSrcRoot(path, prefix);
     this.updateConfigWithNewModule(context, path);
     return launcher

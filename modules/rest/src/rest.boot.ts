@@ -1,6 +1,6 @@
 import { Bootable, Configuration, Context, Internal, toPromise } from '@server/core';
-import express, { Express, Request, Response, Router } from 'express';
-import { RestMapper, retrieveRestConfig } from './rest';
+import express, { Express, NextFunction, Request, RequestHandler, Response, Router } from 'express';
+import { RestMapper, retrieveMiddleware, retrieveRestConfig } from './rest';
 import { Controller } from './rest.decorators';
 import { Server } from 'http';
 import { RestMiddleware, toExpressMiddleware } from './rest.middleware';
@@ -11,10 +11,7 @@ export class RestBootable extends Bootable {
   private readonly server: Express = express();
   private runner: Server;
 
-  async run(
-    context: Context,
-    ...args: any[]
-  ): Promise<{
+  async run(context: Context): Promise<{
     runner: Server;
     port: number;
   }> {
@@ -45,7 +42,7 @@ export class RestBootable extends Bootable {
     });
   }
 
-  close(context: Context): Promise<void> | void {
+  close(): Promise<void> | void {
     this.runner.close();
   }
 
@@ -61,18 +58,29 @@ export class RestBootable extends Bootable {
         .forEach(key => {
           const config = retrieveRestConfig(controller, key);
           if (config) {
-            this.applyPath(
-              config,
-              router,
-              middlewares.filter(
-                middleware => middleware.accept(parent + (config.path ? '/' + config.path : ''), config.method),
-                controller[key]
-              ),
-              controller[key].bind(controller)
+            const middleware = retrieveMiddleware(controller, key);
+            const used = middlewares.filter(
+              middleware => middleware.accept(parent + (config.path ? '/' + config.path : ''), config.method),
+              controller[key]
             );
+            if (middleware) {
+              used.push(
+                new (class extends RestMiddleware {
+                  use(request: Request, response: Response, next: NextFunction): void | Promise<void> {
+                    return middleware(request, response, next);
+                  }
+                })()
+              );
+            }
+            this.applyPath(config, router, used, controller[key].bind(controller));
           }
         });
-      this.server.use(parent, router);
+      const used: RequestHandler[] = [router];
+      const globalMiddleware = retrieveMiddleware(prototype.constructor);
+      if (globalMiddleware) {
+        used.unshift(globalMiddleware!);
+      }
+      this.server.use(parent, ...used);
     });
   }
 
@@ -80,7 +88,7 @@ export class RestBootable extends Bootable {
     router[config.method.toLowerCase()](
       '/' + config.path,
       ...middlewares.map(value => toExpressMiddleware(value)),
-      async (request: Request, response: Response) => {
+      async (_: Request, response: Response) => {
         const value = await toPromise(controllerElement());
         if (typeof value !== 'undefined') {
           response.json(value);

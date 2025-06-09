@@ -9,9 +9,9 @@ import { findVaultProperties } from '../helper/properties.helper';
 @Configuration
 export class VaultRefresh extends BeanPost<VaultClient | VaultProperties> {
   isHandler(
-    target: ProviderType<VaultClient | VaultProperties>,
+    _target: ProviderType<VaultClient | VaultProperties>,
     name: string | symbol,
-    bean: VaultClient | VaultProperties
+    _bean: VaultClient | VaultProperties
   ): boolean {
     return [VaultProperties.name, VaultClient.name].includes(name.toString());
   }

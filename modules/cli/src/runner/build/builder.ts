@@ -104,7 +104,7 @@ class ApplicationBuilder extends Builder {
 }
 
 class NoopBuilder extends Builder {
-  async build(parameters: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
+  async build(_parameters: Parameters<BuildParameter>['cli'], ..._options: string[]): Promise<ConsoleCommand> {
     return Promise.resolve({
       error: [],
       success: [],
