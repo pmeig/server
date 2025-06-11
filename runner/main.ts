@@ -1,7 +1,8 @@
 import { ApplicationContext, Component, Lifecycle, List, Module, Optional, Order, Scope } from '@server/core';
 import { randomBytes } from 'crypto';
 import { Properties, PropertiesModule } from '@server/properties';
-import { Controller, Delete, Get, RestModule, Put } from '@server/rest';
+import { Controller, Delete, Get, Params, Put, Req, Res, RestModule } from '@server/rest';
+import * as express from 'express';
 
 interface Named {
   name: string;
@@ -116,8 +117,8 @@ export class TestController {
     private readonly testService: TestService
   ) {}
 
-  @Get('test')
-  async test() {
+  @Get(':id/:number')
+  async test(@Req request: express.Request, @Res response: express.Response, @Params params: Record<string, any>) {
     this.testService.test.sub.testing++;
     this.testService.test.message += 5;
     return this.testScopedRequest.message;

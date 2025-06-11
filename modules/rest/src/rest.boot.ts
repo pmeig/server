@@ -1,15 +1,20 @@
 import { Bootable, Configuration, Context, Internal, toPromise } from '@server/core';
 import express, { Express, NextFunction, Request, RequestHandler, Response, Router } from 'express';
 import { RestMapper, retrieveMiddleware, retrieveRestConfig } from './rest';
-import { Controller } from './rest.decorators';
+import { Controller } from './decorators/rest.decorators';
 import { Server } from 'http';
 import { RestMiddleware, toExpressMiddleware } from './rest.middleware';
+import { ExpressResolver } from './decorators/express.resolver';
 
 @Configuration
 @Internal
 export class RestBootable extends Bootable {
   private readonly server: Express = express();
   private runner: Server;
+
+  constructor(private readonly resolver: ExpressResolver) {
+    super();
+  }
 
   async run(context: Context): Promise<{
     runner: Server;
@@ -72,7 +77,7 @@ export class RestBootable extends Bootable {
                 })()
               );
             }
-            this.applyPath(config, router, used, controller[key].bind(controller));
+            this.applyPath(config, router, used, controller, key);
           }
         });
       const used: RequestHandler[] = [router];
@@ -84,12 +89,20 @@ export class RestBootable extends Bootable {
     });
   }
 
-  private applyPath(config: RestMapper, router: Router, middlewares: RestMiddleware[], controllerElement: Function) {
+  private applyPath(
+    config: RestMapper,
+    router: Router,
+    middlewares: RestMiddleware[],
+    controller: object,
+    key: string | symbol
+  ) {
+    const controllerElement = controller[key].bind(controller);
+    const params = this.resolver.resolve(controller, key);
     router[config.method.toLowerCase()](
       '/' + config.path,
       ...middlewares.map(value => toExpressMiddleware(value)),
-      async (_: Request, response: Response) => {
-        const value = await toPromise(controllerElement());
+      async (request: Request, response: Response) => {
+        const value = await toPromise(controllerElement(...params(request, response)));
         if (typeof value !== 'undefined') {
           response.json(value);
         } else {

@@ -2,6 +2,7 @@ import {
   AsyncSync,
   BeanPost,
   Configuration,
+  Internal,
   ProviderType,
   RequestProviderFactory,
   retrieveContext
@@ -11,13 +12,14 @@ import { NextFunction, Request, Response } from 'express';
 import { randomUUID, UUID } from 'crypto';
 import { AsyncLocalStorage } from 'async_hooks';
 
-const requestStorage = new AsyncLocalStorage();
+export const requestStorage = new AsyncLocalStorage();
 const factories: {
   factory: RequestProviderFactory;
   name: string;
 }[] = [];
 
 @Configuration
+@Internal
 export class RequestFactoryScoped extends BeanPost {
   constructor() {
     super();
@@ -63,6 +65,7 @@ export class RequestFactoryScoped extends BeanPost {
 }
 
 @Configuration
+@Internal
 export class RequestGeneratorId extends RestMiddleware {
   global = true;
 

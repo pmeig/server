@@ -5,6 +5,7 @@ import { BeanPost } from '../bean/bean.post';
 import { AsyncSync, toPromise } from '../../helper/type.helper';
 import { Context } from '../context.model';
 import { putRequester } from '../../decorators/conditional/internal.conditional';
+import { PMEIG_ADMIN_TOKEN } from '../../decorators/conditional/conditional.helper';
 
 interface FactoryConstructorArgumentContext {
   resolve(context: Context): Promise<any>;
@@ -42,7 +43,9 @@ export abstract class ConstructorFactory {
     name: string | symbol
   ): Promise<T> {
     if (name !== BeanPost.name) {
+      putRequester(PMEIG_ADMIN_TOKEN);
       const postConstructors = await context.multiResolve(BeanPost, []);
+      putRequester();
       for (const postConstructor of postConstructors) {
         if (postConstructor.isHandler(target, name, bean)) {
           bean = (await toPromise(postConstructor.postConstruct(target, name, bean))) as T;

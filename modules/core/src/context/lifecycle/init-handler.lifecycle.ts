@@ -12,6 +12,8 @@ import {
   Refreshable,
   Disposable
 } from './lifecycle';
+import { Module } from '../context.decorators';
+import { Internal } from '../../decorators/conditional/conditional.decorators';
 
 @Configuration
 export class InitHandlerLifecycle extends BeanPost<Initializable> {
@@ -61,9 +63,8 @@ export class RefreshHandlerLifecycle extends BeanPost<Refreshable> {
   }
 }
 
-export const provideLifecycle = () => [
-  InitHandlerLifecycle,
-  DisposeHandlerLifecycle,
-  DestroyHandlerLifecycle,
-  RefreshHandlerLifecycle
-];
+@Module({
+  providers: [InitHandlerLifecycle, DisposeHandlerLifecycle, DestroyHandlerLifecycle, RefreshHandlerLifecycle]
+})
+@Internal
+export class LifecycleModule {}

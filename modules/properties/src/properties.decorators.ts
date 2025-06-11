@@ -28,7 +28,7 @@ export class PropertiesPost extends BeanPost {
   }
 
   isHandler(target: ProviderType<any>, _name: string | symbol, _bean: any): boolean {
-    return hasDecorator(target as Type<any>, Properties.name);
+    return hasDecorator(target as Type<any>, Properties);
   }
 
   async postConstruct(target: ProviderType<any>, name: string | symbol, bean: any): Promise<any> {

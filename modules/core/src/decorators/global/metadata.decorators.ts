@@ -15,7 +15,7 @@ export const PutDesignParam = (
     index = propertyKey;
     propertyKey = undefined;
   }
-  let insert = (types: Type<any>[]) => {
+  let insert = (types: Function[]) => {
     types.push(param as Type<any>);
     return types;
   };
@@ -41,7 +41,7 @@ export const PutDesignType = (target: object, param: Type<any>, propertyKey: str
 };
 
 export const retrieveParameterTypes = (target: Type<any>, propertyKey?: string | symbol) => {
-  return getMultiMetadataReflection<Type<any>>(design_parameters, target, propertyKey);
+  return getMultiMetadataReflection<Function>(design_parameters, target, propertyKey);
 };
 
 export const retrieveDesignReturn = (target: Type<any>, propertyKey: string | symbol) => {

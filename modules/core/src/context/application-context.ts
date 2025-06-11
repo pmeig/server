@@ -3,9 +3,7 @@ import { CustomProvider, Provider, ProviderToken, Type } from './provider/provid
 import { ComponentContext, retrieveContext, updateContext } from '../decorators/components/component.helper';
 import { createComponentDecorator, Scope } from '../decorators/components/component.decorator';
 import { PutDesignParam } from '../decorators/global/metadata.decorators';
-import { provideLifecycle } from './lifecycle/init-handler.lifecycle';
 import { retrieveModuleContext } from './context.decorators';
-import { BeanPost } from './bean/bean.post';
 import { hasDecorator } from '../decorators/decorator.builder';
 import { Bootable } from './bootable';
 import { Context, DefaultValue, ModuleContext, MultiDefaultValue } from './context.model';
@@ -14,10 +12,8 @@ import { affectApplicationContext, putRequester } from '../decorators/conditiona
 import { ProviderFactory } from './factory/provider.factory';
 import { Decorator } from '../decorators/type.decorators';
 import { PMEIG_ADMIN_TOKEN } from '../decorators/conditional/conditional.helper';
-
-const DEFAULT_PROVIDERS: Record<string, Provider[]> = Object.freeze({
-  [BeanPost.name]: [...provideLifecycle()]
-});
+import { LifecycleModule } from './lifecycle/init-handler.lifecycle';
+import { ConverterModule } from './converters/converter.module';
 
 export class ApplicationContext implements Context {
   private factories: Record<string | symbol, ComponentContext[]> = {};
@@ -42,7 +38,12 @@ export class ApplicationContext implements Context {
     putRequester(PMEIG_ADMIN_TOKEN);
     const boots = await this.multiResolve(Bootable);
     putRequester();
-    return Promise.all(boots.map(value => value.run(this.contextReference, ...args))).then(() => this);
+    for (const boot of boots) {
+      putRequester(boot['_myContextId'] ?? this.id);
+      await boot.run(this, ...args);
+      putRequester();
+    }
+    return this;
   }
 
   async restart() {
@@ -56,7 +57,7 @@ export class ApplicationContext implements Context {
     const beans = await this.multiResolve(Bootable, []);
     putRequester();
     for (const bean of beans) {
-      bean.close(this);
+      await bean.close(this);
     }
   }
 
@@ -73,7 +74,12 @@ export class ApplicationContext implements Context {
     }
     const factory = (await this.findFactories(token))[0];
     const injectable = factory?.build(this.contextReference, token);
-    return this.useChildren(injectable, token, defaultValue);
+    return this.useChildren(injectable, token, defaultValue).then(value => {
+      if (value) {
+        value['_myContextId'] = this.id;
+      }
+      return value;
+    });
   }
 
   async resolveRequired<T>(key: ProviderToken<T>): Promise<T> {
@@ -91,18 +97,12 @@ export class ApplicationContext implements Context {
         resolved.filter(bean => !!bean)
       ),
       defaultValue
-    );
-    let removeDefault = (values: T[]) => values;
-    const defaultValues = DEFAULT_PROVIDERS[token.toString()]?.map(defaultProvider =>
-      typeof defaultProvider === 'function' ? defaultProvider.name : defaultProvider.provide
-    );
-    if (defaultValues) {
-      removeDefault = (values: T[]) =>
-        values.filter(value => !defaultValues.includes(Object.getPrototypeOf(value).constructor.name));
-    }
+    ).then(resolved => {
+      resolved.forEach(bean => (bean['_myContextId'] = this.id));
+      return resolved;
+    });
     const others = await Promise.all(this.children.map(module => module.multiResolve<T>(token, [])));
-    const all = removeDefault(others.flat());
-    return this.applyDefault(Promise.resolve(beans.concat(all)), defaultValue);
+    return this.applyDefault(Promise.resolve(beans.concat(others.flat())), defaultValue);
   }
 
   async multiResolveRequired<T>(key: ProviderToken<T>): Promise<T[]> {
@@ -149,6 +149,9 @@ export class ApplicationContext implements Context {
   }
 
   private initImports(imports: Type<any>[]) {
+    if (this.id === this.contextReference.id) {
+      imports.unshift(LifecycleModule, ConverterModule);
+    }
     imports
       .sort(module => retrieveContext(module)?.order ?? Number.MAX_SAFE_INTEGER * 0.9)
       .forEach(module => {
@@ -161,7 +164,6 @@ export class ApplicationContext implements Context {
   }
 
   private initProviders(providers: Provider[]) {
-    this.putDefaultHandler(providers);
     providers.forEach(provider => {
       let targetProvider = provider;
       if (typeof provider !== 'function') {
@@ -241,9 +243,5 @@ export class ApplicationContext implements Context {
       return typeof defaultValue === 'function' ? (defaultValue as () => Promise<T | Nullable<T>>)() : defaultValue;
     }
     return bean;
-  }
-
-  private putDefaultHandler(providers: Provider[] = []) {
-    providers.push(...provideLifecycle());
   }
 }

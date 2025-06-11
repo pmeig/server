@@ -13,7 +13,7 @@ export const toExpressMiddleware =
   };
 
 export abstract class RestMiddleware {
-  global: boolean = false;
+  global = false;
 
   constructor() {}
 

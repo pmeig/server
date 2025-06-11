@@ -1,5 +1,5 @@
 import { Configuration, Decorators } from '@server/core';
-import { insertMiddleware, RequestMapper } from './rest';
+import { insertMiddleware, RequestMapper } from '../rest';
 import { RequestHandler } from 'express';
 
 export const Middleware = (middleware: RequestHandler): ClassDecorator | MethodDecorator =>
