@@ -10,7 +10,7 @@ import { Context, DefaultValue, ModuleContext, MultiDefaultValue } from './conte
 import { randomUUID } from 'crypto';
 import { affectApplicationContext, putRequester } from '../decorators/conditional/internal.conditional';
 import { ProviderFactory } from './factory/provider.factory';
-import { Decorator } from '../decorators/type.decorators';
+import { DecoratorRef } from '../decorators/type.decorators';
 import { PMEIG_ADMIN_TOKEN } from '../decorators/conditional/conditional.helper';
 import { LifecycleModule } from './lifecycle/init-handler.lifecycle';
 import { ConverterModule } from './converters/converter.module';
@@ -111,7 +111,7 @@ export class ApplicationContext implements Context {
     return retrieve;
   }
 
-  async withDecorator(decorator: Decorator | string): Promise<any[]> {
+  async withDecorator(decorator: DecoratorRef | string): Promise<any[]> {
     const beans = await Promise.all(
       Object.values(this.factories)
         .flatMap(factories => factories)

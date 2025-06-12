@@ -1,6 +1,6 @@
 import { Provider, ProviderToken, Type } from './provider/provider.type';
 import { AsyncSync, Nullable, OptionalAsyncSync } from '../helper/type.helper';
-import { DecoratorType } from '../decorators/decorator.builder';
+import { DecoratorRef } from '../decorators/type.decorators';
 
 export type DefaultValue<T> = OptionalAsyncSync<T> | (() => OptionalAsyncSync<T>);
 export type MultiDefaultValue<T> = AsyncSync<T[]> | (() => AsyncSync<T[]>);
@@ -11,7 +11,7 @@ export interface Context {
   multiResolve: <T extends any = any>(key: ProviderToken<T>, defaultValue?: MultiDefaultValue<T>) => Promise<T[]>;
   multiResolveRequired: <T extends any = any>(key: ProviderToken<T>) => Promise<T[]>;
   has: (key: ProviderToken<any>) => Promise<boolean>;
-  withDecorator: (decorator: DecoratorType | string) => Promise<any[]>;
+  withDecorator: (decorator: DecoratorRef | string) => Promise<any[]>;
   id: string;
 }
 

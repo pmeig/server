@@ -25,3 +25,7 @@ export type Decorator = (
   propertyKey?: string | symbol,
   descriptor?: TypedPropertyDescriptor<any> | number
 ) => void;
+
+export type DecoratorType = ClassDecorator | ParameterDecorator | FieldDecorator | MethodDecorator | Decorator;
+
+export type DecoratorRef<T extends DecoratorType = Decorator> = ((...args: any[]) => T) | Type<T>;

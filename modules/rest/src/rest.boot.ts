@@ -52,7 +52,7 @@ export class RestBootable extends Bootable {
   }
 
   private async configurePath(context: Context, middlewares: RestMiddleware[]) {
-    const controllers = await context.withDecorator(Controller.name);
+    const controllers = await context.withDecorator(Controller);
     controllers.forEach(controller => {
       const prototype = Object.getPrototypeOf(controller);
       const mapper = retrieveRestConfig(prototype.constructor);
