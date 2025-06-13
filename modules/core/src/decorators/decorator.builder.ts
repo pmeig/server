@@ -16,12 +16,12 @@ const decorator_names = 'decorator:names';
 
 export type DecoratorMetadata = {
   name: string;
-  type: 'parameter' | 'method' | 'class' | 'field' | 'concat';
+  type: 'parameter' | 'method' | 'class' | 'field' | 'concat' | 'all';
 };
 
 const createDecorator =
   <T extends DecoratorType | ConstructorParameterDecorator | MethodParameterDecorator = Decorator>(
-    type: 'parameter' | 'method' | 'class' | 'field' | 'concat'
+    type: 'parameter' | 'method' | 'class' | 'field' | 'concat' | 'all'
   ) =>
   (name: string, decorator: T): T => {
     return ((target: object, propertyKey?: string | symbol, descriptor?: number | TypedPropertyDescriptor<any>) => {
@@ -44,28 +44,6 @@ const fieldDecorator = createDecorator<FieldDecorator>('field');
 const constructorParameterDecorator = createDecorator<ConstructorParameterDecorator>('parameter');
 const methodParameterDecorator = createDecorator<MethodParameterDecorator>('parameter');
 
-const concatDecoratorFunction = <T extends DecoratorType>(...decorators: T[]) => {
-  const handlers = decorators
-    .map<Decorator>(decorator => {
-      const numberArgumentsNeeded = decorator.length;
-      if (numberArgumentsNeeded === 1) {
-        return target => (decorator as ClassDecorator)(target as Type<any>);
-      }
-      if (numberArgumentsNeeded === 2) {
-        return (target, propertyKey) => (decorator as FieldDecorator)(target, propertyKey!);
-      }
-      return decorator as Decorator;
-    })
-    .reduce(
-      (acc, decorator) => (subTarget, subPropertyKey, subDescriptor) => {
-        acc(subTarget, subPropertyKey, subDescriptor);
-        decorator(subTarget, subPropertyKey, subDescriptor);
-      },
-      (_target, _propertyKey, _descriptor) => {}
-    );
-  return handlers as T;
-};
-
 export const Decorators = Object.freeze({
   parameter: {
     generic: parameterDecorator,
@@ -75,12 +53,10 @@ export const Decorators = Object.freeze({
   field: fieldDecorator,
   method: methodDecorator,
   class: classDecorator,
-  all: createDecorator<Decorator>('concat'),
-  concat: <T extends DecoratorType>(...decorators: T[]) =>
-    createDecorator<Decorator>('concat')('concat', concatDecoratorFunction(...decorators))
+  all: createDecorator<Decorator>('all')
 });
 
-export const hasDecorator = <T extends DecoratorType>(bean: Type<any>, decorator: DecoratorRef | string) => {
+export const hasDecorator = (bean: Type<any>, decorator: DecoratorRef | string) => {
   const names = getDecoratorNames(bean);
   return names.map(value => value.name).includes(typeof decorator === 'string' ? decorator : decorator.name);
 };

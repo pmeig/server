@@ -1,10 +1,13 @@
-import { AsyncSync, Decorators, reflectMultiUpdate } from '@server/core';
+import { AsyncSync, Decorator, Decorators, NoConvert, reflectMultiUpdate } from '@server/core';
 import { Request, Response } from 'express';
 import { request_parameter } from './express.resolver';
 
 export const RestDecorators = Object.freeze({
-  parameter: (name: string, handler: (request: Request, response: Response) => AsyncSync<any>) =>
+  parameter: (name: string, handler: (request: Request, response: Response) => AsyncSync<any>, apply?: Decorator) =>
     Decorators.parameter.method(name, (target, propertyKey, index) => {
+      if (apply) {
+        apply(target, propertyKey, index);
+      }
       reflectMultiUpdate(
         items => {
           items.push({
@@ -50,10 +53,18 @@ export const Headers = RestDecorators.parameter('Headers', request => {
   return request.headers;
 });
 
-export const Req = RestDecorators.parameter('Req', request => {
-  return request;
-});
+export const Req = RestDecorators.parameter(
+  'Req',
+  request => {
+    return request;
+  },
+  (target, propertyKey, parameterIndex) => NoConvert(target, propertyKey, parameterIndex)
+);
 
-export const Res = RestDecorators.parameter('Res', (_, response) => {
-  return response;
-});
+export const Res = RestDecorators.parameter(
+  'Res',
+  (_, response) => {
+    return response;
+  },
+  (target, propertyKey, parameterIndex) => NoConvert(target, propertyKey, parameterIndex)
+);
