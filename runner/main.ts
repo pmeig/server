@@ -1,8 +1,19 @@
 import { ApplicationContext, Component, Module, Order, Scope } from '@server/core';
 import { randomBytes } from 'crypto';
 import { Properties, PropertiesModule } from '@server/properties';
-import { Controller, Delete, Get, Param, Put, Req, Res, RestModule } from '@server/rest';
-import * as express from 'express';
+import {
+  Controller,
+  ControllerAdvisor,
+  Delete,
+  ExceptionAdvisor,
+  Get,
+  Param,
+  Put,
+  Req,
+  Res,
+  RestModule
+} from '@server/rest';
+import type { Request, Response } from 'express';
 
 interface Named {
   name: string;
@@ -48,6 +59,7 @@ export class TestService {
 
 @Controller('test')
 export class TestController {
+  private attempt = 0;
   constructor(
     private readonly props: Props,
     private readonly context: ApplicationContext,
@@ -56,9 +68,12 @@ export class TestController {
   ) {}
 
   @Get(':id/:number')
-  async test(@Req request: express.Request, @Res response: express.Response, @Param('nb') params: number) {
+  async test(@Req request: Request, @Res response: Response, @Param('nb') params: number) {
     this.testService.test.sub.testing++;
     this.testService.test.message += 5;
+    if (this.attempt++ > 2) {
+      throw new Error('error throwing');
+    }
     return this.testScopedRequest.message;
   }
 
@@ -69,9 +84,18 @@ export class TestController {
   delete() {}
 }
 
+@ControllerAdvisor('/test')
+export class TestAdvisor {
+  @ExceptionAdvisor(Error)
+  test(error: Error, response: Response) {
+    console.log(error);
+    return response.send(error.name);
+  }
+}
+
 @Module({
   imports: [PropertiesModule, RestModule],
-  providers: [First, TestController, Props, ScopedRequest, TestService]
+  providers: [First, TestController, Props, ScopedRequest, TestService, TestAdvisor]
 })
 export class ThirdFourthModule {}
 

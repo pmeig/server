@@ -1,4 +1,7 @@
-import { Nullable } from '../helper/type.helper';
+import { getPropsOf, Nullable } from '../helper/type.helper';
+import { DecoratorRef } from './type.decorators';
+import { hasDecorator } from './decorator.builder';
+import { Type } from '../context/provider/provider.type';
 
 export const reflectMultiUpdate = <T = any>(
   handler: (items: T[]) => T[],
@@ -56,4 +59,8 @@ export const getMetadataReflection = <T = any>(key: string, target: object, prop
   return (
     propertyKey ? Reflect.getMetadata(key, target, propertyKey) : Reflect.getMetadata(key, target)
   ) as Nullable<T>;
+};
+
+export const getMethodWithDecorator = (target: Type<any>, decorator: DecoratorRef | string) => {
+  return getPropsOf(target).filter(name => hasDecorator(target, decorator, name));
 };

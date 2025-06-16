@@ -56,8 +56,8 @@ export const Decorators = Object.freeze({
   all: createDecorator<Decorator>('all')
 });
 
-export const hasDecorator = (bean: Type<any>, decorator: DecoratorRef | string) => {
-  const names = getDecoratorNames(bean);
+export const hasDecorator = (bean: Type<any>, decorator: DecoratorRef | string, propertyKey?: string | symbol) => {
+  const names = getDecoratorNames(bean, propertyKey);
   return names.map(value => value.name).includes(typeof decorator === 'string' ? decorator : decorator.name);
 };
 

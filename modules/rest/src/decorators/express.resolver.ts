@@ -5,7 +5,8 @@ import {
   Internal,
   List,
   retrieveConverters,
-  retrieveParameterTypes
+  retrieveParameterTypes,
+  Type
 } from '@server/core';
 import { Request, Response } from 'express';
 
@@ -28,11 +29,18 @@ export class ExpressResolver {
     const customConverters = retrieveConverters(target, name) ?? {};
     const params = metadata.map(item => {
       const type = types[item.index];
-      const instance = type();
-      const converter =
-        customConverters[item.index] ??
-        customConverters[-1] ??
-        this.converters.find(convert => convert.hasConverter(instance));
+      let converter: Converter<any> | undefined = customConverters[item.index] ?? customConverters[-1];
+      if (!converter) {
+        let instance: any;
+        try {
+          instance = type();
+        } catch (error) {
+          if (error.message.includes('cannot be invoked without "new"')) {
+            instance = new (type as Type<any>)();
+          }
+        }
+        converter = this.converters.find(convert => convert.hasConverter(instance));
+      }
       if (!converter) {
         return (request: Request, response: Response, params: any[]) => {
           params[item.index] = item.handler(request, response);

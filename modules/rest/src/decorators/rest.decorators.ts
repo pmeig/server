@@ -1,5 +1,6 @@
 import { Configuration, Decorators } from '@server/core';
-import { insertMiddleware, RequestMapper } from '../rest';
+import { insertMiddleware, OptionsMapper, RequestMapper } from '../rest';
+import { HttpStatus, HttpStatusText } from '../models/status.model';
 import { RequestHandler } from 'express';
 
 export const Middleware = (middleware: RequestHandler): ClassDecorator | MethodDecorator =>
@@ -29,4 +30,35 @@ export const Patch = (path: string) =>
 export const Delete = (path: string) =>
   Decorators.method('Delete', (target, propertyKey, descriptor) => {
     RequestMapper(path, 'DELETE')(target, propertyKey, descriptor);
+  });
+
+type StatusParameter<T extends typeof HttpStatus | typeof HttpStatusText> = Omit<
+  T,
+  'redirect' | 'informational' | 'success' | 'serverError' | 'clientError'
+>;
+
+export const Status = (
+  code:
+    | StatusParameter<typeof HttpStatus>[keyof StatusParameter<typeof HttpStatus>]
+    | keyof StatusParameter<typeof HttpStatus>
+) =>
+  Decorators.method('Status', (target, propertyKey) => {
+    OptionsMapper(
+      {
+        status: typeof code === 'string' ? HttpStatus[code] : code
+      },
+      target,
+      propertyKey
+    );
+  });
+
+export const Media = (media: string) =>
+  Decorators.method('Media', (target, propertyKey) => {
+    OptionsMapper(
+      {
+        media
+      },
+      target,
+      propertyKey
+    );
   });
