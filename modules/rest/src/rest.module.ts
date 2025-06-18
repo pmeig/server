@@ -1,9 +1,10 @@
 import { Module } from '@server/core';
-import { RestBootable } from './rest.boot';
 import { RequestFactoryScoped, RequestGeneratorId } from './rest.scoped';
-import { ExpressResolver } from './decorators/express.resolver';
+import { RestBootModule } from './boot/rest-boot.module';
+import { AdvisorConverter } from './errors/advisor.converter';
 
 @Module({
-  providers: [RestBootable, RequestFactoryScoped, RequestGeneratorId, ExpressResolver]
+  imports: [RestBootModule],
+  providers: [RequestFactoryScoped, RequestGeneratorId, AdvisorConverter]
 })
 export class RestModule {}

@@ -1,4 +1,8 @@
-import { retrieveElementTypes, retrieveOptionals } from '../../decorators/global/parameter.decorators';
+import {
+  retrieveDecorator,
+  retrieveElementTypes,
+  retrieveOptionals
+} from '../../decorators/global/parameter.decorators';
 import { retrieveParameterTypes } from '../../decorators/global/metadata.decorators';
 import { ProviderToken, ProviderType, Type } from '../provider/provider.type';
 import { BeanPost } from '../bean/bean.post';
@@ -6,6 +10,7 @@ import { AsyncSync, toPromise } from '../../helper/type.helper';
 import { Context } from '../context.model';
 import { putRequester } from '../../decorators/conditional/internal.conditional';
 import { PMEIG_ADMIN_TOKEN } from '../../decorators/conditional/conditional.helper';
+import { retrieveConverters } from '../converters/converter';
 
 interface FactoryConstructorArgumentContext {
   resolve(context: Context): Promise<any>;
@@ -15,6 +20,8 @@ interface FactoryConstructorArgumentContext {
 interface FactoryConstructorContext {
   arguments: FactoryConstructorArgumentContext[];
 }
+
+let beanPostExcludes: string[] = [];
 
 export abstract class ConstructorFactory {
   static from(target: ProviderType<any>) {
@@ -30,8 +37,17 @@ export abstract class ConstructorFactory {
   abstract create<T>(target: ProviderType<T>, context: Context): Promise<T>;
 
   async build<T extends any>(target: ProviderType<T>, context: Context, name: string | symbol): Promise<T> {
+    if (beanPostExcludes.includes(target.name)) {
+      return Promise.resolve(undefined as unknown as T);
+    }
     putRequester(name);
+    let resetBeanPostExclude = () => {};
+    if (name === BeanPost.name) {
+      const index = beanPostExcludes.push(target.name) - 1;
+      resetBeanPostExclude = () => (beanPostExcludes = beanPostExcludes.splice(index, 1));
+    }
     const bean = await this.create(target, context);
+    resetBeanPostExclude();
     putRequester();
     return this.postConstruct(target, context, bean, name);
   }
@@ -82,11 +98,31 @@ class ConstructorInjectorFactory extends ConstructorFactory {
       const optionals = retrieveOptionals(target);
       const types = retrieveParameterTypes(target);
       const elements = retrieveElementTypes(target);
+      const converters = retrieveConverters(target);
+      const decorators = retrieveDecorator(target);
       this.context.arguments = types.map((type, index) => {
         const element = elements.find(element => element.index === index);
+        const decorator = decorators[index];
         let resolve = this.extractResolver('resolve', type, index, optionals);
         if (element) {
           resolve = this.extractResolver('multiResolve', element.type, index, optionals);
+        }
+        if (decorator) {
+          resolve = context => context.withDecorator(decorator);
+        }
+        const converter = converters[index];
+        if (converter) {
+          const provider = resolve;
+          resolve = async (context: Context) => {
+            const value = await provider(context);
+            if (typeof value === 'undefined') {
+              return undefined;
+            }
+            if (Array.isArray(value)) {
+              return value.map(item => converter.to(item));
+            }
+            return converter.to(value);
+          };
         }
         return {
           resolve,

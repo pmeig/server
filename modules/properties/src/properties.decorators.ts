@@ -1,5 +1,4 @@
 import {
-  ApplicationContext,
   BeanPost,
   Configuration,
   Decorators,
@@ -22,8 +21,7 @@ export const Properties = (prefix: string) =>
 
 @Configuration
 export class PropertiesPost extends BeanPost {
-  private env?: Environment;
-  constructor(private readonly applicationContext: ApplicationContext) {
+  constructor(private readonly env: Environment) {
     super();
   }
 
@@ -33,23 +31,12 @@ export class PropertiesPost extends BeanPost {
 
   async postConstruct(target: ProviderType<any>, name: string | symbol, bean: any): Promise<any> {
     const prefix = getMetadataReflection<string>(prefix_key, target)!;
-    const env = await this.environment;
-    const properties = await env.find<Record<string, any>>(prefix, {});
+    const properties = await this.env.find<Record<string, any>>(prefix, {});
     this.insertInRecord(bean, properties);
     propertiesRefresh.pipe(filter(env => env instanceof Environment)).subscribe(async value => {
       this.insertInRecord(bean, await value.find(prefix, {}));
     });
     return bean;
-  }
-
-  private get environment() {
-    if (!this.env) {
-      return this.applicationContext.resolveRequired(Environment).then(env => {
-        this.env = env;
-        return env;
-      });
-    }
-    return Promise.resolve(this.env);
   }
 
   private insertInRecord(origin: Record<string, any>, record: Record<string, any>) {

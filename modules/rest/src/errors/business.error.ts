@@ -1,4 +1,4 @@
-import { PmeigServerError } from './pmeig-server.error';
+import { PmeigServerError, PmeigServerErrorMessage } from './pmeig-server.error';
 
 export interface BusinessErrorMessage {
   technical?: string;

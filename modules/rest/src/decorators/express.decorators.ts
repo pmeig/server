@@ -1,6 +1,6 @@
 import { AsyncSync, Decorator, Decorators, NoConvert, reflectMultiUpdate } from '@server/core';
 import { Request, Response } from 'express';
-import { request_parameter } from './express.resolver';
+import { request_parameter } from '../boot/resolver/expressParameterResolver';
 
 export const RestDecorators = Object.freeze({
   parameter: (name: string, handler: (request: Request, response: Response) => AsyncSync<any>, apply?: Decorator) =>

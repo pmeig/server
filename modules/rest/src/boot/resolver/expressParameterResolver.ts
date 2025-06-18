@@ -14,7 +14,7 @@ export const request_parameter = 'request:param';
 
 @Configuration
 @Internal
-export class ExpressResolver {
+export class ExpressParameterResolver {
   private readonly converters: Converter<any>[] = [];
   constructor(@List(Converter) converters: Converter<any>[]) {
     this.converters = converters;

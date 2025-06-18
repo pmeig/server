@@ -1,10 +1,16 @@
 import { ProviderFactory, SingletonProviderFactory } from '../../context/factory/provider.factory';
 import { ScopeType, Type } from '../../context/provider/provider.type';
 import { FactoryProviderScoped } from '../../context/provider-scope';
-import { getMultiMetadataReflection, reflectMetadataContext, reflectMultiMetadataContext } from '../decorators.helper';
+import {
+  getMetadataReflection,
+  getMultiMetadataReflection,
+  reflectMetadataContext,
+  reflectMultiMetadataContext
+} from '../decorators.helper';
 
 const context_key = 'components:context';
 const context_name = 'components:name';
+export const inject_key = 'components:inject';
 
 export interface ComponentContext {
   names?: (string | symbol)[];
@@ -22,6 +28,9 @@ export const PutType = (target: object, metadata: Record<string, any> = {}) => {
 export const retrieveContext = (target: object): ComponentContext => {
   return Reflect.getMetadata(context_key, target) as ComponentContext;
 };
+
+export const retrieveInject = (target: object) =>
+  getMetadataReflection<Record<number, string | Type<any>>>(inject_key, target) ?? {};
 
 export const PutOrder = (target: object, order: number) => {
   updateContext({ order }, target);

@@ -7,7 +7,7 @@ import {
   Delete,
   ExceptionAdvisor,
   Get,
-  Param,
+  Params,
   Put,
   Req,
   Res,
@@ -68,7 +68,7 @@ export class TestController {
   ) {}
 
   @Get(':id/:number')
-  async test(@Req request: Request, @Res response: Response, @Param('nb') params: number) {
+  async test(@Req request: Request, @Res response: Response, @Params params: Record<string, any>) {
     this.testService.test.sub.testing++;
     this.testService.test.message += 5;
     if (this.attempt++ > 2) {

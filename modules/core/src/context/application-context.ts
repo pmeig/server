@@ -1,4 +1,4 @@
-import { Nullable, promiseFind } from '../helper/type.helper';
+import { Nullable } from '../helper/type.helper';
 import { CustomProvider, Provider, ProviderToken, Type } from './provider/provider.type';
 import { ComponentContext, retrieveContext, updateContext } from '../decorators/components/component.helper';
 import { createComponentDecorator, Scope } from '../decorators/components/component.decorator';
@@ -63,8 +63,15 @@ export class ApplicationContext implements Context {
 
   async has(key: any): Promise<boolean> {
     const token = this.extractToken(key);
-    const factories = await this.findFactories(token);
-    return factories.length > 0;
+    let found = (await this.findFactories(token)).length > 0;
+    if (!found && this.children.length > 0) {
+      const iterator = [...this.children];
+      while (!found && iterator.length > 0) {
+        const child = iterator.shift()!;
+        found = await child.has(key);
+      }
+    }
+    return found;
   }
 
   async resolve<T>(key: ProviderToken<T>, defaultValue: DefaultValue<T> = undefined): Promise<Nullable<T>> {
@@ -218,7 +225,14 @@ export class ApplicationContext implements Context {
     defaultValue: DefaultValue<T> | MultiDefaultValue<T>
   ) {
     return this.applyDefault(injectable, async () => {
-      const context = await promiseFind(this.children, child => child.has(token));
+      let context: Context | undefined = undefined;
+      let iterator = [...this.children];
+      while (!context && iterator.length > 0) {
+        const child = iterator.shift()!;
+        if (await child.has(token)) {
+          context = child;
+        }
+      }
       return this.applyDefault(context?.resolve(token, defaultValue), defaultValue);
     }) as Promise<T>;
   }

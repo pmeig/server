@@ -12,6 +12,11 @@ export class JsonConverter extends Converter<any> {
   }
 
   to(value: any): any {
-    return JSON.parse(value);
+    try {
+      return JSON.parse(value);
+    } catch (e) {
+      console.warn('Invalid JSON: ', value);
+      return value;
+    }
   }
 }

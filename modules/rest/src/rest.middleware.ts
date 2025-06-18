@@ -19,7 +19,7 @@ export const toExpressErrorMiddleware = (middleware: RestErrorMiddleware) => {
 export abstract class RestMiddleware {
   global = false;
 
-  constructor() {}
+  protected constructor() {}
 
   accept(_: string, _method?: Method): boolean {
     return false;
@@ -30,7 +30,7 @@ export abstract class RestMiddleware {
 
 export abstract class RestErrorMiddleware {
   global = false;
-  constructor() {}
+  protected constructor() {}
 
   accept(_: string, _method?: Method) {
     return false;

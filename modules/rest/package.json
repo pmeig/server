@@ -12,10 +12,13 @@
   "dependencies": {
     "@server/core": "workspace:*",
     "@server/properties": "workspace:*",
+    "compression": "^1.8.0",
     "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
     "node-match-path": "^0.6.3"
   },
   "devDependencies": {
+    "@types/compression": "^1.8.1",
     "@types/express": "^5.0.2",
     "@types/node": "^22.15.19",
     "reflect-metadata": "^0.2.2",

@@ -35,5 +35,5 @@ export const Convert = (converter: Type<Converter<any>> | Converter<any>) =>
   });
 
 export const retrieveConverters = (target: object, propertyKey?: string | symbol) => {
-  return getMetadataReflection<Record<number, Converter<any>>>(converter_key, target, propertyKey);
+  return getMetadataReflection<Record<number, Converter<any>>>(converter_key, target, propertyKey) ?? {};
 };

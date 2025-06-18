@@ -33,7 +33,8 @@ export const promiseFind = async <T extends any>(
   let found: T | undefined = undefined;
   while (!found && index--) {
     const item = array[index];
-    if (await filter(item)) {
+    const test = await filter(item);
+    if (test) {
       found = item;
     }
   }
