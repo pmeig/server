@@ -18,8 +18,7 @@ export const PmeigVitePlugin = (configuration: PmeigVitePluginConfig): PluginOpt
   return [
     {
       name: 'pmeig-vite-plugin',
-      config: () => {
-        const config: UserConfig = {};
+      config: config => {
         updateBuild(config, configuration);
         updateServer(config);
         return config;
@@ -79,7 +78,6 @@ const updateBuild = (config: UserConfig, configuration: PmeigVitePluginConfig) =
   }
   build.rollupOptions = rollup;
   build.ssr = undefined;
-  // build.ssr = build.ssr ?? (typeof rollup.input === 'string' ? (rollup.input as string) : undefined);
   config.build = build;
 };
 

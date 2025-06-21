@@ -7,7 +7,6 @@ import { retrieveModuleContext } from './context.decorators';
 import { hasDecorator } from '../decorators/decorator.builder';
 import { Bootable } from './bootable';
 import { Context, DefaultValue, ModuleContext, MultiDefaultValue } from './context.model';
-import { randomUUID } from 'crypto';
 import { affectApplicationContext, putRequester } from '../decorators/conditional/internal.conditional';
 import { ProviderFactory } from './factory/provider.factory';
 import { DecoratorRef } from '../decorators/type.decorators';
@@ -18,7 +17,7 @@ import { ConverterModule } from './converters/converter.module';
 export class ApplicationContext implements Context {
   private factories: Record<string | symbol, ComponentContext[]> = {};
   private children: Context[] = [];
-  readonly id: string = randomUUID();
+  readonly id: string = crypto.randomUUID();
 
   static run(boot: Type<any> | ModuleContext, ...args: any[]) {
     if (typeof boot === 'function') {
