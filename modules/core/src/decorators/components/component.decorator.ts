@@ -1,8 +1,9 @@
-import { inject_key, PutName, PutOrder, PutScope, PutType } from './component.helper';
+import { import_key, inject_key, PutName, PutOrder, PutScope, PutType } from './component.helper';
 import { ScopeType, Type } from '../../context/provider/provider.type';
 import { ClassDecorator } from '../type.decorators';
 import { Decorators } from '../decorator.builder';
-import { reflectUpdate } from '../decorators.helper';
+import { reflectMultiUpdate, reflectUpdate } from '../decorators.helper';
+import { ModuleContext } from '../../context/context.model';
 
 export const Component = Decorators.class('Component', target => PutType(target));
 
@@ -26,6 +27,19 @@ export const Inject = (name: string | Type<any>) =>
         return item;
       },
       inject_key,
+      target
+    );
+  });
+
+export const Import = (...modules: (Type<any> | ModuleContext)[]) =>
+  Decorators.class('Import', target => {
+    Configuration(target);
+    reflectMultiUpdate<Type<any> | ModuleContext>(
+      items => {
+        items.push(...modules);
+        return items;
+      },
+      import_key,
       target
     );
   });

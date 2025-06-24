@@ -5,6 +5,7 @@ import { RestRouteBuilder } from './builder/rest-route.builder';
 import { RestMiddlewareResolver } from './resolver/rest-middleware.resolver';
 import { RestPathResolver } from './resolver/rest-path.resolver';
 import { ExpressParameterResolver } from './resolver/expressParameterResolver';
+import { RequestGeneratorId } from '../rest.scoped';
 
 @Module({
   providers: [
@@ -13,7 +14,8 @@ import { ExpressParameterResolver } from './resolver/expressParameterResolver';
     RestRouteBuilder,
     RestMiddlewareResolver,
     RestPathResolver,
-    ExpressParameterResolver
+    ExpressParameterResolver,
+    RequestGeneratorId
   ]
 })
 export class RestBootModule {}

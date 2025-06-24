@@ -79,14 +79,14 @@ class ConstructorInjectorFactory extends ConstructorFactory {
 
   async create<T>(target: Type<T>, context: Context): Promise<T> {
     const contextConstructor = this.getInjectorArguments(target);
-    let index = 0;
+    let index = -1;
     try {
-      const args = contextConstructor.map(async (argumentContext, indexArgument) => {
-        index = indexArgument;
-        return await argumentContext.resolve(context);
-      });
-      const injectables = await Promise.all(args);
-      return new target(...injectables) as T;
+      const args: any[] = [];
+      for (const argumentContext of contextConstructor) {
+        index++;
+        args.push(await argumentContext.resolve(context));
+      }
+      return new target(...args) as T;
     } catch (error) {
       console.error(error);
       throw new Error(`Error while injecting ${contextConstructor[index].type} for ${target.name} at index ${index}`);

@@ -1,4 +1,4 @@
-import { ApplicationContext, Component, Module, Order, Scope } from '@server/core';
+import { ApplicationContext, Component, Import, Module, Order, Scope } from '@server/core';
 import { randomBytes } from 'crypto';
 import { Properties, PropertiesModule } from '@server/properties';
 import {
@@ -57,6 +57,12 @@ export class TestService {
   constructor(public readonly test: ScopedRequest) {}
 }
 
+@Module({})
+export class FirstSecondModule {}
+
+@Import(FirstSecondModule)
+export class InjectModule {}
+
 @Controller('test')
 export class TestController {
   private attempt = 0;
@@ -95,7 +101,7 @@ export class TestAdvisor {
 
 @Module({
   imports: [PropertiesModule, RestModule],
-  providers: [First, TestController, Props, ScopedRequest, TestService, TestAdvisor]
+  providers: [First, TestController, Props, ScopedRequest, TestService, TestAdvisor, InjectModule]
 })
 export class ThirdFourthModule {}
 

@@ -7,10 +7,12 @@ import {
   reflectMetadataContext,
   reflectMultiMetadataContext
 } from '../decorators.helper';
+import { ModuleContext } from '../../context/context.model';
 
 const context_key = 'components:context';
 const context_name = 'components:name';
 export const inject_key = 'components:inject';
+export const import_key = 'components:import';
 
 export interface ComponentContext {
   names?: (string | symbol)[];
@@ -69,6 +71,10 @@ export const updateContext = (context: Partial<ComponentContext>, target: object
     },
     target
   );
+};
+
+export const retrieveImport = (target: object) => {
+  return getMultiMetadataReflection<Type<any> | ModuleContext>(import_key, target) ?? [];
 };
 
 const getNameProvider = (target: object) => {

@@ -1,7 +1,12 @@
-import { Nullable } from '../helper/type.helper';
+import { getTypeOf, Nullable } from '../helper/type.helper';
 import { CustomProvider, Provider, ProviderToken, Type } from './provider/provider.type';
-import { ComponentContext, retrieveContext, updateContext } from '../decorators/components/component.helper';
-import { createComponentDecorator, Scope } from '../decorators/components/component.decorator';
+import {
+  ComponentContext,
+  retrieveContext,
+  retrieveImport,
+  updateContext
+} from '../decorators/components/component.helper';
+import { createComponentDecorator, Import, Scope } from '../decorators/components/component.decorator';
 import { PutDesignParam } from '../decorators/global/metadata.decorators';
 import { retrieveModuleContext } from './context.decorators';
 import { hasDecorator } from '../decorators/decorator.builder';
@@ -35,6 +40,7 @@ export class ApplicationContext implements Context {
 
   async start(...args: any[]) {
     putRequester(PMEIG_ADMIN_TOKEN);
+    await this.searchModuleByDecorators();
     const boots = await this.multiResolve(Bootable);
     putRequester();
     for (const boot of boots) {
@@ -98,17 +104,14 @@ export class ApplicationContext implements Context {
     const token = this.extractToken(key);
     if ([ApplicationContext.name, 'Context'].includes(token.toString())) return [this as unknown as T];
     const factories = await this.findFactories(token);
-    const beans = await this.applyDefault<T>(
-      Promise.all(factories.map(factory => factory.build(this.contextReference, token))).then(resolved =>
-        resolved.filter(bean => !!bean)
-      ),
-      defaultValue
-    ).then(resolved => {
-      resolved.forEach(bean => (bean['_myContextId'] = this.id));
-      return resolved;
-    });
-    const others = await Promise.all(this.children.map(module => module.multiResolve<T>(token, [])));
-    return this.applyDefault(Promise.resolve(beans.concat(others.flat())), defaultValue);
+    const beans: any[] = [];
+    for (const factory of factories) {
+      beans.push(await factory.build(this.contextReference, token));
+    }
+    for (const module of this.children.filter(value => value.has(token))) {
+      beans.push(...(await module.multiResolve<T>(token, [])));
+    }
+    return this.applyDefault(Promise.resolve(beans.filter(value => !!value)), defaultValue);
   }
 
   async multiResolveRequired<T>(key: ProviderToken<T>): Promise<T[]> {
@@ -118,22 +121,26 @@ export class ApplicationContext implements Context {
   }
 
   async withDecorator(decorator: DecoratorRef | string): Promise<any[]> {
-    const beans = await Promise.all(
-      Object.values(this.factories)
-        .flatMap(factories => factories)
-        .filter(factory => {
-          const type = factory.factory?.type;
+    const contexts = Object.values(this.factories)
+      .flatMap(factories => factories)
+      .filter(factory => {
+        if (factory.factory?.isAccessible(this)) {
+          const type = factory.factory!.type;
           if (typeof type === 'function') {
             return hasDecorator(type as Type<any>, decorator);
           }
-          return false;
-        })
-        .map(factory => factory.factory!.build(this.contextReference, factory.factory!.type.name))
-    );
-    const others = (await Promise.all(this.children.map(module => module.withDecorator(decorator)))).flatMap(
-      value => value
-    );
-    return beans.concat(others);
+        }
+        return false;
+      });
+    const beans: any[] = [];
+    for (const context of contexts) {
+      beans.push(await context.factory?.build(this, decorator.toString()));
+    }
+
+    for (const module of this.children) {
+      beans.push(...(await module.withDecorator(decorator)));
+    }
+    return beans;
   }
 
   private async findFactories(token: string | symbol) {
@@ -256,5 +263,21 @@ export class ApplicationContext implements Context {
       return typeof defaultValue === 'function' ? (defaultValue as () => Promise<T | Nullable<T>>)() : defaultValue;
     }
     return bean;
+  }
+
+  private async searchModuleByDecorators() {
+    const modulable = await this.withDecorator(Import);
+    for (const module of modulable) {
+      const imports = retrieveImport(getTypeOf(module));
+      imports.forEach(importable => {
+        let context = importable;
+        if (typeof importable === 'function') {
+          context = retrieveModuleContext(importable) ?? {};
+        }
+        const child = new ApplicationContext(context as ModuleContext, this.contextReference);
+        child.searchModuleByDecorators();
+        this.children.push(child);
+      });
+    }
   }
 }
