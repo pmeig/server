@@ -118,7 +118,7 @@ class LibraryBuilder extends Builder {
 
   constructor(context: CliProject, rootProject: string) {
     super(context, rootProject);
-    context.assets = [...new Set([...context.assets, 'package.json'])];
+    context.assets = [...new Set([...context.assets, 'package.json', 'readme.md', 'README.md'])];
   }
 
   async build(parameters: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
