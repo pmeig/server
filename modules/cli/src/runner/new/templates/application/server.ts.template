@@ -1,0 +1,9 @@
+import { ApplicationContext, Module } from '@pmeig/srv-core';
+
+@Module({
+    imports: [],
+    providers: []
+})
+export class ServerModule {}
+
+export const server = ApplicationContext.run(ServerModule)
