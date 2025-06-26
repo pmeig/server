@@ -1,11 +1,11 @@
 import { CliContext } from '../server/cli.context';
-import { readJson } from '../helper/io.helper';
-import { resolve } from 'path';
 
 export interface ParameterConfiguration {
   indexes: number;
   alias?: string[];
   tilde?: 'double' | 'single';
+  position?: number;
+  default?: any;
 }
 
 export type RunnerParameterConfiguration = Record<string, ParameterConfiguration>;
@@ -37,10 +37,13 @@ const createParameterMapper = <T extends RunnerParameterConfiguration>(configura
       value.alias?.forEach(anotherKey => {
         acc[anotherKey] = config;
       });
+      if (value.position) {
+        acc[value.position] = config;
+      }
       return acc;
     },
     {} as Record<
-      string,
+      string | number,
       {
         key: keyof T;
         indexes: number;
@@ -59,16 +62,23 @@ export const extractParameters = <T extends RunnerParameterConfiguration>(
   const parameters = {} as Record<keyof T, string[]>;
   const mapper = createParameterMapper(configurations);
   const command: string[] = [];
+  let indexWithoutParameterNamed = 0;
   while (max-- > 0) {
     const value = args[max];
-    const config = projects[value]
+    let byIndexes = true;
+    let config = projects[value]
       ? {
           indexes: 0,
           key: 'projects'
         }
       : mapper[value];
+    if (!config) {
+      byIndexes = false;
+      config = mapper[max - indexWithoutParameterNamed];
+    }
     if (config) {
-      let adjust = config.indexes;
+      let adjust = byIndexes ? config.indexes : 0;
+      indexWithoutParameterNamed = adjust + 1;
       if (max + adjust > numberArguments) {
         throw new Error(
           `Missing argument for ${config.key.toString()}, expected ${config.indexes} but got ${numberArguments - max} instead.`
@@ -91,22 +101,3 @@ export const extractParameters = <T extends RunnerParameterConfiguration>(
     command
   };
 };
-
-export const findAliases = (projects: CliContext['projects'], root: string) =>
-  Object.entries(projects).reduce(
-    (acc, [name, cliProject]) => {
-      const path = resolve(root, cliProject.location.root);
-      const projectName = readJson(resolve(path, 'package.json')).name;
-      const item = {
-        project: projectName,
-        name,
-        path,
-        root: cliProject.location.root
-      };
-      [name, projectName, cliProject.location.root].forEach(key => {
-        acc[key] = item;
-      });
-      return acc;
-    },
-    {} as Record<string, RunnerAlias>
-  );

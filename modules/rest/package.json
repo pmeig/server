@@ -1,5 +1,5 @@
 {
-  "name": "@server/rest",
+  "name": "@pmeig/srv-rest",
   "version": "1.0.0-SNAPSHOT",
   "description": "",
   "scripts": {

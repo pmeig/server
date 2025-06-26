@@ -5,22 +5,22 @@
     "declarationMap": true
   },
   "paths": {
-    "@server/core": [
+    "@pmeig/srv-core": [
       "modules/core"
     ],
-    "@server/core/*": [
+    "@pmeig/srv-core/*": [
       "modules/core/src/*"
     ],
-    "@server/vault": [
+    "@pmeig/vault": [
       "modules/vault"
     ],
-    "@server/vault/*": [
+    "@pmeig/srv-vault/*": [
       "modules/vault/src/*"
     ],
-    "@server/properties": [
+    "@pmeig/srv-properties": [
       "modules/properties"
     ],
-    "@server/properties/*": [
+    "@pmeig/srv-properties/*": [
       "modules/properties/src/*"
     ]
   }

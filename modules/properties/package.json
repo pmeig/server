@@ -1,5 +1,5 @@
 {
-  "name": "@server/properties",
+  "name": "@pmeig/srv-properties",
   "version": "1.0.0-SNAPSHOT",
   "description": "",
   "main": "src/index.ts",

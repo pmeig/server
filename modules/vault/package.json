@@ -1,5 +1,5 @@
 {
-  "name": "@server/vault",
+  "name": "@pmeig/srv-vault",
   "version": "1.0.0-SNAPSHOT",
   "description": "",
   "main": "src/index.ts",

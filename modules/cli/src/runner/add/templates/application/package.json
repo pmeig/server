@@ -1,25 +1,26 @@
 {
-  "name": "{NAME}",
+  "name": "@server/runner",
   "version": "1.0.0",
   "description": "",
   "main": "main.ts",
   "scripts": {
     "start": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "test": "echo \"Error: no  specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
+  "packageManager": "pnpm@10.11.0",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "{NODE}",
-    "typescript": "{TYPESCRIPT}",
-    "@types/express": "{TYPE_EXPRESS}",
-    "reflect-metadata": "{REFLECT}",
-    "@swc/core": "{SWC_CORE}",
-    "vite": "{VITE}",
-    "vite-plugin-node": "{VITE_PLUGIN_NODE}"
+    "@pmeig/vite-plugin": "^1.0.0",
+    "@types/node": "^22.15.19",
+    "reflect-metadata": "^0.2.2",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
   },
   "dependencies": {
-    "express": "{EXPRESS}"
+    "@pmeig/srv-core": "^1.0.0"
   }
 }
+

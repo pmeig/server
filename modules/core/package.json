@@ -1,5 +1,5 @@
 {
-  "name": "@server/core",
+  "name": "@pmeig/srv-core",
   "version": "1.0.0",
   "description": "",
   "scripts": {

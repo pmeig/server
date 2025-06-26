@@ -11,8 +11,8 @@ export interface CliProject {
 }
 
 export interface CliGenerate {
-  prefix: string;
-  root: string;
+  prefix?: string;
+  root?: string;
 }
 
 export interface CliContext extends CliProject {
