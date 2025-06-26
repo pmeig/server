@@ -21,10 +21,10 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
-    "@server/core": "workspace:*",
-    "@server/rest": "workspace:*",
-    "@server/properties": "workspace:*",
-    "@server/vault": "workspace:*",
+    "@pmeig/srv-core": "workspace:*",
+    "@pmeig/srv-rest": "workspace:*",
+    "@pmeig/srv-properties": "workspace:*",
+    "@pmeig/srv-vault": "workspace:*",
     "express": "^5.1.0",
     "vite-plugin-node": "^5.0.1"
   }

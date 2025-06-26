@@ -1,5 +1,5 @@
 {
-  "name": "@pmeig/cli",
+  "name": "@pmeig/srv-cli",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

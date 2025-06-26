@@ -30,7 +30,7 @@
   "dependencies": {
     "js-yaml": "^4.1.0",
     "rxjs": "^7.8.2",
-    "@server/vault": "workspace:*",
-    "@server/core": "workspace:*"
+    "@pmeig/srv-vault": "workspace:*",
+    "@pmeig/srv-core": "workspace:*"
   }
 }

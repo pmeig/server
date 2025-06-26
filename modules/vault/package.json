@@ -18,7 +18,7 @@
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
     "axios": "^1.9.0",
-    "@server/core": "workspace:*"
+    "@pmeig/srv-core": "workspace:*"
   },
   "typings": "src/index.d.ts",
   "exports": {
