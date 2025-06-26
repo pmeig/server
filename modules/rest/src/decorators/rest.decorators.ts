@@ -1,4 +1,4 @@
-import { Configuration, Decorators } from '@server/core';
+import { Configuration, Decorators } from '@pmeig/srv-core';
 import { insertMiddleware, OptionsMapper, RequestMapper } from '../rest';
 import { HttpStatus, HttpStatusText } from '../models/status.model';
 import { RequestHandler } from 'express';

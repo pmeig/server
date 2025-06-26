@@ -1,4 +1,4 @@
-import { Module } from '@server/core';
+import { Module } from '@pmeig/srv-core';
 import { RestBootable } from './rest.boot';
 import { RestServerBuilder } from './builder/rest-server.builder';
 import { RestRouteBuilder } from './builder/rest-route.builder';

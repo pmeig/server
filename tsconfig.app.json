@@ -12,28 +12,28 @@
       "@pmeig/vite-plugin/*": [
         "modules/vite-plugin-pmeig/src/*"
       ],
-      "@server/core": [
+      "@pmeig/srv-core": [
         "modules/core"
       ],
-      "@server/core/*": [
+      "@pmeig/srv-core/*": [
         "modules/core/src/*"
       ],
-      "@server/vault": [
+      "@pmeig/srv-vault": [
         "modules/vault"
       ],
-      "@server/vault/*": [
+      "@pmeig/srv-vault/*": [
         "modules/vault/src/*"
       ],
-      "@server/properties": [
+      "@pmeig/srv-properties": [
         "modules/properties"
       ],
-      "@server/properties/*": [
+      "@pmeig/srv-properties/*": [
         "modules/properties/src/*"
       ],
-      "@server/rest": [
+      "@pmeig/srv-rest": [
         "modules/rest"
       ],
-      "@server/rest/*": [
+      "@pmeig/srv-rest/*": [
         "modules/rest/src/*"
       ]
     }

@@ -1,16 +1,16 @@
-# @Server/core
+# @pmeig/srv-core
 
 A powerful dependency injection and configuration framework for Node.js applications built with TypeScript.
 
 ## Installation
 ```bash
-    npm i @server/core
+    npm i @pmeig/srv-core
 ```
 
 
 ## Overview
 
-The `@server/core` module provides the foundational framework for building modular TypeScript applications with dependency injection, decorators, and application context management.
+The `@pmeig/srv-core` module provides the foundational framework for building modular TypeScript applications with dependency injection, decorators, and application context management.
 
 ## Key Features
 
@@ -31,7 +31,7 @@ The application context manages the lifecycle of all components, providers, and 
 Modules are the building blocks of your application. They group related components and define how they should be initialized and connected.
 
 ```typescript
-import { Module } from '@server/core';
+import { Module } from '@pmeig/srv-core';
 
 @Module({ providers: [ UserService, ProductService ] })
 export class AppModule {}
@@ -61,7 +61,7 @@ The core module provides a comprehensive decorator system for:
 * **first implementation**
 
 ```typescript
-import {Module, ApplicationContext} from '@server/core'
+import {Module, ApplicationContext} from '@pmeig/srv-core'
 
 @Module({
     providers: [MyService, {
@@ -79,7 +79,7 @@ export const server = ApplicationContext.run(AppModule)
 * **second implementation**
 
 ```typescript
-import {ApplicationContext} from '@server/core'
+import {ApplicationContext} from '@pmeig/srv-core'
 
 
 export const server = ApplicationContext.run({
@@ -110,7 +110,7 @@ export const server = ApplicationContext.run({
 ### Creating Basic Decorators
 #### Class Decorator
 ```typescript
-import { Decorators } from '@server/core';
+import { Decorators } from '@pmeig/srv-core';
 
 export const MyClassDecorator = (config: string) =>
   Decorators.class('MyClassDecorator', target => {
@@ -216,7 +216,7 @@ export const Cacheable = (ttl: number = 300000) =>
 ### Type Conversion
 
 ```typescript
-import {Convert, Converter} from '@server/core'
+import {Convert, Converter} from '@pmeig/srv-core'
 
 export class StringToDateConverter extends Converter<Date, string> {
 
@@ -295,9 +295,9 @@ Ensure your includes: `tsconfig.json`
 
 ## Integration
 This core module integrates seamlessly with other server modules:
-- `@server/rest` - REST API framework
-- `@server/properties` - Configuration management
-- `@server/vault` - Secret management
+- `@pmeig/srv-rest` - REST API framework
+- `@pmeig/srv-properties` - Configuration management
+- `@pmeig/srv-vault` - Secret management
 
 ## License
 See the [LICENSE](../../LICENSE) file for license information.

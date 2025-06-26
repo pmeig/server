@@ -1,4 +1,4 @@
-import { Bootable, Configuration, Context, Internal } from '@server/core';
+import { Bootable, Configuration, Context, Internal } from '@pmeig/srv-core';
 import { Controller } from '../decorators/rest.decorators';
 import { Server } from 'http';
 import { RestServerBuilder } from './builder/rest-server.builder';

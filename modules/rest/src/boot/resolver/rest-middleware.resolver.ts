@@ -1,4 +1,4 @@
-import { Configuration, InjectByDecorator, Internal, List, Optional } from '@server/core';
+import { Configuration, InjectByDecorator, Internal, List, Optional } from '@pmeig/srv-core';
 import {
   RestErrorMiddleware,
   RestMiddleware,

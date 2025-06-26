@@ -1,4 +1,4 @@
-import { getMetadataReflection, getMultiMetadataReflection } from '@server/core';
+import { getMetadataReflection, getMultiMetadataReflection } from '@pmeig/srv-core';
 
 export const advisor_key = 'advisor:controller';
 export const advisor_exception_key = 'advisor:exception';

@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { existsSync, readFileSync } from 'fs';
 import { VaultKubernetesPlugin, VaultProperties } from './vault.properties';
 import { VaultHealth } from './vault-health';
-import { Nullable, Component } from '@server/core';
+import { Nullable, Component } from '@pmeig/srv-core';
 
 export type VaultNode = { [key: string]: string | undefined };
 

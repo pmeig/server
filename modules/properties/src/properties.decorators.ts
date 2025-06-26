@@ -6,7 +6,7 @@ import {
   hasDecorator,
   ProviderType,
   Type
-} from '@server/core';
+} from '@pmeig/srv-core';
 import { Environment } from './environment/environment';
 import { propertiesRefresh } from './refresh/properties.refresh';
 import { filter } from 'rxjs';

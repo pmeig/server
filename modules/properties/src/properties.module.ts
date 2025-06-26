@@ -1,6 +1,6 @@
-import { Module } from '@server/core';
+import { Module } from '@pmeig/srv-core';
 import { Bootstrap } from './bootstrap/bootstrap.configuration';
-import { createVaultClient, VaultClient, VaultProperties } from '@server/vault';
+import { createVaultClient, VaultClient, VaultProperties } from '@pmeig/srv-vault';
 import { findVaultProperties } from './helper/properties.helper';
 import { PropertiesPost } from './properties.decorators';
 import { Environment } from './environment/environment';

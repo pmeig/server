@@ -1,9 +1,9 @@
-import { createVaultClient, VaultClient, VaultProperties } from '@server/vault';
+import { createVaultClient, VaultClient, VaultProperties } from '@pmeig/srv-vault';
 import { findVaultProperties, mergeRecord } from '../helper/properties.helper';
 import { readAllEnv, readAllProperties } from '../helper/io.helper';
 import { EnvironmentItem } from '../environment/environment.item';
 import { Env } from '../environment/model/env';
-import { AsyncSync, Configuration, Internal, Nullable, OptionalAsyncSync, TooArray } from '@server/core';
+import { AsyncSync, Configuration, Internal, Nullable, OptionalAsyncSync, TooArray } from '@pmeig/srv-core';
 import { propertiesRefresh, watchSources } from '../refresh/properties.refresh';
 import { filter } from 'rxjs';
 

@@ -1,4 +1,4 @@
-import { AsyncSync, Conditionals, Context, Type } from '@server/core';
+import { AsyncSync, Conditionals, Context, Type } from '@pmeig/srv-core';
 import { Environment } from './environment/environment';
 
 export const ConditionalEnvironment = (

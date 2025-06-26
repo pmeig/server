@@ -1,5 +1,5 @@
 import { extractKeys } from '../helper/properties.helper';
-import { VaultClient, VaultNode } from '@server/vault';
+import { VaultClient, VaultNode } from '@pmeig/srv-vault';
 import { Env } from './model/env';
 
 export type EnvironmentValue =

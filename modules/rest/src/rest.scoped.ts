@@ -6,7 +6,7 @@ import {
   ProviderType,
   RequestProviderFactory,
   retrieveContext
-} from '@server/core';
+} from '@pmeig/srv-core';
 import { RestMiddleware } from './rest.middleware';
 import { NextFunction, Request, Response } from 'express';
 import { randomUUID, UUID } from 'crypto';

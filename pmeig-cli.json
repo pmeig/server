@@ -2,7 +2,7 @@
   "name": "server",
   "type": "library",
   "architecture": {
-    "prefix": "@server/",
+    "prefix": "@pmeig/srv-",
     "library": {
       "root": "modules"
     }

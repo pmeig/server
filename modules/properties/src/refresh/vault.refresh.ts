@@ -1,5 +1,5 @@
-import { AsyncSync, BeanPost, Configuration, Internal, ProviderType } from '@server/core';
-import { VaultClient, VaultProperties } from '@server/vault';
+import { AsyncSync, BeanPost, Configuration, Internal, ProviderType } from '@pmeig/srv-core';
+import { VaultClient, VaultProperties } from '@pmeig/srv-vault';
 import { propertiesRefresh } from './properties.refresh';
 import { filter } from 'rxjs';
 import { Bootstrap } from '../bootstrap/bootstrap.configuration';

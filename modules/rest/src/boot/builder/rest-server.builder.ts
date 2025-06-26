@@ -1,4 +1,4 @@
-import { Configuration, Internal } from '@server/core';
+import { Configuration, Internal } from '@pmeig/srv-core';
 import express, { ErrorRequestHandler, Express, json, urlencoded } from 'express';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';

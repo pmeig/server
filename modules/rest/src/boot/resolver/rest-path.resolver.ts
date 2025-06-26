@@ -1,5 +1,5 @@
 import { RestMiddlewareResolver } from './rest-middleware.resolver';
-import { Configuration, Internal, Nullable, toPromise } from '@server/core';
+import { Configuration, Internal, Nullable, toPromise } from '@pmeig/srv-core';
 import { Method } from '../../models/rest.type';
 import { HttpStatusNoValue, is3xx } from '../../models/status.model';
 import { ErrorRequestHandler, RequestHandler, Response } from 'express';

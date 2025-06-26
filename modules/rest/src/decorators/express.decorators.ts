@@ -1,4 +1,4 @@
-import { AsyncSync, Decorator, Decorators, NoConvert, reflectMultiUpdate } from '@server/core';
+import { AsyncSync, Decorator, Decorators, NoConvert, reflectMultiUpdate } from '@pmeig/srv-core';
 import { Request, Response } from 'express';
 import { request_parameter } from '../boot/resolver/expressParameterResolver';
 

@@ -1,4 +1,4 @@
-import { Configuration, Internal } from '@server/core';
+import { Configuration, Internal } from '@pmeig/srv-core';
 import { Bootstrap } from '../bootstrap/bootstrap.configuration';
 import { propertiesRefresh } from '../refresh/properties.refresh';
 import { filter } from 'rxjs';

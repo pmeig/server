@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { Method } from './models/rest.type';
-import { AsyncSync } from '@server/core';
+import { AsyncSync } from '@pmeig/srv-core';
 
 export type ExpressMiddleware = (req: Request, res: Response, next: NextFunction) => AsyncSync<void>;
 export type ExpressErrorMiddleware = (error: Error, req: Request, res: Response, next: NextFunction) => AsyncSync<void>;

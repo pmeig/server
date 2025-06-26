@@ -1,4 +1,4 @@
-import { Configuration, Converter, getMethodWithDecorator, getTypeOf, hasDecorator, Internal } from '@server/core';
+import { Configuration, Converter, getMethodWithDecorator, getTypeOf, hasDecorator, Internal } from '@pmeig/srv-core';
 import { ControllerAdvisor, ExceptionAdvisor } from './advisor.decorators';
 import { retrieveExceptionAdvisor, retrievePathAdvisor } from './advisor.services';
 import { RestErrorMiddleware } from '../rest.middleware';

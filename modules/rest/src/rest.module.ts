@@ -1,4 +1,4 @@
-import { Module } from '@server/core';
+import { Module } from '@pmeig/srv-core';
 import { RequestFactoryScoped } from './rest.scoped';
 import { RestBootModule } from './boot/rest-boot.module';
 import { AdvisorConverter } from './errors/advisor.converter';

@@ -1,4 +1,4 @@
-import { AsyncSync, Nullable, OptionalAsyncSync, TooArray } from '@server/core';
+import { AsyncSync, Nullable, OptionalAsyncSync, TooArray } from '@pmeig/srv-core';
 
 export interface Env {
   get<T extends TooArray<Record<string, any> | number | string | boolean>>(key: string): Promise<T>;

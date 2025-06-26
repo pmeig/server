@@ -7,7 +7,7 @@
     "test": "echo \"Error: no runner specified\" && exit 1",
     "pmeig": "pmeig",
     "start": "vite",
-    "build:cli": "pnpm --filter @server/cli build",
+    "build:cli": "pnpm --filter @pmeig/srv-cli build",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -25,7 +25,7 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
-    "@server/cli": "link:dist\\cli",
+    "@pmeig/srv-cli": "link:dist\\cli",
     "express": "^5.1.0"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@server/runner",
+  "name": "@pmeig/srv-runner",
   "version": "1.0.0",
   "description": "",
   "main": "main.ts",

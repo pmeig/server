@@ -17,11 +17,11 @@ import { launcher } from '../../launcher';
 
 const templates = resolve(dirname(process.argv[1]), 'runner', 'add', 'templates');
 const fileImportReference = Object.freeze({
-  service: '@server/mvc',
-  component: '@server/core',
-  configuration: '@server/core',
-  controller: '@server/mvc',
-  properties: '@server/properties'
+  service: '@pmeig/srv-rest',
+  component: '@pmeig/srv-core',
+  configuration: '@pmeig/srv-core',
+  controller: '@pmeig/srv-rest',
+  properties: '@pmeig/srv-properties'
 });
 
 export abstract class Generator {

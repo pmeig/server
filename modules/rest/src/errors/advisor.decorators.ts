@@ -1,4 +1,4 @@
-import { Configuration, Decorators } from '@server/core';
+import { Configuration, Decorators } from '@pmeig/srv-core';
 import { advisor_key, advisor_exception_key } from './advisor.services';
 
 export const ControllerAdvisor = (...path: (string | RegExp)[]) =>

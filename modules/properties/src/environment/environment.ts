@@ -1,7 +1,7 @@
-import { AsyncSync, Configuration, Nullable, Optional, OptionalAsyncSync, TooArray } from '@server/core';
+import { AsyncSync, Configuration, Nullable, Optional, OptionalAsyncSync, TooArray } from '@pmeig/srv-core';
 import { Env } from './model/env';
 import { EnvironmentItem } from './environment.item';
-import { VaultClient } from '@server/vault';
+import { VaultClient } from '@pmeig/srv-vault';
 import { readAllProperties } from '../helper/io.helper';
 import { EnvironmentConfiguration } from './environment.configuration';
 import { propertiesRefresh, watchSources } from '../refresh/properties.refresh';

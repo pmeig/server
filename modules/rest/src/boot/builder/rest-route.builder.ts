@@ -1,5 +1,5 @@
 import { RestMiddlewareResolver } from '../resolver/rest-middleware.resolver';
-import { Configuration, getTypeOf, Internal } from '@server/core';
+import { Configuration, getTypeOf, Internal } from '@pmeig/srv-core';
 import { retrieveRestConfig } from '../../rest';
 import { ErrorRequestHandler, RequestHandler, Router } from 'express';
 import { RestPath } from '../resolver/rest-path.resolver';

@@ -1,4 +1,11 @@
-import { Decorators, getMetadataReflection, Partials, reflectMetadataContext, reflectUpdate, Type } from '@server/core';
+import {
+  Decorators,
+  getMetadataReflection,
+  Partials,
+  reflectMetadataContext,
+  reflectUpdate,
+  Type
+} from '@pmeig/srv-core';
 import { Method } from './models/rest.type';
 import { ErrorRequestHandler, RequestHandler } from 'express';
 import { ExpressErrorMiddleware, ExpressMiddleware } from './rest.middleware';

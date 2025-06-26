@@ -7,7 +7,7 @@ import {
   retrieveConverters,
   retrieveParameterTypes,
   Type
-} from '@server/core';
+} from '@pmeig/srv-core';
 import { Request, Response } from 'express';
 
 export const request_parameter = 'request:param';

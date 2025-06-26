@@ -1,4 +1,4 @@
-import { VaultCredentials, VaultPlugins, VaultProperties } from '@server/vault';
+import { VaultCredentials, VaultPlugins, VaultProperties } from '@pmeig/srv-vault';
 import { Env } from '../environment/model/env';
 import { readAllProperties } from './io.helper';
 import { EnvironmentItem } from '../environment/environment.item';

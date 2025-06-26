@@ -1,6 +1,6 @@
-import { ApplicationContext, Component, Import, Module, Order, Scope } from '@server/core';
+import { ApplicationContext, Component, Import, Module, Order, Scope } from '@pmeig/srv-core';
 import { randomBytes } from 'crypto';
-import { Properties, PropertiesModule } from '@server/properties';
+import { Properties, PropertiesModule } from '@pmeig/srv-properties';
 import {
   Controller,
   ControllerAdvisor,
@@ -12,7 +12,7 @@ import {
   Req,
   Res,
   RestModule
-} from '@server/rest';
+} from '@pmeig/srv-rest';
 import type { Request, Response } from 'express';
 
 interface Named {
