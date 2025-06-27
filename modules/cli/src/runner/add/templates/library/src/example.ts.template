@@ -1,4 +1,4 @@
-import { Component } from '@server/core';
+import { Component } from '@pmeig/srv-core';
 
 @Component
 export class Example {}

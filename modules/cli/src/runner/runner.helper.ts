@@ -89,8 +89,8 @@ export const extractParameters = <T extends RunnerParameterConfiguration>(
         content.push(args[max]);
       }
       while (adjust > 0) {
-        command.shift();
-        content.unshift(args[max + adjust--]);
+        const argument = command.shift()!;
+        content.unshift(argument);
         adjust--;
       }
       parameters[config.key] = content;

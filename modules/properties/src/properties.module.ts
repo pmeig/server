@@ -6,6 +6,7 @@ import { PropertiesPost } from './properties.decorators';
 import { Environment } from './environment/environment';
 import { EnvironmentConfiguration } from './environment/environment.configuration';
 import { VaultRefresh } from './refresh/vault.refresh';
+import { ApplicationProperties } from './application.properties';
 
 @Module({
   providers: [
@@ -33,7 +34,8 @@ import { VaultRefresh } from './refresh/vault.refresh';
         return EnvironmentConfiguration.from(bootstrap);
       }
     },
-    Environment
+    Environment,
+    ApplicationProperties
   ]
 })
 export class PropertiesModule {}

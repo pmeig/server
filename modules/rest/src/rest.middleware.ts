@@ -21,7 +21,8 @@ export abstract class RestMiddleware {
 
   protected constructor() {}
 
-  accept(_: string, _method?: Method): boolean {
+  // noinspection JSUnusedLocalSymbols
+  accept(path: string, method?: Method): boolean {
     return false;
   }
 

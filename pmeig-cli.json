@@ -59,6 +59,13 @@
         "root": "modules/vite-plugin-pmeig"
       },
       "assets": []
+    },
+    "security": {
+      "type": "library",
+      "location": {
+        "root": "modules/security"
+      },
+      "assets": []
     }
   }
 }

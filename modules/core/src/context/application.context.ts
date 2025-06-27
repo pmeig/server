@@ -18,10 +18,11 @@ import { DecoratorRef } from '../decorators/type.decorators';
 import { PMEIG_ADMIN_TOKEN } from '../decorators/conditional/conditional.helper';
 import { LifecycleModule } from './lifecycle/init-handler.lifecycle';
 import { ConverterModule } from './converters/converter.module';
+import { ImportFactory } from './factory/import.factory';
 
 export class ApplicationContext implements Context {
   private factories: Record<string | symbol, ComponentContext[]> = {};
-  private children: Context[] = [];
+  private children: ImportFactory[] = [];
   readonly id: string = crypto.randomUUID();
 
   static run(boot: Type<any> | ModuleContext, ...args: any[]) {
@@ -69,8 +70,9 @@ export class ApplicationContext implements Context {
   async has(key: any): Promise<boolean> {
     const token = this.extractToken(key);
     let found = (await this.findFactories(token)).length > 0;
-    if (!found && this.children.length > 0) {
-      const iterator = [...this.children];
+    const modules = await this.findValidChildren();
+    if (!found && modules.length > 0) {
+      const iterator = [...modules];
       while (!found && iterator.length > 0) {
         const child = iterator.shift()!;
         found = await child.has(key);
@@ -108,7 +110,7 @@ export class ApplicationContext implements Context {
     for (const factory of factories) {
       beans.push(await factory.build(this.contextReference, token));
     }
-    for (const module of this.children.filter(value => value.has(token))) {
+    for (const module of (await this.findValidChildren()).filter(value => value.has(token))) {
       beans.push(...(await module.multiResolve<T>(token, [])));
     }
     return this.applyDefault(Promise.resolve(beans.filter(value => !!value)), defaultValue);
@@ -137,7 +139,7 @@ export class ApplicationContext implements Context {
       beans.push(await context.factory?.build(this, decorator.toString()));
     }
 
-    for (const module of this.children) {
+    for (const module of await this.findValidChildren()) {
       beans.push(...(await module.withDecorator(decorator)));
     }
     return beans;
@@ -151,6 +153,17 @@ export class ApplicationContext implements Context {
       }
     }
     return factories;
+  }
+
+  private async findValidChildren() {
+    const modules: Context[] = [];
+    for (const child of this.children) {
+      if (await child.isAccessible(this)) {
+        const module = await child.build();
+        if (module) modules.push(module);
+      }
+    }
+    return modules;
   }
 
   private init(context: ModuleContext) {
@@ -170,8 +183,11 @@ export class ApplicationContext implements Context {
       .forEach(module => {
         const context = retrieveModuleContext(module);
         if (context) {
-          const child = new ApplicationContext(context, this.contextReference);
-          this.children.push(child);
+          this.children.push(
+            new ImportFactory(module, moduleContext =>
+              Promise.resolve(new ApplicationContext(moduleContext, this.contextReference))
+            )
+          );
         }
       });
   }
@@ -232,7 +248,7 @@ export class ApplicationContext implements Context {
   ) {
     return this.applyDefault(injectable, async () => {
       let context: Context | undefined = undefined;
-      let iterator = [...this.children];
+      let iterator = [...(await this.findValidChildren())];
       while (!context && iterator.length > 0) {
         const child = iterator.shift()!;
         if (await child.has(token)) {
@@ -276,7 +292,7 @@ export class ApplicationContext implements Context {
         }
         const child = new ApplicationContext(context as ModuleContext, this.contextReference);
         child.searchModuleByDecorators();
-        this.children.push(child);
+        this.children.push(new ImportFactory(module, () => Promise.resolve(child)));
       });
     }
   }
