@@ -1,13 +1,16 @@
-import { AsyncSync, Decorator, Decorators, NoConvert, reflectMultiUpdate } from '@pmeig/srv-core';
-import { Request, Response } from 'express';
-import { request_parameter } from '../boot/resolver/expressParameterResolver';
+import { AsyncSync, Decorators, MethodParameterDecorator, NoConvert, reflectMultiUpdate } from '@pmeig/srv-core';
+import { NextFunction, Request, Response } from 'express';
+import { request_parameter } from '../boot/resolver/express-parameter.resolver';
+import { Middleware } from './rest.decorators';
 
 export const RestDecorators = Object.freeze({
-  parameter: (name: string, handler: (request: Request, response: Response) => AsyncSync<any>, apply?: Decorator) =>
+  parameter: (
+    name: string,
+    handler: (request: Request, response: Response) => AsyncSync<any>,
+    ...applies: MethodParameterDecorator[]
+  ) =>
     Decorators.parameter.method(name, (target, propertyKey, index) => {
-      if (apply) {
-        apply(target, propertyKey, index);
-      }
+      applies.forEach(apply => apply(target, propertyKey, index));
       reflectMultiUpdate(
         items => {
           items.push({
@@ -20,6 +23,17 @@ export const RestDecorators = Object.freeze({
         target,
         propertyKey
       );
+    }),
+  method: (
+    name: string,
+    handler: (request: Request, response: Response, next: NextFunction) => void,
+    ...applies: MethodDecorator[]
+  ) =>
+    Decorators.method(name, (target, propertyKey, descriptor) => {
+      applies.forEach(apply => apply(target, propertyKey, descriptor));
+      Middleware((request, response, next) => {
+        handler(request, response, next);
+      });
     })
 });
 

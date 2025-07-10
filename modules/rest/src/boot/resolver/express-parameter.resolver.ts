@@ -2,18 +2,16 @@ import {
   Configuration,
   Converter,
   getMultiMetadataReflection,
-  Internal,
   List,
   retrieveConverters,
   retrieveParameterTypes,
   Type
 } from '@pmeig/srv-core';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 
 export const request_parameter = 'request:param';
 
 @Configuration
-@Internal
 export class ExpressParameterResolver {
   private readonly converters: Converter<any>[] = [];
   constructor(@List(Converter) converters: Converter<any>[]) {

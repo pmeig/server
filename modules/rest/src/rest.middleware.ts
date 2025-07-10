@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { Method } from './models/rest.type';
 import { AsyncSync } from '@pmeig/srv-core';
 
@@ -7,14 +7,20 @@ export type ExpressErrorMiddleware = (error: Error, req: Request, res: Response,
 
 export const toExpressMiddleware =
   (middleware: RestMiddleware) => (request: Request, response: Response, next: NextFunction) => {
-    return middleware.use(request, response, next);
+    return middleware.use(request, next, response);
   };
 
 export const toExpressErrorMiddleware = (middleware: RestErrorMiddleware) => {
   return (error: Error, req: Request, res: Response, next: NextFunction) => {
-    return middleware.use(error, req, res, next);
+    return middleware.use(error, res, req, next);
   };
 };
+
+export const retrieveControllerCreator = (request: Request) =>
+  request['rest:controller'] as {
+    controller: any;
+    method: string;
+  };
 
 export abstract class RestMiddleware {
   global = false;
@@ -26,7 +32,7 @@ export abstract class RestMiddleware {
     return false;
   }
 
-  abstract use(request: Request, response: Response, next: NextFunction): void | Promise<void>;
+  abstract use(request: Request, next: NextFunction, response: Response): void | Promise<void>;
 }
 
 export abstract class RestErrorMiddleware {
@@ -37,5 +43,5 @@ export abstract class RestErrorMiddleware {
     return false;
   }
 
-  abstract use(error: Error, request: Request, response: Response, next: NextFunction): void | Promise<void>;
+  abstract use(error: Error, response: Response, request: Request, next: NextFunction): void | Promise<void>;
 }

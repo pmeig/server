@@ -4,7 +4,7 @@ import { RestServerBuilder } from './builder/rest-server.builder';
 import { RestRouteBuilder } from './builder/rest-route.builder';
 import { RestMiddlewareResolver } from './resolver/rest-middleware.resolver';
 import { RestPathResolver } from './resolver/rest-path.resolver';
-import { ExpressParameterResolver } from './resolver/expressParameterResolver';
+import { ExpressParameterResolver } from './resolver/express-parameter.resolver';
 import { RequestGeneratorId } from '../rest.scoped';
 
 @Module({

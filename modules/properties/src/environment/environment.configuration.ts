@@ -1,11 +1,10 @@
-import { Configuration, Internal } from '@pmeig/srv-core';
+import { Configuration } from '@pmeig/srv-core';
 import { Bootstrap } from '../bootstrap/bootstrap.configuration';
 import { propertiesRefresh } from '../refresh/properties.refresh';
 import { filter } from 'rxjs';
 import { EnvConfig } from './model/env-config';
 
 @Configuration
-@Internal
 export class EnvironmentConfiguration implements EnvConfig {
   location = './resources';
   watch = false;

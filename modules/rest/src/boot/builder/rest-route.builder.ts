@@ -1,15 +1,15 @@
 import { RestMiddlewareResolver } from '../resolver/rest-middleware.resolver';
-import { Configuration, getTypeOf, Internal } from '@pmeig/srv-core';
+import { Configuration, getTypeOf } from '@pmeig/srv-core';
 import { retrieveRestConfig } from '../../rest';
 import { ErrorRequestHandler, RequestHandler, Router } from 'express';
 import { RestPath } from '../resolver/rest-path.resolver';
+
 export interface RestRoute {
   path: string;
   handler: RequestHandler;
 }
 
 @Configuration
-@Internal
 export class RestRouteBuilder {
   private route: Router;
   private path: string;

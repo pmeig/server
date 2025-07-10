@@ -24,7 +24,7 @@ import { ApplicationProperties } from './application.properties';
       provide: VaultClient,
       useFactory: async context => {
         const vaultProperties = await context.resolveRequired(VaultProperties);
-        return await createVaultClient(vaultProperties);
+        return createVaultClient(vaultProperties);
       }
     },
     {

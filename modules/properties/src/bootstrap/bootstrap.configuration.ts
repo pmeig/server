@@ -3,12 +3,11 @@ import { findVaultProperties, mergeRecord } from '../helper/properties.helper';
 import { readAllEnv, readAllProperties } from '../helper/io.helper';
 import { EnvironmentItem } from '../environment/environment.item';
 import { Env } from '../environment/model/env';
-import { AsyncSync, Configuration, Internal, Nullable, OptionalAsyncSync, TooArray } from '@pmeig/srv-core';
+import { AsyncSync, Configuration, Nullable, OptionalAsyncSync, TooArray } from '@pmeig/srv-core';
 import { propertiesRefresh, watchSources } from '../refresh/properties.refresh';
 import { filter } from 'rxjs';
 
 @Configuration
-@Internal
 export class Bootstrap implements Env {
   private properties: EnvironmentItem;
   sources: Readonly<string[]>;

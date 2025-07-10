@@ -1,9 +1,9 @@
 import { RestMiddlewareResolver } from './rest-middleware.resolver';
-import { Configuration, Internal, Nullable, toPromise } from '@pmeig/srv-core';
+import { Configuration, Nullable, toPromise } from '@pmeig/srv-core';
 import { Method } from '../../models/rest.type';
 import { HttpStatusNoValue, is3xx } from '../../models/status.model';
 import { ErrorRequestHandler, RequestHandler, Response } from 'express';
-import { ExpressParameterResolver } from './expressParameterResolver';
+import { ExpressParameterResolver } from './express-parameter.resolver';
 import { retrieveRestConfig } from '../../rest';
 
 export interface RestPath {
@@ -13,7 +13,6 @@ export interface RestPath {
 }
 
 @Configuration
-@Internal
 export class RestPathResolver {
   constructor(
     private readonly middlewaresResolver: RestMiddlewareResolver,
@@ -33,6 +32,7 @@ export class RestPathResolver {
         method: config.options.method,
         path,
         handler: [
+          this.middlewaresResolver.addRouterCreatorMiddleware(controller, methodName),
           ...middlewares.middlewares.map(value => value),
           async (request: any, response: Response) => {
             const value = await toPromise(handler(...params(request, response)));

@@ -1,15 +1,20 @@
 const toHttpStatusCode = <T extends Record<string, number>>(httpStatus: T) =>
-  Object.entries(httpStatus).reduce((acc, [key, value]) => ({ ...acc, [value]: key }), {} as Record<number, keyof T>);
+  Object.freeze(
+    Object.entries(httpStatus).reduce(
+      (acc, [key, value]) => ({ ...acc, [value]: key }),
+      {} as Record<T[keyof T], keyof T>
+    )
+  );
 
-export const HttpStatusInformationalResponse = {
+export const HttpStatusInformationalResponse = Object.freeze({
   CONTINUE: 100,
   SWITCHING_PROTOCOLS: 101,
   PROCESSING: 102
-};
+});
 
 export const HttpStatus1xx = toHttpStatusCode(HttpStatusInformationalResponse);
 
-export const HttpStatusSuccess = {
+export const HttpStatusSuccess = Object.freeze({
   OK: 200,
   CREATED: 201,
   ACCEPTED: 202,
@@ -20,11 +25,11 @@ export const HttpStatusSuccess = {
   MULTI_STATUS: 207,
   ALREADY_REPORTED: 208,
   IM_USED: 226
-};
+});
 
 export const HttpStatus2xx = toHttpStatusCode(HttpStatusSuccess);
 
-export const HttpStatusRedirect = {
+export const HttpStatusRedirect = Object.freeze({
   MULTIPLE_CHOICES: 300,
   MOVED_PERMANENTLY: 301,
   FOUND: 302,
@@ -34,11 +39,11 @@ export const HttpStatusRedirect = {
   SWITCH_PROXY: 306,
   TEMPORARY_REDIRECT: 307,
   PERMANENT_REDIRECT: 308
-};
+});
 
 export const HttpStatus3xx = toHttpStatusCode(HttpStatusRedirect);
 
-export const HttpStatusClientError = {
+export const HttpStatusClientError = Object.freeze({
   BAD_REQUEST: 400,
   UNAUTHORIZED: 401,
   PAYMENT_REQUIRED: 402,
@@ -67,11 +72,11 @@ export const HttpStatusClientError = {
   TOO_MANY_REQUESTS: 429,
   REQUEST_HEADER_FIELDS_TOO_LARGE: 431,
   UNAVAILABLE_FOR_LEGAL_REASONS: 451
-};
+});
 
 export const HttpStatus4xx = toHttpStatusCode(HttpStatusClientError);
 
-export const HttpStatusServerError = {
+export const HttpStatusServerError = Object.freeze({
   INTERNAL_SERVER_ERROR: 500,
   NOT_IMPLEMENTED: 501,
   BAD_GATEWAY: 502,
@@ -83,7 +88,7 @@ export const HttpStatusServerError = {
   LOOP_DETECTED: 508,
   NOT_EXTENDED: 510,
   NETWORK_AUTHENTICATION_REQUIRED: 511
-};
+});
 
 export const HttpStatus5xx = toHttpStatusCode(HttpStatusServerError);
 

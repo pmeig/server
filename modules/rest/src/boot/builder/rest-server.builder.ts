@@ -1,4 +1,4 @@
-import { Configuration, Internal } from '@pmeig/srv-core';
+import { Configuration } from '@pmeig/srv-core';
 import express, { ErrorRequestHandler, Express, json, urlencoded } from 'express';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
@@ -6,7 +6,6 @@ import { RestMiddlewareResolver } from '../resolver/rest-middleware.resolver';
 import { RestRoute } from './rest-route.builder';
 
 @Configuration
-@Internal
 export class RestServerBuilder {
   private server: Express;
   private errorMiddleware: ErrorRequestHandler[];

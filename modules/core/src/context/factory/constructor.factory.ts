@@ -8,8 +8,6 @@ import { ProviderToken, ProviderType, Type } from '../provider/provider.type';
 import { BeanPost } from '../bean/bean.post';
 import { AsyncSync, toPromise } from '../../helper/type.helper';
 import { Context } from '../context.model';
-import { putRequester } from '../../decorators/conditional/internal.conditional';
-import { PMEIG_ADMIN_TOKEN } from '../../decorators/conditional/conditional.helper';
 import { retrieveConverters } from '../converters/converter';
 
 interface FactoryConstructorArgumentContext {
@@ -40,7 +38,6 @@ export abstract class ConstructorFactory {
     if (beanPostExcludes.includes(target.name)) {
       return Promise.resolve(undefined as unknown as T);
     }
-    putRequester(name);
     let resetBeanPostExclude = () => {};
     if (name === BeanPost.name) {
       const index = beanPostExcludes.push(target.name) - 1;
@@ -48,7 +45,6 @@ export abstract class ConstructorFactory {
     }
     const bean = await this.create(target, context);
     resetBeanPostExclude();
-    putRequester();
     return this.postConstruct(target, context, bean, name);
   }
 
@@ -59,9 +55,7 @@ export abstract class ConstructorFactory {
     name: string | symbol
   ): Promise<T> {
     if (name !== BeanPost.name) {
-      putRequester(PMEIG_ADMIN_TOKEN);
       const postConstructors = await context.multiResolve(BeanPost, []);
-      putRequester();
       for (const postConstructor of postConstructors) {
         if (postConstructor.isHandler(target, name, bean)) {
           bean = (await toPromise(postConstructor.postConstruct(target, name, bean))) as T;

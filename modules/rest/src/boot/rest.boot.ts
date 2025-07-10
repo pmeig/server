@@ -1,4 +1,4 @@
-import { Bootable, Configuration, Context, Internal } from '@pmeig/srv-core';
+import { Bootable, Configuration, Context } from '@pmeig/srv-core';
 import { Controller } from '../decorators/rest.decorators';
 import { Server } from 'http';
 import { RestServerBuilder } from './builder/rest-server.builder';
@@ -6,7 +6,6 @@ import { RestRouteBuilder } from './builder/rest-route.builder';
 import { RestPathResolver } from './resolver/rest-path.resolver';
 
 @Configuration
-@Internal
 export class RestBootable extends Bootable {
   private runner: Server;
 

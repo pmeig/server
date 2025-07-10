@@ -1,11 +1,10 @@
-import { AsyncSync, BeanPost, Configuration, Internal, ProviderType } from '@pmeig/srv-core';
+import { AsyncSync, BeanPost, Configuration, ProviderType } from '@pmeig/srv-core';
 import { VaultClient, VaultProperties } from '@pmeig/srv-vault';
 import { propertiesRefresh } from './properties.refresh';
 import { filter } from 'rxjs';
 import { Bootstrap } from '../bootstrap/bootstrap.configuration';
 import { findVaultProperties } from '../helper/properties.helper';
 
-@Internal
 @Configuration
 export class VaultRefresh extends BeanPost<VaultClient | VaultProperties> {
   isHandler(

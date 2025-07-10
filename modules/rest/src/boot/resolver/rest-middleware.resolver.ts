@@ -1,4 +1,4 @@
-import { Configuration, InjectByDecorator, Internal, List, Optional } from '@pmeig/srv-core';
+import { Configuration, InjectByDecorator, List, Optional } from '@pmeig/srv-core';
 import {
   RestErrorMiddleware,
   RestMiddleware,
@@ -21,7 +21,6 @@ interface MiddlewareResolver<T> {
 }
 
 @Configuration
-@Internal
 export class RestMiddlewareResolver {
   private readonly middlewares: MiddlewareResolver<RestMiddleware> = {
     global: [],
@@ -109,6 +108,16 @@ export class RestMiddlewareResolver {
     const middlewares = this.state.middlewares.filter(value => value.accept(uri, method));
     const errorMiddlewares = this.state.errorMiddlewares.filter(value => value.accept(uri, method));
     return this.addMiddlewareFromDecorator(middlewares, errorMiddlewares, controller, propertyKey);
+  }
+
+  addRouterCreatorMiddleware(controller: any, methodName: string): RequestHandler {
+    return (req, _, next) => {
+      req['rest:controller'] = {
+        controller,
+        method: methodName
+      };
+      next();
+    };
   }
 
   private addMiddlewareFromDecorator(

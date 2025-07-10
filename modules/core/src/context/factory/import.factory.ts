@@ -6,6 +6,7 @@ import { retrieveModuleContext } from '../context.decorators';
 import { PromiseConditionalExecutor } from '../../decorators/conditional/conditional.decorators';
 
 export class ImportFactory {
+  ref = crypto.randomUUID();
   private readonly conditional: PromiseConditionalExecutor;
   private readonly context: Nullable<ModuleContext>;
   private instance?: Context;

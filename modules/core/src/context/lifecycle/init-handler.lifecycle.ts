@@ -4,16 +4,15 @@ import { Configuration } from '../../decorators/components/component.decorator';
 import { ProviderType } from '../provider/provider.type';
 import {
   Destroyable,
+  Disposable,
   Initializable,
   isDestroyable,
   isDisposable,
   isInitializable,
   isRefreshable,
-  Refreshable,
-  Disposable
+  Refreshable
 } from './lifecycle';
 import { Module } from '../context.decorators';
-import { Internal } from '../../decorators/conditional/conditional.decorators';
 
 @Configuration
 export class InitHandlerLifecycle extends BeanPost<Initializable> {
@@ -66,5 +65,4 @@ export class RefreshHandlerLifecycle extends BeanPost<Refreshable> {
 @Module({
   providers: [InitHandlerLifecycle, DisposeHandlerLifecycle, DestroyHandlerLifecycle, RefreshHandlerLifecycle]
 })
-@Internal
 export class LifecycleModule {}

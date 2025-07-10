@@ -7,6 +7,7 @@ import { retrieveConditionals } from '../../decorators/conditional/conditional.h
 import { UUID } from 'crypto';
 
 export abstract class ProviderFactory<T extends any = any> {
+  ref = crypto.randomUUID();
   protected constructorFactory: ConstructorFactory;
   protected readonly conditional: PromiseConditionalExecutor;
 

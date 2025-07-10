@@ -1,13 +1,12 @@
-import { Configuration, Converter, getMethodWithDecorator, getTypeOf, hasDecorator, Internal } from '@pmeig/srv-core';
+import { Configuration, Converter, getMethodWithDecorator, getTypeOf, hasDecorator } from '@pmeig/srv-core';
 import { ControllerAdvisor, ExceptionAdvisor } from './advisor.decorators';
 import { retrieveExceptionAdvisor, retrievePathAdvisor } from './advisor.services';
 import { RestErrorMiddleware } from '../rest.middleware';
-import { NextFunction, Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { Method } from '../models/rest.type';
 import { match } from 'node-match-path';
 
 @Configuration
-@Internal
 export class AdvisorConverter extends Converter<Advisor> {
   hasConverter(value: any): boolean {
     return hasDecorator(getTypeOf(value), ControllerAdvisor);
@@ -52,7 +51,7 @@ class Advisor extends RestErrorMiddleware {
     return this.regexes.some(tester => controls.some(url => match(tester, url).matches));
   }
 
-  use(error: Error, request: Request, response: Response, next: NextFunction): void | Promise<void> {
+  use(error: Error, response: Response, request: Request): void | Promise<void> {
     const errorName = Object.getPrototypeOf(error).constructor.name;
     const method = this.methods.find(value => value.error === errorName)?.method;
     if (method) {

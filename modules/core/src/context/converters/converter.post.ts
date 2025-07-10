@@ -5,11 +5,9 @@ import { ObjectConverter } from './object.converter';
 import { ProviderType } from '../provider/provider.type';
 import { AsyncSync } from '../../helper/type.helper';
 import { Configuration } from '../../decorators/components/component.decorator';
-import { Internal } from '../../decorators/conditional/conditional.decorators';
 import { RefConverter } from './ref.converter';
 
 @Configuration
-@Internal
 export class ConverterPost extends BeanPost {
   private readonly converters: Converter<any>[];
   constructor(@List(Converter) converters: Converter<any>[]) {

@@ -2,13 +2,12 @@ import {
   AsyncSync,
   BeanPost,
   Configuration,
-  Internal,
   ProviderType,
   RequestProviderFactory,
   retrieveContext
 } from '@pmeig/srv-core';
 import { RestMiddleware } from './rest.middleware';
-import { NextFunction, Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { randomUUID, UUID } from 'crypto';
 import { AsyncLocalStorage } from 'async_hooks';
 
@@ -19,7 +18,6 @@ const factories: {
 }[] = [];
 
 @Configuration
-@Internal
 export class RequestFactoryScoped extends BeanPost {
   constructor() {
     super();
@@ -65,14 +63,13 @@ export class RequestFactoryScoped extends BeanPost {
 }
 
 @Configuration
-@Internal
 export class RequestGeneratorId extends RestMiddleware {
   global = true;
 
   constructor() {
     super();
   }
-  async use(_: Request, response: Response, next: NextFunction) {
+  async use(_: Request, next: NextFunction, response: Response) {
     const request = randomUUID();
     for (const { factory } of factories) {
       await factory.createInstance(request);

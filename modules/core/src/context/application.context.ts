@@ -6,19 +6,19 @@ import {
   retrieveImport,
   updateContext
 } from '../decorators/components/component.helper';
-import { createComponentDecorator, Import, Scope } from '../decorators/components/component.decorator';
+import { createComponentDecorator, Import } from '../decorators/components/component.decorator';
 import { PutDesignParam } from '../decorators/global/metadata.decorators';
 import { retrieveModuleContext } from './context.decorators';
 import { hasDecorator } from '../decorators/decorator.builder';
 import { Bootable } from './bootable';
 import { Context, DefaultValue, ModuleContext, MultiDefaultValue } from './context.model';
-import { affectApplicationContext, putRequester } from '../decorators/conditional/internal.conditional';
 import { ProviderFactory } from './factory/provider.factory';
 import { DecoratorRef } from '../decorators/type.decorators';
-import { PMEIG_ADMIN_TOKEN } from '../decorators/conditional/conditional.helper';
 import { LifecycleModule } from './lifecycle/init-handler.lifecycle';
 import { ConverterModule } from './converters/converter.module';
 import { ImportFactory } from './factory/import.factory';
+
+const checked: string[] = [];
 
 export class ApplicationContext implements Context {
   private factories: Record<string | symbol, ComponentContext[]> = {};
@@ -40,14 +40,10 @@ export class ApplicationContext implements Context {
   }
 
   async start(...args: any[]) {
-    putRequester(PMEIG_ADMIN_TOKEN);
     await this.searchModuleByDecorators();
     const boots = await this.multiResolve(Bootable);
-    putRequester();
     for (const boot of boots) {
-      putRequester(boot['_myContextId'] ?? this.id);
       await boot.run(this, ...args);
-      putRequester();
     }
     return this;
   }
@@ -59,9 +55,7 @@ export class ApplicationContext implements Context {
   }
 
   async close() {
-    putRequester(PMEIG_ADMIN_TOKEN);
     const beans = await this.multiResolve(Bootable, []);
-    putRequester();
     for (const bean of beans) {
       await bean.close(this);
     }
@@ -70,6 +64,7 @@ export class ApplicationContext implements Context {
   async has(key: any): Promise<boolean> {
     const token = this.extractToken(key);
     let found = (await this.findFactories(token)).length > 0;
+    if (found) return true;
     const modules = await this.findValidChildren();
     if (!found && modules.length > 0) {
       const iterator = [...modules];
@@ -110,8 +105,11 @@ export class ApplicationContext implements Context {
     for (const factory of factories) {
       beans.push(await factory.build(this.contextReference, token));
     }
-    for (const module of (await this.findValidChildren()).filter(value => value.has(token))) {
-      beans.push(...(await module.multiResolve<T>(token, [])));
+    const children = await this.findValidChildren();
+    for (const child of children) {
+      if (await child.has(token)) {
+        beans.push(...(await child.multiResolve<T>(token, [])));
+      }
     }
     return this.applyDefault(Promise.resolve(beans.filter(value => !!value)), defaultValue);
   }
@@ -123,20 +121,25 @@ export class ApplicationContext implements Context {
   }
 
   async withDecorator(decorator: DecoratorRef | string): Promise<any[]> {
-    const contexts = Object.values(this.factories)
-      .flatMap(factories => factories)
-      .filter(factory => {
-        if (factory.factory?.isAccessible(this)) {
-          const type = factory.factory!.type;
-          if (typeof type === 'function') {
-            return hasDecorator(type as Type<any>, decorator);
-          }
-        }
-        return false;
-      });
+    const contexts = Object.values(this.factories).flat();
     const beans: any[] = [];
+    const factories: ProviderFactory[] = [];
     for (const context of contexts) {
-      beans.push(await context.factory?.build(this, decorator.toString()));
+      if (!checked.includes(context.factory?.ref ?? 'error')) {
+        checked.push(context.factory?.ref ?? 'unknown');
+        if (
+          (await context.factory?.isAccessible(this.contextReference)) &&
+          typeof context.factory?.type === 'function' &&
+          hasDecorator(context.factory.type as Type<any>, decorator)
+        ) {
+          factories.push(context.factory!);
+        }
+        checked.pop();
+      }
+    }
+
+    for (const factory of factories) {
+      beans.push(await factory.build(this, decorator.toString()));
     }
 
     for (const module of await this.findValidChildren()) {
@@ -148,8 +151,13 @@ export class ApplicationContext implements Context {
   private async findFactories(token: string | symbol) {
     const factories: ProviderFactory[] = [];
     for (const factory of (this.factories[token] ?? []).map(factory => factory.factory)) {
-      if ((await factory?.isAccessible(this)) ?? false) {
-        factories.push(factory!);
+      if (!checked.includes(factory?.ref ?? 'error')) {
+        checked.push(factory?.ref ?? 'unknown');
+        const check = await factory?.isAccessible(this.contextReference);
+        if (check) {
+          factories.push(factory!);
+        }
+        checked.pop();
       }
     }
     return factories;
@@ -158,9 +166,13 @@ export class ApplicationContext implements Context {
   private async findValidChildren() {
     const modules: Context[] = [];
     for (const child of this.children) {
-      if (await child.isAccessible(this)) {
-        const module = await child.build();
-        if (module) modules.push(module);
+      if (!checked.includes(child.ref)) {
+        checked.push(child.ref);
+        if (await child.isAccessible(this.contextReference)) {
+          const module = await child.build();
+          if (module) modules.push(module);
+        }
+        checked.pop();
       }
     }
     return modules;
@@ -198,10 +210,8 @@ export class ApplicationContext implements Context {
       if (typeof provider !== 'function') {
         targetProvider = this.prepareCustomProvider(provider);
       }
-      affectApplicationContext(targetProvider as Type<any>, this);
       const metadata = retrieveContext(targetProvider);
       metadata.names?.forEach(name => {
-        affectApplicationContext(name, this);
         const context = this.factories[name] ?? [];
         context.push(metadata);
         this.factories[name] = context;
@@ -228,9 +238,6 @@ export class ApplicationContext implements Context {
       },
       target
     );
-    if (provider.scope) {
-      Scope(provider.scope)(target);
-    }
     return target;
   }
 
