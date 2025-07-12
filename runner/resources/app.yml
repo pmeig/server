@@ -4,6 +4,9 @@ variables:
 check:
   continue: false
 
+security:
+  auth: none
+
 test:
   properties:
     popo: replacing key variables.change.popo by ${variables.change.popo} with ENV ${USERPROFILE}

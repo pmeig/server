@@ -12,9 +12,12 @@ export type TooArray<T> = T | T[];
 
 export const getTypeOf = <T = any>(value: T): Type<T> => Object.getPrototypeOf(value).constructor;
 
-export type Partials<T extends Record<any, any>> = {
-  [K in keyof T]?: T[K] extends Record<any, any> ? Partials<T[K]> : T[K];
-};
+export type Partials<T> =
+  T extends Record<any, any>
+    ? {
+        [P in keyof T]?: Partials<T[P]>;
+      }
+    : T;
 
 export function toPromise<T>(value: OptionalAsyncSync<T>): Promise<T | undefined>;
 export function toPromise<T>(value: OptionalAsyncSync<T>, defaultValue: AsyncSync<T>): Promise<T>;

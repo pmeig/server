@@ -6,10 +6,14 @@ import { RestMiddlewareResolver } from './resolver/rest-middleware.resolver';
 import { RestPathResolver } from './resolver/rest-path.resolver';
 import { ExpressParameterResolver } from './resolver/express-parameter.resolver';
 import { RequestGeneratorId } from '../rest.scoped';
+import { RestControllerMiddleware } from './rest-controller.middleware';
+import { RestControllerResolver } from './resolver/rest-controller.resolver';
 
 @Module({
   providers: [
     RestBootable,
+    RestControllerMiddleware,
+    RestControllerResolver,
     RestServerBuilder,
     RestRouteBuilder,
     RestMiddlewareResolver,

@@ -2,6 +2,7 @@ import {
   AsyncSync,
   BeanPost,
   Configuration,
+  Order,
   ProviderType,
   RequestProviderFactory,
   retrieveContext
@@ -63,6 +64,7 @@ export class RequestFactoryScoped extends BeanPost {
 }
 
 @Configuration
+@Order(Number.MIN_SAFE_INTEGER)
 export class RequestGeneratorId extends RestMiddleware {
   global = true;
 

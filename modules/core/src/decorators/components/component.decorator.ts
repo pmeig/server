@@ -1,4 +1,4 @@
-import { import_key, inject_key, PutName, PutOrder, PutScope, PutType } from './component.helper';
+import { import_key, inject_key, PutLocationFrom, PutName, PutOrder, PutScope, PutType } from './component.helper';
 import { ScopeType, Type } from '../../context/provider/provider.type';
 import { ClassDecorator } from '../type.decorators';
 import { Decorators } from '../decorator.builder';
@@ -10,6 +10,13 @@ export const Component = Decorators.class('Component', target => PutType(target)
 export const Configuration = createComponentDecorator('Configuration');
 
 export const Order = (order: number) => Decorators.class('Order', target => PutOrder(target, order));
+
+export const Before = (target: Type<any>) =>
+  Decorators.class('Before', bean => {
+    PutLocationFrom('before', target, bean);
+  });
+
+export const After = (target: Type<any>) => Decorators.class('After', bean => PutLocationFrom('after', target, bean));
 
 export const Scope = (scope: ScopeType) => Decorators.class('Scope', target => PutScope(target, scope));
 

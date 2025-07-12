@@ -17,11 +17,13 @@ import { DecoratorRef } from '../decorators/type.decorators';
 import { LifecycleModule } from './lifecycle/init-handler.lifecycle';
 import { ConverterModule } from './converters/converter.module';
 import { ImportFactory } from './factory/import.factory';
+import * as crypto from 'node:crypto';
 
 const checked: string[] = [];
 
 export class ApplicationContext implements Context {
   private factories: Record<string | symbol, ComponentContext[]> = {};
+  private factoriesOrdered: Record<string | symbol, ComponentContext[]> = {};
   private children: ImportFactory[] = [];
   readonly id: string = crypto.randomUUID();
 
@@ -81,9 +83,8 @@ export class ApplicationContext implements Context {
     if ([ApplicationContext.name, 'Context'].includes(token.toString())) {
       return this as unknown as T;
     }
-    const factory = (await this.findFactories(token))[0];
-    const injectable = factory?.build(this.contextReference, token);
-    return this.useChildren(injectable, token, defaultValue).then(value => {
+    const factory = (await this.findAll(token)).shift();
+    return this.useChildren(factory?.factory?.build(this.contextReference, token), token, defaultValue).then(value => {
       if (value) {
         value['_myContextId'] = this.id;
       }
@@ -100,18 +101,15 @@ export class ApplicationContext implements Context {
   async multiResolve<T>(key: ProviderToken<T>, defaultValue: MultiDefaultValue<T> = []): Promise<T[]> {
     const token = this.extractToken(key);
     if ([ApplicationContext.name, 'Context'].includes(token.toString())) return [this as unknown as T];
-    const factories = await this.findFactories(token);
+    const factories = await this.findAll(token);
     const beans: any[] = [];
     for (const factory of factories) {
-      beans.push(await factory.build(this.contextReference, token));
-    }
-    const children = await this.findValidChildren();
-    for (const child of children) {
-      if (await child.has(token)) {
-        beans.push(...(await child.multiResolve<T>(token, [])));
+      const bean = await factory.factory?.build(this.contextReference, token);
+      if (bean) {
+        beans.push(bean);
       }
     }
-    return this.applyDefault(Promise.resolve(beans.filter(value => !!value)), defaultValue);
+    return this.applyDefault(Promise.resolve(beans), defaultValue);
   }
 
   async multiResolveRequired<T>(key: ProviderToken<T>): Promise<T[]> {
@@ -139,7 +137,7 @@ export class ApplicationContext implements Context {
     }
 
     for (const factory of factories) {
-      beans.push(await factory.build(this, decorator.toString()));
+      beans.push(await factory.build(this.contextReference, decorator.toString()));
     }
 
     for (const module of await this.findValidChildren()) {
@@ -148,12 +146,27 @@ export class ApplicationContext implements Context {
     return beans;
   }
 
+  private async findAll(key: ProviderToken<any>): Promise<ComponentContext[]> {
+    const token = this.extractToken(key);
+    // if (this.factoriesOrdered[token]) return this.factoriesOrdered[token];
+    const factories = await this.findFactories(token);
+    const children = await this.findValidChildren();
+    for (const child of children) {
+      if (await child.has(token)) {
+        factories.push(...(await (child as ApplicationContext).findAll(token)));
+      }
+    }
+    const factoriesOrdered = factories.sort((first, second) => this.sortContext(first, second));
+    this.factoriesOrdered[token] = factoriesOrdered;
+    return factoriesOrdered;
+  }
+
   private async findFactories(token: string | symbol) {
-    const factories: ProviderFactory[] = [];
-    for (const factory of (this.factories[token] ?? []).map(factory => factory.factory)) {
-      if (!checked.includes(factory?.ref ?? 'error')) {
-        checked.push(factory?.ref ?? 'unknown');
-        const check = await factory?.isAccessible(this.contextReference);
+    const factories: ComponentContext[] = [];
+    for (const factory of this.factories[token] ?? []) {
+      if (!checked.includes(factory?.factory?.ref ?? 'error')) {
+        checked.push(factory?.factory?.ref ?? 'unknown');
+        const check = await factory?.factory?.isAccessible(this.contextReference);
         if (check) {
           factories.push(factory!);
         }
@@ -191,12 +204,23 @@ export class ApplicationContext implements Context {
       imports.unshift(LifecycleModule, ConverterModule);
     }
     imports
-      .sort(module => retrieveContext(module)?.order ?? Number.MAX_SAFE_INTEGER * 0.9)
+      .map(module => {
+        const context = retrieveContext(module) ?? {};
+        if (!context.names) {
+          context.names = [];
+        }
+        context.names.push(module.name);
+        return {
+          type: module,
+          context
+        };
+      })
+      .sort((first, second) => this.sortContext(first.context, second.context))
       .forEach(module => {
-        const context = retrieveModuleContext(module);
+        const context = retrieveModuleContext(module.type);
         if (context) {
           this.children.push(
-            new ImportFactory(module, moduleContext =>
+            new ImportFactory(module.type, moduleContext =>
               Promise.resolve(new ApplicationContext(moduleContext, this.contextReference))
             )
           );
@@ -216,10 +240,6 @@ export class ApplicationContext implements Context {
         context.push(metadata);
         this.factories[name] = context;
       });
-    });
-
-    Object.entries(this.factories).forEach(([key, context]) => {
-      this.factories[key] = context.sort((first, second) => first.order - second.order);
     });
   }
 
@@ -302,5 +322,30 @@ export class ApplicationContext implements Context {
         this.children.push(new ImportFactory(module, () => Promise.resolve(child)));
       });
     }
+  }
+
+  private compareOrderContext(
+    compare: {
+      order?: number;
+      after?: string;
+      before?: string;
+    },
+    names: (string | symbol)[]
+  ): 'after' | 'before' | number {
+    if (compare.after && names.includes(compare.after)) {
+      return 'after';
+    }
+    if (compare.before && names.includes(compare.before)) {
+      return 'before';
+    }
+    return compare.order ?? 0;
+  }
+
+  private sortContext(first: ComponentContext, second: ComponentContext) {
+    const compareFirst = this.compareOrderContext(first.compare ?? { order: 0 }, second.names ?? []);
+    if (typeof compareFirst === 'string') return compareFirst === 'after' ? 0 : -1;
+    const compareSecond = this.compareOrderContext(second.compare ?? { order: 0 }, first.names ?? []);
+    if (typeof compareSecond === 'string') return compareSecond === 'after' ? -1 : 0;
+    return compareFirst - compareSecond;
   }
 }

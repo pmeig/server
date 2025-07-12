@@ -14,6 +14,7 @@ import {
   RestModule
 } from '@pmeig/srv-rest';
 import type { Request, Response } from 'express';
+import { Public, SecurityModule } from '@pmeig/srv-security';
 
 interface Named {
   name: string;
@@ -74,6 +75,7 @@ export class TestController {
   ) {}
 
   @Get(':id/:number')
+  @Public
   async test(@Req request: Request, @Res response: Response, @Params params: Record<string, any>) {
     this.testService.test.sub.testing++;
     this.testService.test.message += 5;
@@ -100,7 +102,7 @@ export class TestAdvisor {
 }
 
 @Module({
-  imports: [PropertiesModule, RestModule],
+  imports: [PropertiesModule, RestModule, SecurityModule],
   providers: [First, TestController, Props, ScopedRequest, TestService, TestAdvisor, InjectModule]
 })
 export class ThirdFourthModule {}

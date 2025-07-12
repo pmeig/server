@@ -9,6 +9,7 @@ import { Method } from '../../models/rest.type';
 import { retrieveErrorMiddleware, retrieveMiddleware } from '../../rest';
 import { ErrorRequestHandler, RequestHandler } from 'express';
 import { ControllerAdvisor } from '../../errors/advisor.decorators';
+import { pathIdentifiers } from '../rest-controller.middleware';
 
 export interface MiddlewareResolved {
   middlewares: RequestHandler[];
@@ -103,21 +104,15 @@ export class RestMiddlewareResolver {
     );
   }
 
-  resolvePath(path: string, method: Method, controller: any, propertyKey: string | symbol): MiddlewareResolved {
+  resolvePath(path: string, method: Method, controller: any, methodName: string | symbol): MiddlewareResolved {
     const uri = this.state.path + path;
     const middlewares = this.state.middlewares.filter(value => value.accept(uri, method));
     const errorMiddlewares = this.state.errorMiddlewares.filter(value => value.accept(uri, method));
-    return this.addMiddlewareFromDecorator(middlewares, errorMiddlewares, controller, propertyKey);
-  }
-
-  addRouterCreatorMiddleware(controller: any, methodName: string): RequestHandler {
-    return (req, _, next) => {
-      req['rest:controller'] = {
-        controller,
-        method: methodName
-      };
-      next();
+    pathIdentifiers[uri] = {
+      controller,
+      method: methodName.toString()
     };
+    return this.addMiddlewareFromDecorator(middlewares, errorMiddlewares, controller, methodName);
   }
 
   private addMiddlewareFromDecorator(

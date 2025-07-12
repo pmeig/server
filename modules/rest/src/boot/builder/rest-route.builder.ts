@@ -20,7 +20,7 @@ export class RestRouteBuilder {
     const beanDecorator = getTypeOf(controller);
     const mapper = retrieveRestConfig(beanDecorator);
     this.route = Router();
-    this.path = `/${mapper?.path ?? ''}`;
+    this.path = mapper?.path ? (mapper.path.startsWith('/') ? mapper.path : '/' + mapper.path) : '';
 
     const middlewares = this.middlewareResolver.resolveRoute(this.path, controller);
     if (middlewares.middlewares.length > 0) this.route.use(...middlewares.middlewares);

@@ -1,6 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
 import { Method } from './models/rest.type';
-import { AsyncSync } from '@pmeig/srv-core';
+import { AsyncSync, Type } from '@pmeig/srv-core';
+import { RestControllerResolver } from './boot/resolver/rest-controller.resolver';
+import { controllerStorage } from './boot/rest-internal.boot';
 
 export type ExpressMiddleware = (req: Request, res: Response, next: NextFunction) => AsyncSync<void>;
 export type ExpressErrorMiddleware = (error: Error, req: Request, res: Response, next: NextFunction) => AsyncSync<void>;
@@ -16,11 +18,13 @@ export const toExpressErrorMiddleware = (middleware: RestErrorMiddleware) => {
   };
 };
 
-export const retrieveControllerCreator = (request: Request) =>
-  request['rest:controller'] as {
-    controller: any;
-    method: string;
-  };
+export const retrieveControllerCreator = () => {
+  const store = controllerStorage.getStore() as { controller: Type<any>; method: string };
+  if (store) {
+    return new RestControllerResolver(store.controller, store.method);
+  }
+  return undefined;
+};
 
 export abstract class RestMiddleware {
   global = false;

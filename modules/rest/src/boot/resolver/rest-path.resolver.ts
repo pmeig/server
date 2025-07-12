@@ -32,7 +32,6 @@ export class RestPathResolver {
         method: config.options.method,
         path,
         handler: [
-          this.middlewaresResolver.addRouterCreatorMiddleware(controller, methodName),
           ...middlewares.middlewares.map(value => value),
           async (request: any, response: Response) => {
             const value = await toPromise(handler(...params(request, response)));

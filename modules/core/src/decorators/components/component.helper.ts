@@ -8,6 +8,7 @@ import {
   reflectMultiMetadataContext
 } from '../decorators.helper';
 import { ModuleContext } from '../../context/context.model';
+import { Partials } from '../../helper/type.helper';
 
 const context_key = 'components:context';
 const context_name = 'components:name';
@@ -16,7 +17,11 @@ export const import_key = 'components:import';
 
 export interface ComponentContext {
   names?: (string | symbol)[];
-  order: number;
+  compare: {
+    order?: number;
+    after?: string;
+    before?: string;
+  };
   factory?: ProviderFactory;
   metadata: Record<string, any>;
 }
@@ -35,7 +40,18 @@ export const retrieveInject = (target: object) =>
   getMetadataReflection<Record<number, string | Type<any>>>(inject_key, target) ?? {};
 
 export const PutOrder = (target: object, order: number) => {
-  updateContext({ order }, target);
+  updateContext(
+    {
+      compare: {
+        order
+      }
+    },
+    target
+  );
+};
+
+export const PutLocationFrom = (location: 'before' | 'after', target: Type<any>, bean: Type<any>) => {
+  updateContext({ compare: { [location]: target.name } }, bean);
 };
 
 export const PutScope = (target: object, scope: ScopeType) => {
@@ -46,12 +62,20 @@ export const PutName = (target: object, ...names: (string | symbol)[]) => {
   const handler = reflectMultiMetadataContext<string | symbol>(context_name, target);
   handler.set(names);
   const handlerContext = reflectMetadataContext<ComponentContext>(context_key, target);
-  const context = handlerContext.get() ?? { order: 0, metadata: {} };
+  const context = handlerContext.get() ?? {
+    compare: {
+      order: 0
+    },
+    metadata: {}
+  };
   context.names = names;
   handlerContext.set(context);
 };
 
-export const updateContext = (context: Partial<ComponentContext>, target: object) => {
+export const updateContext = (
+  context: Partials<Exclude<ComponentContext, 'factory'>> & Pick<ComponentContext, 'factory'>,
+  target: object
+) => {
   const previous = Reflect.getMetadata(context_key, target) as ComponentContext;
   const names = new Set(context.names ?? []);
   previous?.names?.forEach(name => names.add(name));
@@ -63,7 +87,11 @@ export const updateContext = (context: Partial<ComponentContext>, target: object
         context.factory?.valid(target) ??
         previous?.factory?.valid(target) ??
         new SingletonProviderFactory(target as Type<any>),
-      order: context.order || previous?.order || 0,
+      compare: {
+        order: 0,
+        ...previous?.compare,
+        ...context.compare
+      },
       metadata: {
         ...context.metadata,
         ...previous?.metadata
