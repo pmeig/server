@@ -1,15 +1,15 @@
-import { HttpStatus } from '../models/status.model';
+import { HttpStatus, HttpStatusCode } from '../models/status.model';
 
 export interface PmeigServerErrorMessage {
   technical?: string;
   business?: string;
 }
 
-export abstract class PmeigServerError extends Error {
+export abstract class HttpError extends Error {
   protected constructor(code: number);
   protected constructor(code: number, cause: Error);
-  protected constructor(code: number, status: number | PmeigServerErrorMessage, cause?: Error);
-  protected constructor(code: number, status: number, errorMessage: PmeigServerErrorMessage, cause?: Error);
+  protected constructor(code: number, status: HttpStatusCode | PmeigServerErrorMessage, cause?: Error);
+  protected constructor(code: number, status: HttpStatusCode, errorMessage: PmeigServerErrorMessage, cause?: Error);
   protected constructor(
     public readonly code: number,
     public status?: number | PmeigServerErrorMessage | Error,

@@ -9,7 +9,7 @@ import {
 import { Method } from './models/rest.type';
 import { ErrorRequestHandler, RequestHandler } from 'express';
 import { ExpressErrorMiddleware, ExpressMiddleware } from './rest.middleware';
-import { HttpStatus } from './models/status.model';
+import { HttpStatus, HttpStatusCode } from './models/status.model';
 import { MediaType } from './models/media.model';
 
 const rest_key = 'rest:mapper';
@@ -19,7 +19,7 @@ const rest_error_middleware_key = 'rest:error-middleware';
 export interface RestMapper {
   path?: string;
   options: {
-    status: number;
+    status: HttpStatusCode;
     media: string;
     method: Method;
   };

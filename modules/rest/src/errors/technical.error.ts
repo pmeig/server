@@ -1,15 +1,15 @@
-import { PmeigServerError, PmeigServerErrorMessage } from './pmeig-server.error';
-import { HttpStatus } from '../models/status.model';
+import { HttpError, PmeigServerErrorMessage } from './http.error';
+import { HttpStatus, HttpStatusCode } from '../models/status.model';
 import { Nullable } from '@pmeig/srv-core';
 
-export abstract class TechnicalError extends PmeigServerError {
+export abstract class TechnicalError extends HttpError {
   protected constructor(code: number);
   protected constructor(code: number, cause: Error);
   protected constructor(code: number, message: string, cause?: Error);
   protected constructor(code: number, message: string, business: string, cause?: Error);
-  protected constructor(code: number, status: number, cause?: Error);
-  protected constructor(code: number, status: number, message: string, cause?: Error);
-  protected constructor(code: number, status: number, message: string, business?: string, cause?: Error);
+  protected constructor(code: number, status: HttpStatusCode, cause?: Error);
+  protected constructor(code: number, status: HttpStatusCode, message: string, cause?: Error);
+  protected constructor(code: number, status: HttpStatusCode, message: string, business?: string, cause?: Error);
   protected constructor(
     code: number,
     status?: number | string | Error,

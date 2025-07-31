@@ -9,6 +9,8 @@ export const Component = Decorators.class('Component', target => PutType(target)
 
 export const Configuration = createComponentDecorator('Configuration');
 
+export const Service = createComponentDecorator('Service');
+
 export const Order = (order: number) => Decorators.class('Order', target => PutOrder(target, order));
 
 export const Before = (target: Type<any>) =>

@@ -1,18 +1,7 @@
 import { ApplicationContext, Component, Import, Module, Order, Scope } from '@pmeig/srv-core';
 import { randomBytes } from 'crypto';
 import { Properties, PropertiesModule } from '@pmeig/srv-properties';
-import {
-  Controller,
-  ControllerAdvisor,
-  Delete,
-  ExceptionAdvisor,
-  Get,
-  Params,
-  Put,
-  Req,
-  Res,
-  RestModule
-} from '@pmeig/srv-rest';
+import { Controller, ControllerAdvisor, Delete, Catch, Get, Params, Put, Req, Res, RestModule } from '@pmeig/srv-rest';
 import type { Request, Response } from 'express';
 import { Public, SecurityModule } from '@pmeig/srv-security';
 
@@ -82,7 +71,7 @@ export class TestController {
     if (this.attempt++ > 2) {
       throw new Error('error throwing');
     }
-    return this.testScopedRequest.message;
+    return this.props;
   }
 
   @Put('test')
@@ -94,9 +83,8 @@ export class TestController {
 
 @ControllerAdvisor('/test')
 export class TestAdvisor {
-  @ExceptionAdvisor(Error)
+  @Catch(Error)
   test(error: Error, response: Response) {
-    console.log(error);
     return response.send(error.name);
   }
 }

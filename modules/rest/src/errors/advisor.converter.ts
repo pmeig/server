@@ -1,5 +1,5 @@
 import { Configuration, Converter, getMethodWithDecorator, getTypeOf, hasDecorator } from '@pmeig/srv-core';
-import { ControllerAdvisor, ExceptionAdvisor } from './advisor.decorators';
+import { ControllerAdvisor, Catch } from './advisor.decorators';
 import { retrieveExceptionAdvisor, retrievePathAdvisor } from './advisor.services';
 import { RestErrorMiddleware } from '../rest.middleware';
 import type { Request, Response } from 'express';
@@ -15,7 +15,7 @@ export class AdvisorConverter extends Converter<Advisor> {
   to(advisor: any): any {
     const prototype = getTypeOf(advisor);
     const path = retrievePathAdvisor(prototype);
-    const methods = getMethodWithDecorator(advisor, ExceptionAdvisor).map(value => {
+    const methods = getMethodWithDecorator(advisor, Catch).map(value => {
       return {
         method: advisor[value].bind(advisor),
         error: retrieveExceptionAdvisor(advisor, value)

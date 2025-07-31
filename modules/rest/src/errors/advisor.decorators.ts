@@ -7,7 +7,7 @@ export const ControllerAdvisor = (...path: (string | RegExp)[]) =>
     Reflect.defineMetadata(advisor_key, path, target);
   });
 
-export const ExceptionAdvisor = (exception: ErrorConstructor) =>
-  Decorators.method('ExceptionAdvisor', (target, propertyKey) => {
+export const Catch = (exception: ErrorConstructor) =>
+  Decorators.method('Catch', (target, propertyKey) => {
     Reflect.defineMetadata(advisor_exception_key, exception.name, target, propertyKey);
   });

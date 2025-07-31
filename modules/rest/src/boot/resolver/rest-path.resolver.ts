@@ -1,7 +1,7 @@
 import { RestMiddlewareResolver } from './rest-middleware.resolver';
 import { Configuration, Nullable, toPromise } from '@pmeig/srv-core';
 import { Method } from '../../models/rest.type';
-import { HttpStatusNoValue, is3xx } from '../../models/status.model';
+import { HttpStatusCode, HttpStatusNoValue, is3xx } from '../../models/status.model';
 import { ErrorRequestHandler, RequestHandler, Response } from 'express';
 import { ExpressParameterResolver } from './express-parameter.resolver';
 import { retrieveRestConfig } from '../../rest';
@@ -47,7 +47,7 @@ export class RestPathResolver {
     return undefined;
   }
 
-  private createHandlerResponse(options: { status: number; media: string; method: Method }) {
+  private createHandlerResponse(options: { status: HttpStatusCode; media: string; method: Method }) {
     if (is3xx(options.status)) {
       return (value: any, response: Response) => response.status(options.status).redirect(value);
     }

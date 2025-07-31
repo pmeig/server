@@ -118,6 +118,11 @@ export const HttpStatusText = Object.freeze({
   serverError: HttpStatus5xx
 });
 
+export type HttpStatusCode = (typeof HttpStatus)[keyof Omit<
+  typeof HttpStatus,
+  'informational' | 'success' | 'redirect' | 'clientError' | 'serverError'
+>];
+
 export const HttpStatusNoValue = (code: number) => {
   if (is2xx(code)) return HttpStatus.NO_CONTENT;
   if (is3xx(code)) return HttpStatus.NOT_FOUND;
