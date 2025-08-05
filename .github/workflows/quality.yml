@@ -1,0 +1,158 @@
+on:
+  workflow_dispatch:
+    inputs:
+      modules:
+        description: modules do you want test
+        required: false
+        default: ''
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - develop
+      - release
+      - main
+jobs:
+  context:
+    runs-on:
+      - self-hosted
+      - Linux
+      - x64
+    steps:
+      - name: checkout project
+        uses: actions/checkout@v4
+      - name: metadata
+        id: metadata
+        uses: pmeig/github-actions/actions/context/metadata@main
+      - name: secrets
+        uses: pmeig/github-actions/actions/secret/vault@main
+        with:
+          secrets: |
+            secret/data/pmeig/sonar/token user | SONAR_TOKEN;
+            secret/data/pmeig/jfrog/reader user | ARTIFACTORY_USER;
+            secret/data/pmeig/jfrog/reader password | ARTIFACTORY_PASSWORD;
+      - name: retrieve module change
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        id: diff
+        uses: pmeig/github-actions/actions/github/diff@main
+        with:
+          includes: 'start=modules'
+          excludes: 'contains=/vite-plugin-pmeig/'
+      - name: create matrix from github diff
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        id: matrix
+        run: |
+          matrix='[]'
+          for file in ${{ steps.diff.outputs.files }}
+          do
+            name=$(echo "$file" | cut -d'/' -f2)
+            matrix="$(echo $matrix | jq -rc --arg module "modules/$name" '. += [$module]')"
+          done
+          echo "value=$matrix" >> $GITHUB_OUTPUT
+      - name: create matrix from input module
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        id: matrix-manual
+        run: |
+          modules='${{ inputs.modules }}'
+          if [ -z "$modules" ]
+          then
+            modules=$(ls modules | grep -ve '.*vite-plugin-pmeig.*')
+          fi
+          matrix='[]'
+          for module in $modules
+          do
+            matrix=$(echo $matrix | jq -rc --arg name "modules/$module" '. += [$name]')
+          done
+          echo "value=$matrix" >> $GITHUB_OUTPUT
+          
+
+    outputs:
+      check: ${{ steps.metadata.outputs.env == steps.metadata.outputs.env-target || (steps.metadata.outputs.env == 'dev' && steps.metadata.outputs.env-target == 'prep') }}
+      env: ${{ steps.metadata.outputs.env-target }}
+      branch: ${{ steps.metadata.outputs.target }}
+      manager: ${{ steps.metadata.outputs.manager }}
+      matrix: ${{ steps.matrix.outputs.value }}${{ steps.matrix-manual.outputs.value }}
+  test:
+    needs: context
+    if: ${{ needs.context.outputs.check == 'true' }}
+    environment: ${{ needs.context.outputs.env }}
+    runs-on:
+      - self-hosted
+      - Linux
+      - x64
+    strategy:
+      matrix:
+        module: ${{ fromJSON(needs.context.outputs.matrix) }}
+    steps:
+      - name: checkout project
+        uses: actions/checkout@v4
+      - name: node setup
+        uses: pmeig/github-actions/actions/node/setup@main
+        with:
+          branch: ${{ needs.context.outputs.branch }}
+          version: '22'
+          artifactory-user: ${{ env.ARTIFACTORY-USER }}
+          artifactory-password: ${{ env.ARTIFACTORY-PASSWORD }}
+      - name: sonar setup
+        uses: pmeig/github-actions/actions/node/sonar/setup@main
+        with:
+          workspace: ${{ matrix.module }}
+          manager: ${{ needs.context.outputs.manager }}
+      - name: execute test
+        working-directory: ${{ matrix.module }}
+        run: |
+          ${{ needs.context.outputs.manager }} install
+          ${{ needs.context.outputs.manager }} test
+  quality:
+    needs: context
+    if: ${{ needs.context.outputs.check == 'true' }}
+    environment: ${{ needs.context.outputs.env }}
+    runs-on:
+      - self-hosted
+      - Linux
+      - x64
+    strategy:
+      matrix:
+        module: ${{ fromJSON(needs.context.outputs.matrix) }}
+    steps:
+      - name: checkout project
+        uses: actions/checkout@v4
+      - name: load secrets
+        uses: pmeig/github-actions/actions/secret/cache/download@main
+      - name: node setup
+        uses: pmeig/github-actions/actions/node/setup@main
+        with:
+          branch: ${{ needs.context.outputs.branch }}
+          version: '22'
+          artifactory-user: ${{ github.env.ARTIFACTORY-USER }}
+          artifactory-password: ${{ github.env.ARTIFACTORY-PASSWORD }}
+      - name: sonar setup
+        uses: pmeig/github-actions/actions/node/sonar/setup@main
+        id: sonar-setup
+        with:
+          workspace: ${{ matrix.module }}
+          manager: ${{ needs.context.outputs.manager }}
+
+      - name: execute test
+        working-directory: ${{ matrix.module }}
+        run: |
+          ${{ needs.context.outputs.manager }} install
+          ${{ needs.context.outputs.manager }} test:coverage
+      - name: Sonarqube scan with Quality Gate
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_HOST_URL: 'http://sonar.pmeig'
+        with:
+          args: | 
+            -Dproject.settings=${{ steps.sonar-setup.outputs.config }}
+
+      - name: Wait for Quality Gate
+        uses: sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+
+
