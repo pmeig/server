@@ -142,7 +142,7 @@ jobs:
           ${{ needs.context.outputs.manager }} install
           ${{ needs.context.outputs.manager }} test:coverage
       - name: Sonarqube scan with Quality Gate
-        uses: SonarSource/sonarqube-scan-action@master
+        uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
           SONAR_HOST_URL: 'http://sonar.pmeig'
@@ -151,7 +151,7 @@ jobs:
             -Dproject.settings=${{ steps.sonar-setup.outputs.config }}
 
       - name: Wait for Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@master
+        uses: sonarsource/sonarqube-quality-gate-action@master
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
