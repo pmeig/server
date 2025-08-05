@@ -15,6 +15,9 @@ on:
       - develop
       - release
       - main
+
+permissions: read-all
+
 jobs:
   context:
     runs-on:
