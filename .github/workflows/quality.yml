@@ -20,7 +20,6 @@ jobs:
     runs-on:
       - self-hosted
       - Linux
-      - x64
     steps:
       - name: checkout project
         uses: actions/checkout@v4
@@ -82,7 +81,6 @@ jobs:
     runs-on:
       - self-hosted
       - Linux
-      - x64
     strategy:
       matrix:
         module: ${{ fromJSON(needs.context.outputs.matrix) }}
@@ -113,7 +111,6 @@ jobs:
     runs-on:
       - self-hosted
       - Linux
-      - x64
     strategy:
       matrix:
         module: ${{ fromJSON(needs.context.outputs.matrix) }}
