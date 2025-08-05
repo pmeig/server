@@ -1,3 +1,4 @@
+name: quality
 on:
   workflow_dispatch:
     inputs:
