@@ -38,7 +38,7 @@ jobs:
         with:
           secrets: |
             pmeig/server/data/cicd/sonar token | SONAR_TOKEN;
-            pmeig/server/data/pmeig/server/cicd/jfrog/reader user | ARTIFACTORY_USER;
+            pmeig/server/data/cicd/jfrog/reader user | ARTIFACTORY_USER;
             pmeig/server/data/cicd/jfrog/reader token | ARTIFACTORY_PASSWORD;
       - name: retrieve module change
         if: ${{ github.event_name != 'workflow_dispatch' }}
