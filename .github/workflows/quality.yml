@@ -94,6 +94,8 @@ jobs:
     steps:
       - name: checkout project
         uses: actions/checkout@v4
+      - name: load secrets
+        uses: pmeig/github-actions/actions/secret/cache/download@main
       - name: node setup
         uses: pmeig/github-actions/actions/node/setup@main
         with:
@@ -126,8 +128,8 @@ jobs:
         with:
           branch: ${{ needs.context.outputs.branch }}
           version: '22'
-          artifactory-user: ${{ github.env.ARTIFACTORY-USER }}
-          artifactory-password: ${{ github.env.ARTIFACTORY-PASSWORD }}
+          artifactory-user: ${{ env.ARTIFACTORY-USER }}
+          artifactory-password: ${{ env.ARTIFACTORY-PASSWORD }}
       - name: sonar setup
         uses: pmeig/github-actions/actions/node/sonar/setup@main
         id: sonar-setup
