@@ -37,9 +37,9 @@ jobs:
         uses: pmeig/github-actions/actions/secret/vault@main
         with:
           secrets: |
-            secret/data/pmeig/ci/sonar token | SONAR_TOKEN;
-            secret/data/pmeig/ci/jfrog/reader user | ARTIFACTORY_USER;
-            secret/data/pmeig/ci/jfrog/reader password | ARTIFACTORY_PASSWORD;
+            secret/data/pmeig/cicd/sonar token | SONAR_TOKEN;
+            secret/data/pmeig/cicd/jfrog/reader user | ARTIFACTORY_USER;
+            secret/data/pmeig/cicd/jfrog/reader token | ARTIFACTORY_PASSWORD;
       - name: retrieve module change
         if: ${{ github.event_name != 'workflow_dispatch' }}
         id: diff
