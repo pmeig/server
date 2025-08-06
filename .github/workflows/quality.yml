@@ -18,6 +18,10 @@ on:
 
 permissions: read-all
 
+env:
+  VAULT_ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
+  VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
+
 jobs:
   context:
     runs-on:
