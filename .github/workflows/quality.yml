@@ -137,7 +137,6 @@ jobs:
         uses: pmeig/github-actions/actions/node/sonar/setup@main
         id: sonar-setup
         with:
-          workspace: ${{ matrix.module }}
           manager: ${{ needs.context.outputs.manager }}
 
       - name: execute test
