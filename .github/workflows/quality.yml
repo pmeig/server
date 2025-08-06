@@ -101,11 +101,6 @@ jobs:
           version: '22'
           artifactory-user: ${{ env.ARTIFACTORY-USER }}
           artifactory-password: ${{ env.ARTIFACTORY-PASSWORD }}
-      - name: sonar setup
-        uses: pmeig/github-actions/actions/node/sonar/setup@main
-        with:
-          workspace: ${{ matrix.module }}
-          manager: ${{ needs.context.outputs.manager }}
       - name: execute test
         working-directory: ${{ matrix.module }}
         run: |
