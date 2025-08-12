@@ -135,9 +135,10 @@ jobs:
         id: sonar-setup
         with:
           manager: ${{ needs.context.outputs.manager }}
+          workspace: ./${{ matrix.module }}
 
       - name: execute test
-        working-directory: ${{ matrix.module }}
+        working-directory: ./${{ matrix.module }}
         run: |
           ${{ needs.context.outputs.manager }} install
           ${{ needs.context.outputs.manager }} test:coverage
