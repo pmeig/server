@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no runner specified\" && exit 1",
     "pmeig": "pmeig",
+    "jest": "jest",
     "start": "vite",
     "build:cli": "pnpm --filter @pmeig/srv-cli build",
     "format": "prettier --write .",
@@ -22,10 +23,10 @@
     "prettier": "^3.5.3",
     "reflect-metadata": "^0.2.2",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "jest": "^30.0.5"
   },
   "dependencies": {
-    "@pmeig/srv-cli": "link:dist\\cli",
     "express": "^5.1.0"
   }
 }
