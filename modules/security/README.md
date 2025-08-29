@@ -7,6 +7,7 @@ npm i -D @types/express @types/jsonwebtoken
 ```
 ## Quick Start
 ### 1. Basic Setup
+
 ``` typescript
 import { Application } from '@pmeig/srv-core';
 import { SecurityModule } from '@pmeig/srv-security';

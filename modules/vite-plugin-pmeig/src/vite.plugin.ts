@@ -11,7 +11,7 @@ export interface PmeigVitePluginConfig {
   swc?: Options;
 }
 
-export const PmeigVitePlugin = (configuration: PmeigVitePluginConfig): PluginOption[] => {
+export const PmeigVitePlugin = (configuration: PmeigVitePluginConfig = {}): PluginOption[] => {
   let context: { close(): Promise<void | any> } | undefined;
   let currentServer: ViteDevServer;
   let timeoutDisable = () => {};

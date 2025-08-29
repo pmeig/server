@@ -1,0 +1,142 @@
+name: Deploy
+on:
+  workflow_dispatch:
+    inputs:
+      modules:
+        description: modules do you want build separate by space
+        required: false
+        default: ''
+      env:
+        description: environment to build
+        required: false
+        type: choice
+        options:
+          - dev
+          - prod
+        default: 'dev'
+  pull_request_target:
+    types:
+      - closed
+    branches:
+      - develop
+      - main
+
+permissions:
+  id-token: write
+  deployments: write
+  contents: write
+
+jobs:
+  context:
+    if: ${{ github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' }}
+    runs-on:
+      - self-hosted
+      - Linux
+      - x64
+    steps:
+      - name: checkout project
+        uses: actions/checkout@v4
+      - name: metadata
+        id: metadata
+        uses: pmeig/github-actions/actions/context/metadata@main
+      - name: find last release
+        id: release
+        if: ${{ steps.metadata.outputs.env-target == 'prod' && github.event_name != 'workflow_dispatch' }}
+        uses: pmeig/github-actions/actions/github/release/latest@main
+      - name: retrieve module change
+        id: modules-accepted
+        if: ${{ steps.metadata.outputs.env-target == 'prod' && github.event_name != 'workflow_dispatch' }}
+        uses: pmeig/github-actions/actions/github/diff@main
+        with:
+          target: ${{ steps.release.outputs.tag }}
+          origin: ${{ steps.metadata.outputs.target }}
+      - name: prepare modules build manual
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.modules != '' }}
+        id: files
+        run: |
+          files=''
+          for file in ${{ inputs.modules }}
+          do
+            files="$files ./modules/$file"
+          done
+          echo "value=${files:1}" >> $GITHUB_OUTPUT
+      - name: find modules
+        id: modules
+        run: |
+          json=$(jq -rc '.projects | to_entries | map( {"name": .key, "root": ("./" + .value.location.root)})' pmeig-cli.json)
+          filter='${{ steps.files.outputs.value }}${{ steps.modules-accepted.outputs.files }}'
+          if [ -n "$filter" ]
+          then
+            selection='[]'
+            for file in $filter
+            do
+              selection=$(echo "$selection" | jq -rc --arg root "./$file" --arg-json modules "$json" '. += ($modules | map(.root | startswith($root)))')
+            done
+            json="$selection"
+          fi
+          echo "value=$json" >> $GITHUB_OUTPUT
+      - name: suffix version
+        id: suffix
+        uses: pmeig/github-actions/actions/context/version/suffix@main
+        with:
+          env: ${{ steps.metadata.outputs.env-target }}
+    outputs:
+      env: ${{ steps.metadata.outputs.env-target }}
+      modules: ${{ steps.modules.outputs.value }}
+      suffix: ${{ steps.suffix.outputs.value }}
+      artifactory: ${{ steps.metadata.outputs.npm-target }}
+  build:
+    needs: context
+    runs-on:
+      - self-hosted
+      - Linux
+      - x64
+    environment: ${{ needs.context.outputs.env }}
+    strategy:
+      matrix:
+        module: ${{ fromJSON(needs.context.outputs.modules) }}
+      max-parallel: 3
+    steps:
+      - name: checkout project
+        uses: actions/checkout@v4
+      - name: load secrets
+        uses: pmeig/github-actions/actions/secret/vault@main
+        with:
+          cache: 'false'
+          secrets: |
+            secret/data/pmeig/jfrog/writer user | ARTIFACTORY_USER;
+            secret/data/pmeig/jfrog/writer password | ARTIFACTORY_PASSWORD;
+      - name: node setup
+        uses: pmeig/github-actions/actions/node/setup@main
+        id: node-setup
+        with:
+          artifactory-password: ${{ env.ARTIFACTORY_PASSWORD }}
+          artifactory-user: ${{ env.ARTIFACTORY_USER }}
+          branch: ${{ needs.context.outputs.target }}
+      - name: install dependencies
+        run: |
+          pnpm install --prod
+      - name: install cli
+        run: |
+          pnpm build:cli
+          cp modules/cli/package.json dist/cli/package.json
+          cd dist/cli
+          pnpm pack
+          mv *.tgz cli.tgz
+          cd ../..
+          pnpm -w install dist/cli/cli.tgz
+      - name: build module
+        if: ${{ matrix.module.name != 'cli' }}
+        working-directory: ${{ matrix.module.root }}
+        run: |
+          pnpm build
+      - name: pack
+        id: pack
+        working-directory: dist/${{ matrix.module.name }}
+        run: |
+          pnpm pack
+          mv *.tgz ${{ matrix.module.name }}.tgz
+          echo "path=dist/${{ matrix.module.name }}/${{ matrix.module.name }}.tgz" >> $GITHUB_OUTPUT
+      - name: deploy
+        run: |
+          pnpm publish ${{ steps.pack.outputs.path }} --registry http://jfrog/artifactory/api/npm/npm-

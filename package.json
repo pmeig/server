@@ -7,7 +7,7 @@
     "test": "echo \"Error: no runner specified\" && exit 1",
     "pmeig": "pmeig",
     "start": "vite",
-    "build:cli": "pnpm --filter @pmeig/srv-cli build",
+    "build:cli": "pnpm --filter @pmeig/srv-cli tsc",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
