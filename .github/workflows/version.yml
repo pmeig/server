@@ -1,0 +1,93 @@
+name: Breaking-change
+on:
+  workflow_call:
+    inputs:
+      modules:
+        required: true
+        type: string
+        description: 'contains list of modules json like this [{ "name": "vault", "root": "./modules/vault", "version": "1.0.0-SNAPSHOT" }]'
+  workflow_dispatch:
+    inputs:
+      modules:
+        type: string
+        required: true
+        description: all modules separate by space
+jobs:
+  bump:
+    runs-on:
+      - self-hosted
+      - Linux
+      - pmeig
+    steps:
+      - name: checkout project
+        uses: actions/checkout@v4
+      - name: get branch
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        id: branch
+        uses: pmeig/github-actions/actions/github/branch@main
+      - name: env
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        id: env
+        uses: pmeig/github-actions/actions/context/env@main
+        with:
+          branch: ${{ steps.branch.outputs.target }}
+      - name: to json
+        if: ${{ github.event_name == 'workflow_dispatch' && steps.env.outputs.value == 'dev' }}
+        id: modules
+        run: |
+          json=$(jq -rc '.projects | to_entries | map( {"name": .key, "root": ("./" + .value.location.root)})' pmeig-cli.json)
+          modules='[]'
+          for root in $(echo "$json" | jq -c '.[]')
+          do
+            name=$(echo $root | jq -rc '.name')
+            if [[ ' ${{ inputs.modules }} ' == *" $name "* ]]
+            then
+              path=$(echo $root | jq -rc '.root')
+              version=$(jq -rc '.version' $path/package.json)
+              major=$(echo $version | cut -d'.' -f1)
+              version="$(( major + 1 )).0.0-SNAPSHOT"
+              modules=$(echo $modules | jq -rc --argjson json "$root" \
+              --arg version "$version" \
+              '. += [$json + {"version": $version}]'])
+            fi
+          done
+          echo "value=$modules" >> $GITHUB_OUTPUT
+      - name: semver type
+        id: type
+        run: |
+          if [ '${{ github.event_name }}' == 'workflow_dispatch' ]
+          then
+            type='major'
+          else
+            type='minor'
+          fi
+          echo "value=$type" >> $GITHUB_OUTPUT
+      - name: bump version
+        if: ${{ github.event_name == 'workflow_call' || steps.env.outputs.value == 'dev' }}
+        id: staging
+        run: |
+          staging='
+          modules='${{ steps.modules.outputs.value }}'
+          names=''
+          if [ -z "$modules" ]
+          then
+            modules='${{ inputs.modules }}'
+          fi
+          for context in $(echo $modules | jq -c '.[]')
+          do
+            path=$(echo $context | jq -r '.root')
+            package="$path/package.json"
+            jq --arg version "$(echo $context | jq -rc '.version')" '. += {"version": $version}' $package > $package
+            staging="$staging $package"
+            names="$names $(echo $context | jq -rc '.name')" 
+          done
+          echo "value=$staging" >> $GITHUB_OUTPUT
+          echo "modules=$names" >> $GITHUB_OUTPUT
+      - name: commit version
+        if: ${{ steps.staging.outputs.value != '' }}
+        uses: pmeig/github-actions/actions/github/push@main
+        with:
+          commit: "semver(${{ steps.type.outputs.value }}): bump version for${{ steps.staging.outputs.modules }}"
+          stage: ${{ steps.staging.outputs.value }}
+          mail: 'pierrick.workplace@gmail.com'
+          user: 'pmeig'

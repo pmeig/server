@@ -1,0 +1,92 @@
+name: Bump patch version
+on:
+  pull_request_target:
+    types:
+      - opened
+    branches:
+      - main
+jobs:
+  context:
+    runs-on:
+      - self-hosted
+      - Linux
+      - pmeig
+    steps:
+      - name: branch
+        id: branch
+        uses: pmeig/github-actions/actions/github/branch@main
+      - name: env
+        id: env
+        uses: pmeig/github-actions/actions/context/env@main
+        with:
+          branch: ${{ steps.branch.outputs.current }}
+      - name: suffix version
+        id: suffix
+        uses: pmeig/github-actions/actions/context/version/suffix@main
+        with:
+          env: ${{ steps.env.outputs.value }}
+      - name: retrieve modules change
+        id: modules-accepted
+        if: ${{ steps.env.outputs.value == 'prod' }}
+        uses: pmeig/github-actions/actions/github/diff@main
+        with:
+          target: ${{ steps.branch.outputs.target }}
+          origin: ${{ steps.metadata.outputs.current }}
+          excludes: 'start=runner/'
+    outputs:
+      files: ${{ steps.modules-accepted.outputs.files }}
+      env: ${{ steps.env.outputs.value }}
+      suffix: ${{ steps.suffix.outputs.value }}
+  bump:
+    runs-on:
+      - self-hosted
+      - Linux
+      - pmeig
+    needs: context
+    if: ${{ needs.context.outputs.env == 'prod' }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: checkout branch main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: compare
+      - name: bump patch
+        id: staging
+        run: |
+          json=$(jq -rc '.projects | to_entries | map( {"name": .key, "root": ("./" + .value.location.root)})' pmeig-cli.json)
+          filter='${{ steps.modules-accepted.outputs.files }}'
+          staging=''
+          if [ -n "$filter" ]
+          then
+            modules=''
+            for file in $filter
+            do
+              if [[ " $modules " != *" $(echo $file | cut -d'/' -f2) "* ]]
+              then
+                select=$(echo $json | jq -rc --arg root "./$file" '. | map(select(.root | startswith($root))) | .[]')
+                package="$(echo $select | jq -rc '.root')/package.json"
+                version=$(jq -rc '.version' $package | cut -d'-' -f1)
+                patch=$(echo "$version" | cut -d'.' -f3)
+                release=$(jq -rc '.version' $GITHUB_WORKSPACE/compare/$package - cut -d'-' -f1 | cut -d'.' -f3) 
+                if (( $patch == $release ))
+                then
+                  version="$(echo $version | cut -d'.' -f1-2).$(( $patch + 1))${{ steps.suffix.outputs.value }}"
+                  modules="$modules $(echo $file | cut -d'/' -f2)"
+                  staging="$staging $package"
+                fi
+              fi
+            done
+          fi
+          echo "modules=$modules" >> $GITHUB_OUTPUT
+          echo "value=$staging" >> $GITHUB_OUTPUT
+      - name: commit patch version
+        if: ${{ steps.staging.outputs.value != '' }}
+        uses: pmeig/github-actions/actions/github/push@main
+        with:
+          commit: "semver(patch): bump patch version for${{ steps.staging.outputs.modules }}"
+          stage: ${{ steps.staging.outputs.value }}
+          mail: 'pierrick.workplace@gmail.com'
+          user: 'pmeig'
+
