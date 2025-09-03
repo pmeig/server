@@ -145,7 +145,16 @@ jobs:
 #          user: ${{ env.ARTIFACTORY_USER }}
 #          password: ${{ env.ARTIFACTORY_PASSWORD }}
       - name: install dependencies
+        id: projects
         run: |
+          json='{}'
+          for package in $(find . -name 'package.json')
+          do
+            dir=$(dirname $package)
+            name=$(jq -rc '.name' $package)
+            json=$(echo $json | jq -rc --arg name "$name" --arg dir "$dir" '. + {($name): $dir}')
+          done
+          echo "value=$json" >> $GITHUB_OUTPUT
           pnpm install
       - name: actualize version
         working-directory: ${{ matrix.module.root }}
@@ -161,6 +170,30 @@ jobs:
           mv *.tgz cli.tgz
           cd ../..
           pnpm -w install dist/cli/cli.tgz
+      - name: check install internal module
+        id: internals
+        uses: pmeig/github-actions/actions/node/package/dependencies@main
+        with:
+          prefix: '@pmeig'
+          workspace: ${{ matrix.module.root }}
+          subpath-resolver: |
+            package=$(echo '${{ steps.projects.outputs.value }}' | jq -r --arg key "$depend" '.[$key]')
+      - name: install internal modules
+        if: ${{ steps.internals.outputs.paths != '' }}
+        working-directory: ${{ matrix.module.root }}
+        run: |
+          here=$(pwd)
+          for module in ${{ steps.internals.outputs.paths }}
+          do
+            cd "${{ github.workspace }}/${module:1}"
+            pnpm build
+            cd $(pnpm tsc --showConfig | jq -rc '.compilerOptions.outDir')
+            pnpm pack
+            mv *.tgz $here/dependencies/depend.tgz
+            cd $here
+            pnpm install dependencies/depend.tgz
+            rm -rf dependencies
+          done
       - name: build module
         if: ${{ matrix.module.name != 'cli' }}
         working-directory: ${{ matrix.module.root }}
