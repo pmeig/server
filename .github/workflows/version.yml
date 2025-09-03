@@ -12,6 +12,12 @@ on:
         type: string
         required: true
         description: all modules separate by space
+
+permissions:
+  id-token: write
+  deployments: write
+  contents: write
+
 jobs:
   bump:
     runs-on:

@@ -20,11 +20,11 @@
     "@swc/core": "^1.11.29",
     "@types/express": "^5.0.2",
     "@types/node": "^22.15.19",
+    "jest": "^30.0.5",
     "prettier": "^3.5.3",
     "reflect-metadata": "^0.2.2",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5",
-    "jest": "^30.0.5"
+    "vite": "^6.3.5"
   },
   "dependencies": {
     "express": "^5.1.0"

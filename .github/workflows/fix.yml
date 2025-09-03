@@ -5,6 +5,12 @@ on:
       - opened
     branches:
       - main
+
+permissions:
+  id-token: write
+  deployments: write
+  contents: write
+
 jobs:
   context:
     runs-on:
