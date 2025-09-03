@@ -9,7 +9,7 @@
   "packageManager": "pnpm@10.11.0",
   "scripts": {
     "tsc": "tsc",
-    "build": "tsc"
+    "build": "pnpm tsc"
   },
   "dependencies": {
     "fast-glob": "^3.3.3",
