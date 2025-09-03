@@ -146,7 +146,7 @@ jobs:
 #          password: ${{ env.ARTIFACTORY_PASSWORD }}
       - name: install dependencies
         run: |
-          pnpm install --prod
+          pnpm install
       - name: actualize version
         working-directory: ${{ matrix.module.root }}
         run: |
