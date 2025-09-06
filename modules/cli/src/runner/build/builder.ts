@@ -1,12 +1,12 @@
 import { CliContext, CliProject } from '../../server/cli.context';
 import { dirname, resolve } from 'path';
 import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
   copyFileSync,
   createReadStream,
+  existsSync,
+  mkdirSync,
   readdirSync,
+  readFileSync,
   rmSync,
   unlinkSync
 } from 'fs';
@@ -15,21 +15,29 @@ import { ConsoleCommand, launcher } from '../../launcher';
 import { glob } from 'fast-glob';
 import { BuildParameter } from './build.runner';
 import { Parameters } from '../runner.helper';
-import { updateContent, updateJson } from '../../helper/io.helper';
+import { readJson, updateContent, updateJson } from '../../helper/io.helper';
+
+interface BuildProjectContext {
+  name: string;
+  version: string;
+  module: string;
+}
 
 export abstract class Builder {
   constructor(
     protected readonly context: CliProject,
-    protected readonly rootProject: string
+    protected readonly rootProject: string,
+    protected readonly projects: Record<string, BuildProjectContext> = {}
   ) {}
 
   static from(context: CliContext, rootProject: string, project: string): Builder {
     const cliProject = context.projects?.[project];
     if (cliProject) {
+      const anotherProject = Builder.retrieveProjectNameVersion(rootProject, context.projects);
       if (cliProject.type === 'application') {
-        return new ApplicationBuilder(cliProject, rootProject);
+        return new ApplicationBuilder(cliProject, rootProject, anotherProject);
       }
-      return new LibraryBuilder(cliProject, rootProject);
+      return new LibraryBuilder(cliProject, rootProject, anotherProject);
     }
     return new NoopBuilder(
       {
@@ -41,6 +49,20 @@ export abstract class Builder {
       },
       rootProject
     );
+  }
+
+  private static retrieveProjectNameVersion(rootProject: string, projects?: Record<string, CliProject>) {
+    return Object.entries(projects ?? {}).reduce((acc, [name, context]) => {
+      const json = readJson(resolve(rootProject, context.location.root, 'package.json'));
+      const item = {
+        name,
+        version: json.version,
+        module: json.name
+      }
+      acc[item.module] = item;
+      acc[name] = item;
+      return acc;
+    }, {} as Record<string, BuildProjectContext>)
   }
 
   async build(_: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
@@ -69,7 +91,18 @@ export abstract class Builder {
           });
         });
       });
-      result = Promise.all(copies).then(() => command);
+      result = Promise.all(copies).then(() => {
+        updateJson(resolve(outDirPath, 'package.json'), content => {
+          content.scripts = undefined;
+          content.dependencies = this.exposeVersionOfInternalDependencies(content.dependencies);
+          content.devDependencies = this.exposeVersionOfInternalDependencies(content.devDependencies);
+          return content;
+        });
+        return command;
+      }).catch(error => {
+        console.error(error.message);
+        throw error;
+      });
     }
     return result;
   }
@@ -89,6 +122,18 @@ export abstract class Builder {
         }
       });
     }
+  }
+
+  private exposeVersionOfInternalDependencies(dependencies?: Record<string, string>) {
+    if (!dependencies) return undefined;
+    return Object.entries(dependencies).reduce(
+      (acc, [key, value]) => {
+        const context = this.projects[key];
+        acc[key] = context ? `^${context.version}` : value;
+        return acc;
+      },
+      {} as Record<string, string>
+    );
   }
 }
 
@@ -116,8 +161,8 @@ class NoopBuilder extends Builder {
 class LibraryBuilder extends Builder {
   private regex = new RegExp(`^export [*] from .*;$`);
 
-  constructor(context: CliProject, rootProject: string) {
-    super(context, rootProject);
+  constructor(context: CliProject, rootProject: string, projects: Record<string, BuildProjectContext> = {}) {
+    super(context, rootProject, projects);
     context.assets = [...new Set([...context.assets, 'package.json', 'readme.md', 'README.md'])];
   }
 
