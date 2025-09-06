@@ -170,30 +170,6 @@ jobs:
           mv *.tgz cli.tgz
           cd ../..
           pnpm -w install dist/cli/cli.tgz
-      - name: check install internal module
-        id: internals
-        uses: pmeig/github-actions/actions/node/package/dependencies@main
-        with:
-          prefix: '@pmeig'
-          workspace: ${{ matrix.module.root }}
-          subpath-resolver: |
-            package=$(echo '${{ steps.projects.outputs.value }}' | jq -r --arg key "$depend" '.[$key]')
-      - name: install internal modules
-        if: ${{ steps.internals.outputs.paths != '' }}
-        run: |
-          for module in ${{ steps.internals.outputs.paths }}
-          do
-            cd "$module"
-            pnpm build
-            cd $(pnpm tsc --showConfig | jq -rc '.compilerOptions.outDir')
-            pnpm pack
-            mv *.tgz ${{ github.workspace }}/dependencies/depend.tgz
-            cd ${{ github.workspace }}
-            pnpm install -w dependencies/depend.tgz
-            rm -rf dependencies
-          done
-          cd ${{ matrix.module.root }}
-          pnpm install
       - name: build module
         if: ${{ matrix.module.name != 'cli' }}
         working-directory: ${{ matrix.module.root }}
