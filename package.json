@@ -16,7 +16,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.13.1",
+  "packageManager": "pnpm@10.15.1",
   "devDependencies": {
     "@pmeig/srv-cli": "file:dist\\cli\\pmeig-srv-cli-1.0.0.tgz",
     "@swc/core": "^1.11.29",
