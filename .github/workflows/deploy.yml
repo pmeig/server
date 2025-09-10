@@ -197,7 +197,7 @@ jobs:
       - name: deploy on remote
         if: ${{ needs.context.outputs.env == 'prod' }}
         run: |
-          pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} $options
+          pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --no-git-checks
   prepare-tag:
     if: ${{ needs.context.outputs.env == 'prod' }}
     needs:
