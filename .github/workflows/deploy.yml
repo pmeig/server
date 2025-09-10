@@ -101,6 +101,7 @@ jobs:
       env: ${{ steps.env.outputs.value }}
       modules: ${{ steps.modules.outputs.value }}
       artifactory: ${{ steps.metadata.outputs.npm-target }}
+      target: ${{ steps.metadata.outputs.target }}
   build:
     needs: context
     runs-on:
