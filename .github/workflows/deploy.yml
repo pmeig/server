@@ -162,6 +162,7 @@ jobs:
         run: |
           pnpm version '${{ matrix.module.version}}'
       - name: install cli
+        id: cli
         run: |
           pnpm build:cli
           cp modules/cli/package.json dist/cli/package.json
@@ -171,6 +172,10 @@ jobs:
           mv *.tgz cli.tgz
           cd ../..
           pnpm -w install dist/cli/cli.tgz
+          if [ '${{ matrix.module.name }}' = 'cli' ]
+          then
+            echo 'path=dist/cli/cli.tgz' >> $GITHUB_OUTPUT
+          fi
       - name: build module
         if: ${{ matrix.module.name != 'cli' }}
         working-directory: ${{ matrix.module.root }}
@@ -183,6 +188,7 @@ jobs:
 #          jf rt upload './*' ${{ needs.context.outputs.artifactory }}/$name/${{ matrix.module.version }} --server-id=pmeig   --threads=10 --recursive=true
       - name: pack
         id: pack
+        if: ${{ matrix.module.name != 'cli' }}
         working-directory: dist/${{ matrix.module.name }}
         run: |
           pnpm pack
@@ -191,7 +197,7 @@ jobs:
       - name: deploy on remote
         if: ${{ needs.context.outputs.env == 'prod' }}
         run: |
-          pnpm publish ${{ steps.pack.outputs.path }} $options
+          pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} $options
   prepare-tag:
     if: ${{ needs.context.outputs.env == 'prod' }}
     needs:
