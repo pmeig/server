@@ -47,11 +47,11 @@ jobs:
         with:
           target: ${{ steps.release.outputs.target }}
           origin: ${{ steps.metadata.outputs.tag }}
-          excludes: 'start=runner/'
+          excludes: 'start=runner/ start=.github'
       - name: prepare modules
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.modules != '' }}
         id: files
-        run: |
+        run: |  
           files=''
           for file in ${{ inputs.modules }}
           do
