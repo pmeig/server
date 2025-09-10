@@ -62,7 +62,7 @@ jobs:
         id: staging
         run: |
           json=$(jq -rc '.projects | to_entries | map( {"name": .key, "root": ("./" + .value.location.root)})' pmeig-cli.json)
-          filter='${{ steps.modules-accepted.outputs.files }}'
+          filter='${{ needs.context.outputs.files }}'
           staging=''
           if [ -n "$filter" ]
           then
@@ -78,7 +78,7 @@ jobs:
                 release=$(jq -rc '.version' $GITHUB_WORKSPACE/compare/$package - cut -d'-' -f1 | cut -d'.' -f3) 
                 if (( $patch == $release ))
                 then
-                  version="$(echo $version | cut -d'.' -f1-2).$(( $patch + 1))${{ steps.suffix.outputs.value }}"
+                  version="$(echo $version | cut -d'.' -f1-2).$(( $patch + 1))${{ needs.context.outputs.suffix }}"
                   modules="$modules $(echo $file | cut -d'/' -f2)"
                   staging="$staging $package"
                 fi

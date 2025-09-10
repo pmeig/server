@@ -93,7 +93,7 @@ jobs:
         if: ${{ steps.staging.outputs.value != '' }}
         uses: pmeig/github-actions/actions/github/push@main
         with:
-          commit: "semver(${{ steps.type.outputs.value }}): bump version for${{ steps.staging.outputs.modules }}"
+          commit: "semver(${{ steps.type.outputs.value }}): bump version for ${{ steps.staging.outputs.modules }}"
           stage: ${{ steps.staging.outputs.value }}
           mail: 'pierrick.workplace@gmail.com'
           user: 'pmeig'
