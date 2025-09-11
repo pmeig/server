@@ -1,6 +1,6 @@
 {
   "name": "@pmeig/srv-runner",
-  "version": "1.0.0",
+  "version": "1.0.0-SNAPSHOT",
   "description": "",
   "main": "main.ts",
   "scripts": {
