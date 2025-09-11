@@ -28,9 +28,9 @@
     }
   },
   "dependencies": {
-    "js-yaml": "^4.1.0",
-    "rxjs": "^7.8.2",
+    "@pmeig/srv-core": "workspace:*",
     "@pmeig/srv-vault": "workspace:*",
-    "@pmeig/srv-core": "workspace:*"
+    "js-yaml": "^4.1.0",
+    "rxjs": "^7.8.2"
   }
 }

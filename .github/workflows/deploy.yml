@@ -47,11 +47,11 @@ jobs:
         with:
           target: ${{ steps.release.outputs.target }}
           origin: ${{ steps.metadata.outputs.tag }}
-          excludes: 'start=runner/'
+          includes: 'start=modules'
       - name: prepare modules
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.modules != '' }}
         id: files
-        run: |
+        run: |  
           files=''
           for file in ${{ inputs.modules }}
           do
@@ -74,14 +74,15 @@ jobs:
             modules=''
             for file in $filter
             do
-              if [[ " $modules " != *" $(echo $file | cut -d'/' -f2) "* ]]
+              select=$(echo $json | jq -rc --arg root "./$file" '. | map(select(.root as $compare | $root | startswith($compare))) | .[]')
+              module=$(echo $select | jq -rc '.name')
+              if [[ " $modules " != *" $module "* ]]
               then
-                select=$(echo $json | jq -rc --arg root "./$file" '. | map(select(.root | startswith($root))) | .[]')
                 version=$(jq -rc '.version' $(echo $select | jq -rc '.root')/package.json | cut -d'-' -f1)
                 selection=$( echo $selection | jq -rc --argjson select "$select" \
                   --arg version "$version${{ steps.suffix.outputs.value }}" \
                   '. += [$select + {"version": $version}]')
-                modules="$modules $(echo $file | cut -d'/' -f2)"
+                modules="$modules $module"
               fi
             done
             json="$selection"
@@ -100,6 +101,7 @@ jobs:
       env: ${{ steps.env.outputs.value }}
       modules: ${{ steps.modules.outputs.value }}
       artifactory: ${{ steps.metadata.outputs.npm-target }}
+      target: ${{ steps.metadata.outputs.target }}
   build:
     needs: context
     runs-on:
@@ -126,16 +128,14 @@ jobs:
           secrets: |
             pmeig/server/data/cicd/jfrog/writer user | ARTIFACTORY_USER;
             pmeig/server/data/cicd/jfrog/writer password | ARTIFACTORY_PASSWORD;
-            pmeig/server/data/cicd/jfrog/reader user | ARTIFACTORY_READER_USER;
-            pmeig/server/data/cicd/jfrog/reader password | ARTIFACTORY_READER_PASSWORD;
             pmeig/server/data/cicd/npm user | REMOTE_USER;
             pmeig/server/data/cicd/npm password | REMOTE_PASSWORD;
       - name: node setup
         uses: pmeig/github-actions/actions/node/setup@main
         id: node-setup
         with:
-          artifactory-password: ${{ env.ARTIFACTORY_READER_PASSWORD }}
-          artifactory-user: ${{ env.ARTIFACTORY_READER_USER }}
+          artifactory-password: ${{ env.ARTIFACTORY_PASSWORD }}
+          artifactory-user: ${{ env.ARTIFACTORY_USER }}
           remote-password: ${{ env.REMOTE_PASSWORD }}
           remote-user: ${{ env.REMOTE_USER }}
           branch: ${{ needs.context.outputs.target }}
@@ -145,13 +145,23 @@ jobs:
 #          user: ${{ env.ARTIFACTORY_USER }}
 #          password: ${{ env.ARTIFACTORY_PASSWORD }}
       - name: install dependencies
+        id: projects
         run: |
-          pnpm install --prod
+          json='{}'
+          for package in $(find . -name 'package.json')
+          do
+            dir=$(dirname $package)
+            name=$(jq -rc '.name' $package)
+            json=$(echo $json | jq -rc --arg name "$name" --arg dir "$dir" '. + {($name): $dir}')
+          done
+          echo "value=$json" >> $GITHUB_OUTPUT
+          pnpm install
       - name: actualize version
         working-directory: ${{ matrix.module.root }}
         run: |
           pnpm version '${{ matrix.module.version}}'
       - name: install cli
+        id: cli
         run: |
           pnpm build:cli
           cp modules/cli/package.json dist/cli/package.json
@@ -161,6 +171,10 @@ jobs:
           mv *.tgz cli.tgz
           cd ../..
           pnpm -w install dist/cli/cli.tgz
+          if [ '${{ matrix.module.name }}' = 'cli' ]
+          then
+            echo 'path=dist/cli/cli.tgz' >> $GITHUB_OUTPUT
+          fi
       - name: build module
         if: ${{ matrix.module.name != 'cli' }}
         working-directory: ${{ matrix.module.root }}
@@ -173,15 +187,18 @@ jobs:
 #          jf rt upload './*' ${{ needs.context.outputs.artifactory }}/$name/${{ matrix.module.version }} --server-id=pmeig   --threads=10 --recursive=true
       - name: pack
         id: pack
+        if: ${{ matrix.module.name != 'cli' }}
         working-directory: dist/${{ matrix.module.name }}
         run: |
           pnpm pack
           mv *.tgz ${{ matrix.module.name }}.tgz
           echo "path=dist/${{ matrix.module.name }}/${{ matrix.module.name }}.tgz" >> $GITHUB_OUTPUT
       - name: deploy on remote
-        if: ${{ needs.context.outputs.env == 'prod' }}
         run: |
-          pnpm publish ${{ steps.pack.outputs.path }} $options
+          options='--tag ${{ matrix.module.version }} --no-git-checks'
+          # pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} $options
+          pnpm config delete @pmeig:registry
+          pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --access public $options
   prepare-tag:
     if: ${{ needs.context.outputs.env == 'prod' }}
     needs:

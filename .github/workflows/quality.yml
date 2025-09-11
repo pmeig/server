@@ -1,4 +1,4 @@
-name: quality
+name: Quality
 on:
   workflow_dispatch:
     inputs:
@@ -36,6 +36,8 @@ jobs:
       - name: secrets
         uses: pmeig/github-actions/actions/secret/vault@main
         with:
+          role-id: ${{ secrets.VAULT_ROLE_ID }}
+          secret-id: ${{ secrets.VAULT_SECRET_ID }}
           secrets: |
             pmeig/server/data/cicd/sonar token | SONAR_TOKEN;
             pmeig/server/data/cicd/jfrog/reader user | ARTIFACTORY_USER;
