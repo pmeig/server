@@ -195,16 +195,12 @@ jobs:
           echo "path=dist/${{ matrix.module.name }}/${{ matrix.module.name }}.tgz" >> $GITHUB_OUTPUT
       - name: deploy on remote
         run: |
-          options=''
-          if [ '${{ needs.context.outputs.env }}' != 'prod' ]
-          then
-            options="--tag ${{ matrix.module.version }}"
-          fi
-          # pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --no-git-checks $options
+          options='--tag ${{ matrix.module.version }} --no-git-checks'
+          # pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path } $options
           if [ -z "$options" ]
           then
             pnpm config delete @pmeig:registry
-            pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --no-git-checks --access public $options
+            pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --access public $options
           fi
   prepare-tag:
     if: ${{ needs.context.outputs.env == 'prod' }}
