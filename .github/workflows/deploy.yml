@@ -197,11 +197,8 @@ jobs:
         run: |
           options='--tag ${{ matrix.module.version }} --no-git-checks'
           # pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path } $options
-          if [ -z "$options" ]
-          then
-            pnpm config delete @pmeig:registry
-            pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --access public $options
-          fi
+          pnpm config delete @pmeig:registry
+          pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --access public $options
   prepare-tag:
     if: ${{ needs.context.outputs.env == 'prod' }}
     needs:
