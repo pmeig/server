@@ -204,7 +204,7 @@ jobs:
           if [ -z "$options" ]
           then
             pnpm config delete @pmeig:registry
-            pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --no-git-checks $options
+            pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --no-git-checks --access public $options
           fi
   prepare-tag:
     if: ${{ needs.context.outputs.env == 'prod' }}
