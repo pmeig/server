@@ -128,16 +128,14 @@ jobs:
           secrets: |
             pmeig/server/data/cicd/jfrog/writer user | ARTIFACTORY_USER;
             pmeig/server/data/cicd/jfrog/writer password | ARTIFACTORY_PASSWORD;
-            pmeig/server/data/cicd/jfrog/reader user | ARTIFACTORY_READER_USER;
-            pmeig/server/data/cicd/jfrog/reader password | ARTIFACTORY_READER_PASSWORD;
             pmeig/server/data/cicd/npm user | REMOTE_USER;
             pmeig/server/data/cicd/npm password | REMOTE_PASSWORD;
       - name: node setup
         uses: pmeig/github-actions/actions/node/setup@main
         id: node-setup
         with:
-          artifactory-password: ${{ env.ARTIFACTORY_READER_PASSWORD }}
-          artifactory-user: ${{ env.ARTIFACTORY_READER_USER }}
+          artifactory-password: ${{ env.ARTIFACTORY_PASSWORD }}
+          artifactory-user: ${{ env.ARTIFACTORY_USER }}
           remote-password: ${{ env.REMOTE_PASSWORD }}
           remote-user: ${{ env.REMOTE_USER }}
           branch: ${{ needs.context.outputs.target }}
@@ -196,9 +194,18 @@ jobs:
           mv *.tgz ${{ matrix.module.name }}.tgz
           echo "path=dist/${{ matrix.module.name }}/${{ matrix.module.name }}.tgz" >> $GITHUB_OUTPUT
       - name: deploy on remote
-        if: ${{ needs.context.outputs.env == 'prod' }}
         run: |
-          pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --no-git-checks '--registry=https://registry.npmjs.org/'
+          options=''
+          if [ '${{ needs.context.outputs.env }}' != 'prod' ]
+          then
+            options="--tag ${{ matrix.module.version }}"
+          fi
+          # pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --no-git-checks $options
+          if [ -z "$options" ]
+          then
+            pnpm config delete @pmeig:registry
+            pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --no-git-checks $options
+          fi
   prepare-tag:
     if: ${{ needs.context.outputs.env == 'prod' }}
     needs:
