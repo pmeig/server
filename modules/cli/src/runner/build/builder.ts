@@ -67,17 +67,20 @@ export abstract class Builder {
 
   async build(_: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
     const root = resolve(this.rootProject, this.context.location.root);
-    const executor = launcher.cwd(root);
-    const outDirConsole = await executor.launch('tsc', '--showConfig', ...options);
-    const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
-    const outDirPath = resolve(root, outDir);
-    this.removeDist(outDirPath);
     let command;
+    let outDirPath;
     try {
+      const executor = launcher.cwd(root);
+      const outDirConsole = await executor.launch('tsc', '--showConfig', ...options);
+      const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
+      outDirPath = resolve(root, outDir);
+      this.removeDist(outDirPath);
       command = await executor.launch('tsc', ...options);
     } catch (error) {
+      console.error(error.message);
       throw error;
     }
+
     let result = Promise.resolve(command);
     if (command.code === 0 && this.context.assets.length > 0) {
       const copies = this.context.assets.map(asset => {
@@ -99,12 +102,12 @@ export abstract class Builder {
           return content;
         });
         return command;
-      }).catch(error => {
-        console.error(error.message);
-        throw error;
-      });
+      })
     }
-    return result;
+    return result.catch(error => {
+      console.error(error.message);
+      throw error;
+    });
   }
 
   private removeDist(outDirPath: string) {

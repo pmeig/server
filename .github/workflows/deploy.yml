@@ -129,21 +129,15 @@ jobs:
             pmeig/server/data/cicd/jfrog/writer user | ARTIFACTORY_USER;
             pmeig/server/data/cicd/jfrog/writer password | ARTIFACTORY_PASSWORD;
             pmeig/server/data/cicd/npm user | REMOTE_USER;
-            pmeig/server/data/cicd/npm password | REMOTE_PASSWORD;
+            pmeig/server/data/cicd/npm token | REMOTE_TOKEN;
       - name: node setup
         uses: pmeig/github-actions/actions/node/setup@main
         id: node-setup
         with:
+          remote-token: ${{ env.REMOTE_PASSWORD }}
           artifactory-password: ${{ env.ARTIFACTORY_PASSWORD }}
           artifactory-user: ${{ env.ARTIFACTORY_USER }}
-          remote-password: ${{ env.REMOTE_PASSWORD }}
-          remote-user: ${{ env.REMOTE_USER }}
           branch: ${{ needs.context.outputs.target }}
-#      - name: jfrog setup
-#        uses: pmeig/github-actions/actions/artifactory/jfrog/setup@main
-#        with:
-#          user: ${{ env.ARTIFACTORY_USER }}
-#          password: ${{ env.ARTIFACTORY_PASSWORD }}
       - name: install dependencies
         id: projects
         run: |
@@ -180,11 +174,6 @@ jobs:
         working-directory: ${{ matrix.module.root }}
         run: |
           pnpm build
-#      - name: deploy in jfrog
-#        working-directory: dist/${{ matrix.module.name }}
-#        run: |
-#          name=$(jq -rc '.name' package.json)
-#          jf rt upload './*' ${{ needs.context.outputs.artifactory }}/$name/${{ matrix.module.version }} --server-id=pmeig   --threads=10 --recursive=true
       - name: pack
         id: pack
         if: ${{ matrix.module.name != 'cli' }}

@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "1.0.0-SNAPSHOT",
+  "version": "0.1.0-SNAPSHOT",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -30,6 +30,7 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
+    "@pmeig/srv-cli": "file:dist\\cli\\pmeig-srv-cli-1.0.0-SNAPSHOT.tgz",
     "express": "^5.1.0"
   }
 }

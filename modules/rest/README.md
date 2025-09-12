@@ -1,13 +1,13 @@
 # @pmeig/srv-rest
 REST API module for framework that provides Express.js integration with decorators for building REST APIs. `@pmeig/srv-core`
 ## Installation
-``` bash
-pnpm add @pmeig/srv-rest @pmeig/srv-core express
-pnpm add -D @types/express
+```bash
+  pnpm add @pmeig/srv-rest
+  pnpm add -D @types/express
 ```
 ## Quick Start
 ### 1. Basic REST Controller
-``` typescript
+```typescript
 import { Configuration } from '@pmeig/srv-core';
 import { RestController, GET, POST, PUT, DELETE } from '@pmeig/srv-rest';
 
@@ -46,7 +46,7 @@ export class UserController {
 }
 ```
 ### 2. Application Setup
-``` typescript
+```typescript
 import { Application } from '@pmeig/srv-core';
 import { RestModule } from '@pmeig/srv-rest';
 import { UserController } from './controllers/user.controller';
