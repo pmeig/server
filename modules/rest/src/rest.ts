@@ -51,7 +51,7 @@ const updateRestMapper = (item: Partials<RestMapper>, target: object, propertyKe
   );
 };
 
-export const RequestMapper = (path: string, method: Method = 'GET') =>
+export const RequestMapper = (path: string = '', method: Method = 'GET') =>
   Decorators.all('RequestMapper', (target, propertyKey) => {
     updateRestMapper(
       {
