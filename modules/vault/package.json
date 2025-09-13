@@ -7,8 +7,15 @@
     "build": "pmeig build vault",
     "build:prod": "pnpm build --prod"
   },
-  "keywords": [],
-  "author": "",
+  "homepage": "https://github.com/pmeig/server/tree/main/modules/vault",
+  "repository": {
+    "url": "https://github.com/pmeig/server"
+  },
+  "keywords": [
+    "server",
+    "pmeig",
+    "vault"
+  ],
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^22.15.19",

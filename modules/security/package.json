@@ -6,8 +6,15 @@
     "tsc": "tsc",
     "build": "pmeig build"
   },
-  "keywords": [],
-  "author": "",
+  "homepage": "https://github.com/pmeig/server/tree/main/modules/security",
+  "repository": {
+    "url": "https://github.com/pmeig/server"
+  },
+  "keywords": [
+    "server",
+    "pmeig",
+    "security"
+  ],
   "license": "ISC",
   "peerDependencies": {
     "@pmeig/srv-rest": "workspace:*"

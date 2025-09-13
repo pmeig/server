@@ -7,8 +7,15 @@
     "build": "pmeig build properties",
     "build:prod": "pnpm build --prod"
   },
-  "keywords": [],
-  "author": "",
+  "homepage": "https://github.com/pmeig/server/tree/main/modules/properties",
+  "repository": {
+    "url": "https://github.com/pmeig/server"
+  },
+  "keywords": [
+    "server",
+    "pmeig",
+    "properties"
+  ],
   "license": "ISC",
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",

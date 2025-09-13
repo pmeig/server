@@ -6,8 +6,16 @@
     "tsc": "tsc",
     "build": "pmeig build"
   },
-  "keywords": [],
-  "author": "",
+  "homepage": "https://github.com/pmeig/server/tree/main/modules/vite-plugin-pmeig",
+  "repository": {
+    "url": "https://github.com/pmeig/server"
+  },
+  "keywords": [
+    "server",
+    "pmeig",
+    "plugin",
+    "vite"
+  ],
   "license": "ISC",
   "dependencies": {
     "@rollup/pluginutils": "^5.1.4",

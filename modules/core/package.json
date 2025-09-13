@@ -6,8 +6,16 @@
     "build": "pmeig build core --prod",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "homepage": "https://github.com/pmeig/server/tree/main/modules/core",
+  "repository": {
+    "url": "https://github.com/pmeig/server"
+  },
+  "keywords": [
+    "server",
+    "pmeig",
+    "core",
+    "shared"
+  ],
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
   "devDependencies": {
