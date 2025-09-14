@@ -43,10 +43,15 @@ jobs:
         run: |
           json=$(jq -rc '.projects | to_entries | map( {"name": .key, "root": ("./" + .value.location.root)})' pmeig-cli.json)
           modules='[]'
-          for root in $(echo "$json" | jq -c '.[]')
+          compare='${{ inputs.modules }}'
+          if [ -z "$compare" ]
+          then
+            compare=$(echo $json | jq -c '.[] | .name')
+          fi
+          for root in $(echo "$json" | jq -rc '.[]')
           do
             name=$(echo $root | jq -rc '.name')
-            if [[ ' ${{ inputs.modules }} ' == *" $name "* ]]
+            if [[ " $compare " == *" $name "* ]]
             then
               path=$(echo $root | jq -rc '.root')
               version=$(jq -rc '.version' $path/package.json)
@@ -58,6 +63,34 @@ jobs:
             fi
           done
           echo "value=$modules" >> $GITHUB_OUTPUT
+          echo "context=$json" >> $GITHUB_OUTPUT
+      - name: context dependencies
+        id: context
+        run: |
+          json='${{ steps.modules.outputs.context }}'
+          modules='${{ steps.modules.outputs.value }}'
+          value='[]'
+          for module in $modules
+          do
+            path=$(echo $module | jq -rc '.root')
+            name=$(jq -rc '.name' $path/package.json)
+            for other in $(echo $json | jq -c --argjson current "$module" '.[] | select(.name as $name | $current.name != $name)')
+            do
+              root=$(echo $other | jq -rc '.root')
+              dependencies=$(jq -rc --argjson current "$name" '.dependencies | keys | map(select(. as $name | $current == $name)) | .[]' $root/package.json)
+              if [ -n "$dependencies" ]
+              then
+                module=$(echo $module | jq -rc --argjson other "$other" '.dependencies += [$other.root + "/package.json"]')
+              fi
+              dependencies=$(jq -rc --argjson current "$name" '.devDependencies | keys | map(select(. as $name | $current == $name)) | .[]' $root/package.json)
+              if [ -n "$dependencies" ]
+              then
+                module=$(echo $module | jq -rc --argjson other "$other" '.devDependencies += [$other.root + "/package.json"]')
+              fi
+            done
+            value=$(echo $value | jq -rc --argjson module "$module" '. += [$module]')
+          done
+          echo "value=$value" >> $GITHUB_OUTPUT
       - name: semver type
         id: type
         run: |
@@ -72,20 +105,27 @@ jobs:
         if: ${{ github.event_name == 'workflow_call' || steps.env.outputs.value == 'dev' }}
         id: staging
         run: |
-          staging='
-          modules='${{ steps.modules.outputs.value }}'
+          staging=''
+          modules='${{ steps.context.outputs.value }}'
           names=''
-          if [ -z "$modules" ]
-          then
-            modules='${{ inputs.modules }}'
-          fi
           for context in $(echo $modules | jq -c '.[]')
           do
             path=$(echo $context | jq -r '.root')
             package="$path/package.json"
-            jq --arg version "$(echo $context | jq -rc '.version')" '. += {"version": $version}' $package > $package
+            name=$(jq -rc '.name' $package)
+            version=$(echo $context | jq -rc '.version')
+            json=$(jq --arg version "$version" '. += {"version": $version}' $package)
             staging="$staging $package"
-            names="$names $(echo $context | jq -rc '.name')" 
+            names="$names $(echo $context | jq -rc '.name')"
+            for dependency in $(echo $context | jq -rc '.dependencies | .[]')
+            do
+              json=$(echo $json | jq --arg version "$version" --arg name "$name" '.dependencies += {($name): "^" + $version}')
+            done
+            for dependency in $(echo $context | jq -rc '.devDependencies | .[]')
+            do
+              json=$(echo $json | jq --arg version "$version" --arg name "$name" '.devDependencies += {($name): "^" + $version}')
+            done
+            echo $json > $package
           done
           echo "value=$staging" >> $GITHUB_OUTPUT
           echo "modules=$names" >> $GITHUB_OUTPUT
