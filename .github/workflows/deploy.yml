@@ -137,6 +137,7 @@ jobs:
           remote-token: ${{ env.REMOTE_PASSWORD }}
           artifactory-password: ${{ env.ARTIFACTORY_PASSWORD }}
           artifactory-user: ${{ env.ARTIFACTORY_USER }}
+          remote-user: ${{ env.REMOTE_USER }}
           branch: ${{ needs.context.outputs.target }}
       - name: install dependencies
         id: projects
