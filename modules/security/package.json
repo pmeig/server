@@ -23,6 +23,7 @@
   "peerDependencies": {
     "@pmeig/srv-rest": "workspace:*"
   },
+
   "devDependencies": {
     "@types/cookie-parser": "^1.4.9",
     "@types/jsonwebtoken": "^9.0.10",

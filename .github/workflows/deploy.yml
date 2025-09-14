@@ -259,7 +259,7 @@ jobs:
         run: |
           staging=''
           modules=''
-          for module in $(echo '${{ needs.context.outputs.modules }}' | jq -c '.[]')
+          for module in $(echo '${{ needs.context.outputs.modules }}' | jq -rc '.[]')
           do
             path=$(echo $module | jq -rc '.root')
             package="$path/package.json"
