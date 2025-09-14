@@ -134,10 +134,9 @@ jobs:
         uses: pmeig/github-actions/actions/node/setup@main
         id: node-setup
         with:
-          remote-token: ${{ env.REMOTE_PASSWORD }}
+          remote-token: ${{ env.REMOTE_TOKEN }}
           artifactory-password: ${{ env.ARTIFACTORY_PASSWORD }}
           artifactory-user: ${{ env.ARTIFACTORY_USER }}
-          remote-user: ${{ env.REMOTE_USER }}
           branch: ${{ needs.context.outputs.target }}
       - name: install dependencies
         id: projects
