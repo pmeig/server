@@ -159,7 +159,7 @@ jobs:
         run: |
           pnpm build:cli
           cp modules/cli/package.json dist/cli/package.json
-          cat dist/cli/package.json
+          cp modules/cli/README.md dist/cli/README.md
           cd dist/cli
           pnpm pack
           mv *.tgz cli.tgz
