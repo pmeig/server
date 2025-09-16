@@ -72,8 +72,13 @@ export abstract class Builder {
     try {
       const executor = launcher.cwd(root);
       const outDirConsole = await executor.launch('tsc', '--showConfig', ...options);
-      console.log(outDirConsole.success)
-      const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
+      console.log('output', outDirConsole.success);
+      const json = this.linesToJson(outDirConsole.success);
+      console.log('toJson', json);
+      const outDir = JSON.parse(json || '{}').compilerOptions.outDir;
+      if (!outDir) {
+        throw new Error('No outDir found');
+      }
       outDirPath = resolve(root, outDir);
       this.removeDist(outDirPath);
       command = await executor.launch('tsc', ...options);
@@ -139,6 +144,23 @@ export abstract class Builder {
       {} as Record<string, string>
     );
   }
+
+  protected linesToJson(lines: string[]) {
+    let start = lines[0];
+    while (lines.length > 0 && !['{', '['].some(value => start.startsWith(value))) {
+      lines.shift();
+      start = lines[0];
+    }
+    if (lines.length > 0) {
+      let end = lines[lines.length - 1];
+      const compare = start === '{' ? '}' : ']';
+      while (lines.length > 0 && !end.endsWith(compare)) {
+        lines.pop();
+        end = lines[lines.length - 1];
+      }
+    }
+    return lines.join('');
+  }
 }
 
 class ApplicationBuilder extends Builder {
@@ -175,7 +197,11 @@ class LibraryBuilder extends Builder {
     if (prepare.code === 0 && typeof parameters.prod !== 'undefined') {
       const src = resolve(this.rootProject, this.context.location.root);
       const outDirConsole = await launcher.cwd(src).launch('tsc', '--showConfig', ...options);
-      const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
+      const json = this.linesToJson(outDirConsole.success);
+      const outDir = JSON.parse(json || '{}').compilerOptions?.outDir;
+      if (!outDir) {
+        throw new Error('No outDir found');
+      }
       const outDirPath = resolve(src, outDir);
       await this.exposeOnlyPublicApi(outDirPath);
       updateJson(resolve(outDirPath, 'package.json'), content => {
