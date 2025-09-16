@@ -72,6 +72,7 @@ export abstract class Builder {
     try {
       const executor = launcher.cwd(root);
       const outDirConsole = await executor.launch('tsc', '--showConfig', ...options);
+      console.log(outDirConsole.success)
       const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
       outDirPath = resolve(root, outDir);
       this.removeDist(outDirPath);

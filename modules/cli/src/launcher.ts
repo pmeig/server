@@ -105,7 +105,6 @@ export class Launcher {
       });
       thread.on('close', code => {
         consoleCommand.code = code ?? 0;
-        // consoleCommand.success.shift();
         consoleCommand.error = consoleCommand.error.filter(error => {
           const message = error.trim();
           return !['Debugger listening on', 'Debugger attached', 'Waiting for the debugger to disconnect...'].some(
