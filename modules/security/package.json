@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "tsc": "tsc",
-    "build": "pmeig build core",
+    "build": "pmeig build security",
     "build:prod": "pnpm build -- --prod"
   },
   "homepage": "https://github.com/pmeig/server/tree/main/modules/security",
