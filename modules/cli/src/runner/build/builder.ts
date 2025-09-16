@@ -150,11 +150,11 @@ export abstract class Builder {
       start = lines[0];
     }
     if (lines.length > 0) {
-      let end = lines[lines.length - 1];
+      let end = lines[lines.length - 1].replace('\r', '');
       const compare = start === '{' ? '}' : ']';
       while (lines.length > 0 && !end.endsWith(compare)) {
         lines.pop();
-        end = lines[lines.length - 1];
+        end = lines[lines.length - 1].replace('\r', '');
       }
     }
     return lines.join('');
