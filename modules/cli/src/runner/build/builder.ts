@@ -8,7 +8,7 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
-  unlinkSync
+  unlinkSync, writeFileSync
 } from 'fs';
 import { createInterface } from 'node:readline';
 import { ConsoleCommand, launcher } from '../../launcher';
@@ -180,16 +180,17 @@ class LibraryBuilder extends Builder {
       if (outDirConsole.success.length === 0) {
         throw new Error('Unable to find config');
       }
-      const outDir = JSON.parse(outDirConsole.success.join('')).compilerOptions.outDir;
-      const outDirPath = resolve(src, outDir);
-      await this.exposeOnlyPublicApi(outDirPath);
-      updateJson(resolve(outDirPath, 'package.json'), content => {
-        content.scripts = undefined;
-        return content;
-      });
-      updateContent(resolve(outDirPath, 'package.json'), content =>
-        content.replaceAll('src/index.d.ts', 'index.d.ts').replaceAll('src/index.js', 'index.js')
-      );
+      writeFileSync('test.tmp', outDirConsole.success.join(''));
+      // const outDir = JSON.parse(outDirConsole.success.join('')).compilerOptions.outDir;
+      // const outDirPath = resolve(src, outDir);
+      // await this.exposeOnlyPublicApi(outDirPath);
+      // updateJson(resolve(outDirPath, 'package.json'), content => {
+      //   content.scripts = undefined;
+      //   return content;
+      // });
+      // updateContent(resolve(outDirPath, 'package.json'), content =>
+      //   content.replaceAll('src/index.d.ts', 'index.d.ts').replaceAll('src/index.js', 'index.js')
+      // );
     }
     return prepare;
   }
