@@ -21,9 +21,11 @@ interface BuildProjectContext {
   name: string;
   version: string;
   module: string;
+  path: string
 }
 
 export abstract class Builder {
+  protected isProd = false;
   constructor(
     protected readonly context: CliProject,
     protected readonly rootProject: string,
@@ -57,7 +59,8 @@ export abstract class Builder {
       const item = {
         name,
         version: json.version,
-        module: json.name
+        module: json.name,
+        path: context.location.root
       }
       acc[item.module] = item;
       acc[name] = item;
@@ -67,12 +70,17 @@ export abstract class Builder {
 
   async build(_: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
     const root = resolve(this.rootProject, this.context.location.root);
+    this.isProd = options.includes('--prod');
     let command;
     let outDirPath;
     try {
       const executor = launcher.cwd(root);
       const outDirConsole = await executor.launch('tsc', '--showConfig', ...options);
-      const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
+      const json = this.linesToJson(outDirConsole.success);
+      const outDir = JSON.parse(json || '{}').compilerOptions.outDir;
+      if (!outDir) {
+        throw new Error('No outDir found');
+      }
       outDirPath = resolve(root, outDir);
       this.removeDist(outDirPath);
       command = await executor.launch('tsc', ...options);
@@ -99,6 +107,7 @@ export abstract class Builder {
           content.scripts = undefined;
           content.dependencies = this.exposeVersionOfInternalDependencies(content.dependencies);
           content.devDependencies = this.exposeVersionOfInternalDependencies(content.devDependencies);
+          content.peerDependencies = this.exposeVersionOfInternalDependencies(content.peerDependencies);
           return content;
         });
         return command;
@@ -129,14 +138,37 @@ export abstract class Builder {
 
   private exposeVersionOfInternalDependencies(dependencies?: Record<string, string>) {
     if (!dependencies) return undefined;
+    let removeSnapshot = (version: string) => version;
+    if (this.isProd) {
+      removeSnapshot = (version: string) => {
+        return version.replace(/-SNAPSHOT$/, '');
+      }
+    }
     return Object.entries(dependencies).reduce(
       (acc, [key, value]) => {
         const context = this.projects[key];
-        acc[key] = context ? `^${context.version}` : value;
+        acc[key] = context ? `^${removeSnapshot(context.version)}` : value;
         return acc;
       },
       {} as Record<string, string>
     );
+  }
+
+  protected linesToJson(lines: string[]) {
+    let start = lines[0];
+    while (lines.length > 0 && !['{', '['].some(value => start.startsWith(value))) {
+      lines.shift();
+      start = lines[0];
+    }
+    if (lines.length > 0) {
+      let end = lines[lines.length - 1].replace('\r', '');
+      const compare = start === '{' ? '}' : ']';
+      while (lines.length > 0 && !end.endsWith(compare)) {
+        lines.pop();
+        end = lines[lines.length - 1].replace('\r', '');
+      }
+    }
+    return lines.join('');
   }
 }
 
@@ -174,7 +206,11 @@ class LibraryBuilder extends Builder {
     if (prepare.code === 0 && typeof parameters.prod !== 'undefined') {
       const src = resolve(this.rootProject, this.context.location.root);
       const outDirConsole = await launcher.cwd(src).launch('tsc', '--showConfig', ...options);
-      const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
+      const json = this.linesToJson(outDirConsole.success);
+      const outDir = JSON.parse(json || '{}').compilerOptions?.outDir;
+      if (!outDir) {
+        throw new Error('No outDir found');
+      }
       const outDirPath = resolve(src, outDir);
       await this.exposeOnlyPublicApi(outDirPath);
       updateJson(resolve(outDirPath, 'package.json'), content => {

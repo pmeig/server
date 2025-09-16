@@ -1,11 +1,11 @@
 {
   "name": "@pmeig/srv-properties",
-  "version": "0.1.0-SNAPSHOT",
+  "version": "0.1.2-SNAPSHOT",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
     "build": "pmeig build properties",
-    "build:prod": "pnpm build --prod"
+    "build:prod": "pnpm build -- --prod"
   },
   "homepage": "https://github.com/pmeig/server/tree/main/modules/properties",
   "repository": {

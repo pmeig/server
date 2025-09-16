@@ -1,10 +1,11 @@
 {
   "name": "@pmeig/srv-rest",
-  "version": "0.1.0-SNAPSHOT",
+  "version": "0.1.4-SNAPSHOT",
   "description": "",
   "scripts": {
     "tsc": "tsc",
-    "build": "pmeig build rest"
+    "build": "pmeig build rest",
+    "build:prod": "pnpm build -- --prod"
   },
   "homepage": "https://github.com/pmeig/server/tree/main/modules/rest",
   "repository": {

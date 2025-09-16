@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "tsc": "tsc",
-    "build": "pmeig build"
+    "build": "pmeig build security",
+    "build:prod": "pnpm build -- --prod"
   },
   "homepage": "https://github.com/pmeig/server/tree/main/modules/security",
   "repository": {
@@ -20,10 +21,6 @@
     "security"
   ],
   "license": "ISC",
-  "peerDependencies": {
-    "@pmeig/srv-rest": "workspace:*"
-  },
-
   "devDependencies": {
     "@types/cookie-parser": "^1.4.9",
     "@types/jsonwebtoken": "^9.0.10",

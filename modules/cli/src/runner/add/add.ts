@@ -186,6 +186,7 @@ class ModuleGenerator extends Generator {
     const packageJson = readJson(resolve(this.rootProject, 'package.json'));
     updateJson(resolve(path, 'package.json'), json => {
       json.name = prefix + this.name;
+      json.scripts.build = `pmeig build ${this.name}`
       json.keywords = packageJson.keywords ?? [];
       json.license = packageJson.license ?? '';
       json.packageManager = packageJson.packageManager;

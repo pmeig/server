@@ -23,6 +23,6 @@ export class CookieParserMiddleware extends RestMiddleware {
         this.parser = (_, _res, next) => next();
       }
     }
-    return this.parser(req, res, next);
+    this.parser(req, res, next);
   }
 }
