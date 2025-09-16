@@ -173,9 +173,6 @@ jobs:
         if: ${{ matrix.module.name != 'cli' }}
         working-directory: ${{ matrix.module.root }}
         run: |
-          cat ../../dist/cli/package.json
-          echo my package.json
-          cat package.json
           pnpm build
       - name: pack
         id: pack
