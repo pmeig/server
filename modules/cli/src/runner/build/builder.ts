@@ -174,6 +174,12 @@ class LibraryBuilder extends Builder {
     if (prepare.code === 0 && typeof parameters.prod !== 'undefined') {
       const src = resolve(this.rootProject, this.context.location.root);
       const outDirConsole = await launcher.cwd(src).launch('tsc', '--showConfig', ...options);
+      while (!outDirConsole.success[0].startsWith('{')) {
+        outDirConsole.success.shift();
+      }
+      if (outDirConsole.success.length === 0) {
+        throw new Error('Unable to find config');
+      }
       const outDir = JSON.parse(outDirConsole.success.join('')).compilerOptions.outDir;
       const outDirPath = resolve(src, outDir);
       await this.exposeOnlyPublicApi(outDirPath);
