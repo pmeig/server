@@ -174,8 +174,7 @@ class LibraryBuilder extends Builder {
     if (prepare.code === 0 && typeof parameters.prod !== 'undefined') {
       const src = resolve(this.rootProject, this.context.location.root);
       const outDirConsole = await launcher.cwd(src).launch('tsc', '--showConfig', ...options);
-      console.log(outDirConsole.success[0]);
-      const outDir = JSON.parse(outDirConsole.success[0]).compilerOptions.outDir;
+      const outDir = JSON.parse(outDirConsole.success.join('')).compilerOptions.outDir;
       const outDirPath = resolve(src, outDir);
       await this.exposeOnlyPublicApi(outDirPath);
       updateJson(resolve(outDirPath, 'package.json'), content => {
