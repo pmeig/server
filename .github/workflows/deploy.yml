@@ -173,7 +173,7 @@ jobs:
         if: ${{ matrix.module.name != 'cli' }}
         working-directory: ${{ matrix.module.root }}
         run: |
-          pnpm build
+          pnpm build --${{ needs.context.outputs.env }}
       - name: pack
         id: pack
         if: ${{ matrix.module.name != 'cli' }}
@@ -190,8 +190,11 @@ jobs:
             options="$options --tag snapshot"
           fi
           # pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} $options
-          pnpm config delete @pmeig:registry
-          pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --access public $options
+          if [ '${{ needs.context.outputs.env }}' == 'prod' ]
+          then
+            pnpm config delete @pmeig:registry
+            pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --access public $options
+          fi
   prepare-tag:
     if: ${{ needs.context.outputs.env == 'prod' }}
     needs:

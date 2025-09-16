@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "tsc": "tsc",
-    "build": "pmeig build {PROJECT}"
+    "build": "pmeig build {PROJECT} ",
+    "build:prod": "npm build -- --prod"
   },
   "keywords": [],
   "author": "{AUTHOR}",

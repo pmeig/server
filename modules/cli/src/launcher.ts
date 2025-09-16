@@ -25,7 +25,7 @@ export class Launcher {
   });
 
   constructor(
-    private readonly manager?: 'pnpm' | 'npm' | string,
+    public readonly manager?: 'pnpm' | 'npm' | string,
     private readonly workspace = process.cwd(),
     private readonly printCommand = false
   ) {

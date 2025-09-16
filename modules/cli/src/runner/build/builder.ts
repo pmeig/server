@@ -21,9 +21,11 @@ interface BuildProjectContext {
   name: string;
   version: string;
   module: string;
+  path: string
 }
 
 export abstract class Builder {
+  protected isProd = false;
   constructor(
     protected readonly context: CliProject,
     protected readonly rootProject: string,
@@ -57,7 +59,8 @@ export abstract class Builder {
       const item = {
         name,
         version: json.version,
-        module: json.name
+        module: json.name,
+        path: context.location.root
       }
       acc[item.module] = item;
       acc[name] = item;
@@ -67,6 +70,7 @@ export abstract class Builder {
 
   async build(_: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
     const root = resolve(this.rootProject, this.context.location.root);
+    this.isProd = options.includes('--prod');
     let command;
     let outDirPath;
     try {
@@ -103,6 +107,7 @@ export abstract class Builder {
           content.scripts = undefined;
           content.dependencies = this.exposeVersionOfInternalDependencies(content.dependencies);
           content.devDependencies = this.exposeVersionOfInternalDependencies(content.devDependencies);
+          content.peerDependencies = this.exposeVersionOfInternalDependencies(content.peerDependencies);
           return content;
         });
         return command;
@@ -133,10 +138,16 @@ export abstract class Builder {
 
   private exposeVersionOfInternalDependencies(dependencies?: Record<string, string>) {
     if (!dependencies) return undefined;
+    let removeSnapshot = (version: string) => version;
+    if (this.isProd) {
+      removeSnapshot = (version: string) => {
+        return version.replace(/-SNAPSHOT$/, '');
+      }
+    }
     return Object.entries(dependencies).reduce(
       (acc, [key, value]) => {
         const context = this.projects[key];
-        acc[key] = context ? `^${context.version}` : value;
+        acc[key] = context ? `^${removeSnapshot(context.version)}` : value;
         return acc;
       },
       {} as Record<string, string>
