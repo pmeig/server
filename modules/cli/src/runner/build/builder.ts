@@ -72,9 +72,7 @@ export abstract class Builder {
     try {
       const executor = launcher.cwd(root);
       const outDirConsole = await executor.launch('tsc', '--showConfig', ...options);
-      console.log('output', outDirConsole.success);
       const json = this.linesToJson(outDirConsole.success);
-      console.log('toJson', json);
       const outDir = JSON.parse(json || '{}').compilerOptions.outDir;
       if (!outDir) {
         throw new Error('No outDir found');
