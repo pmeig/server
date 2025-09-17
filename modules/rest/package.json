@@ -1,6 +1,6 @@
 {
   "name": "@pmeig/srv-rest",
-  "version": "0.1.4-SNAPSHOT",
+  "version": "1.0.0-SNAPSHOT",
   "description": "",
   "scripts": {
     "tsc": "tsc",
@@ -15,7 +15,6 @@
     "url": "https://github.com/pmeig/server/issues",
     "email": "pierrick.workspace@gmail.com"
   },
-
   "keywords": [
     "server",
     "pmeig",

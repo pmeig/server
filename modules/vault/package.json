@@ -1,6 +1,6 @@
 {
   "name": "@pmeig/srv-vault",
-  "version": "0.1.1-SNAPSHOT",
+  "version": "1.0.0-SNAPSHOT",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
@@ -15,7 +15,6 @@
     "url": "https://github.com/pmeig/server/issues",
     "email": "pierrick.workspace@gmail.com"
   },
-
   "keywords": [
     "server",
     "pmeig",
