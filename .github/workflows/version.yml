@@ -10,7 +10,8 @@ on:
     inputs:
       modules:
         type: string
-        required: true
+        required: false
+        default: ''
         description: all modules separate by space
 
 permissions:
@@ -41,12 +42,12 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && steps.env.outputs.value == 'dev' }}
         id: modules
         run: |
-          json=$(jq -rc '.projects | to_entries | map( {"name": .key, "root": ("./" + .value.location.root)})' pmeig-cli.json)
+          json=$(jq -rc '.projects | to_entries | map( {"name": .key, "root": ("./" + .value.location.root)}) | map(select(.name != "runner"))' pmeig-cli.json)
           modules='[]'
           compare='${{ inputs.modules }}'
           if [ -z "$compare" ]
           then
-            compare=$(echo $json | jq -c '.[] | .name')
+            compare=$(echo $json | jq -rc 'map(select(.name != "runner") | .name) | join(" ")')
           fi
           for root in $(echo "$json" | jq -rc '.[]')
           do
@@ -59,7 +60,7 @@ jobs:
               version="$(( major + 1 )).0.0-SNAPSHOT"
               modules=$(echo $modules | jq -rc --argjson json "$root" \
               --arg version "$version" \
-              '. += [$json + {"version": $version}]'])
+              '. += [$json + {"version": $version}]')
             fi
           done
           echo "value=$modules" >> $GITHUB_OUTPUT
@@ -70,25 +71,42 @@ jobs:
           json='${{ steps.modules.outputs.context }}'
           modules='${{ steps.modules.outputs.value }}'
           value='[]'
-          for module in $modules
+          for module in $(echo $modules | jq -rc '.[]')
           do
             path=$(echo $module | jq -rc '.root')
             name=$(jq -rc '.name' $path/package.json)
             for other in $(echo $json | jq -c --argjson current "$module" '.[] | select(.name as $name | $current.name != $name)')
             do
               root=$(echo $other | jq -rc '.root')
-              dependencies=$(jq -rc --argjson current "$name" '.dependencies | keys | map(select(. as $name | $current == $name)) | .[]' $root/package.json)
-              if [ -n "$dependencies" ]
+              dependencies=$(jq -rc '.dependencies' $root/package.json)
+              if [ "$dependencies" != "null" ]
               then
-                module=$(echo $module | jq -rc --argjson other "$other" '.dependencies += [$other.root + "/package.json"]')
+                dependencies=$(jq -rc --arg current "$name" '.dependencies | keys | map(select(. as $name | $current == $name)) | .[]' $root/package.json)
+                if [ -n "$dependencies" ]
+                then
+                  module=$(echo $module | jq -rc --argjson other "$other" '.dependencies += [$other.root + "/package.json"]')
+                fi
               fi
-              dependencies=$(jq -rc --argjson current "$name" '.devDependencies | keys | map(select(. as $name | $current == $name)) | .[]' $root/package.json)
-              if [ -n "$dependencies" ]
+              dependencies=$(jq -rc '.devDependencies' $root/package.json)
+              if [ "$dependencies" != "null" ]
               then
-                module=$(echo $module | jq -rc --argjson other "$other" '.devDependencies += [$other.root + "/package.json"]')
+                dependencies=$(jq -rc --arg current "$name" '.devDependencies | keys | map(select(. as $name | $current == $name)) | .[]' $root/package.json)
+                if [ -n "$dependencies" ]
+                then
+                  module=$(echo $module | jq -rc --argjson other "$other" '.devDependencies += [$other.root + "/package.json"]')
+                fi
+              fi
+              dependencies=$(jq -rc '.peerDependencies' $root/package.json)
+              if [ "$dependencies" != "null" ]
+              then
+                dependencies=$(jq -rc --arg current "$name" '.peerDependencies | keys | map(select(. as $name | $current == $name)) | .[]' $root/package.json)
+                if [ -n "$dependencies" ]
+                then
+                  module=$(echo $module | jq -rc --argjson other "$other" '.peerDependencies += [$other.root + "/package.json"]')
+                fi
               fi
             done
-            value=$(echo $value | jq -rc --argjson module "$module" '. += [$module]')
+            value=$(echo $value | jq -rc --argjson item "$module" '. += [$item]')
           done
           echo "value=$value" >> $GITHUB_OUTPUT
       - name: semver type
@@ -115,17 +133,10 @@ jobs:
             name=$(jq -rc '.name' $package)
             version=$(echo $context | jq -rc '.version')
             json=$(jq --arg version "$version" '. += {"version": $version}' $package)
+            echo $json | jq -r '.' > $package
+            json='{}'
             staging="$staging $package"
             names="$names $(echo $context | jq -rc '.name')"
-            for dependency in $(echo $context | jq -rc '.dependencies | .[]')
-            do
-              json=$(echo $json | jq --arg version "$version" --arg name "$name" '.dependencies += {($name): "^" + $version}')
-            done
-            for dependency in $(echo $context | jq -rc '.devDependencies | .[]')
-            do
-              json=$(echo $json | jq --arg version "$version" --arg name "$name" '.devDependencies += {($name): "^" + $version}')
-            done
-            echo $json > $package
           done
           echo "value=$staging" >> $GITHUB_OUTPUT
           echo "modules=$names" >> $GITHUB_OUTPUT
