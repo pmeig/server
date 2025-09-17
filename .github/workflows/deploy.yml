@@ -262,6 +262,7 @@ jobs:
         run: |
           staging=''
           modules=''
+          workspace=$(pwd)
           for module in $(echo '${{ needs.context.outputs.modules }}' | jq -rc '.[]')
           do
             path=$(echo $module | jq -rc '.root')
@@ -274,8 +275,10 @@ jobs:
             
             if (( $minor == $release ))
             then
-              jq --arg version "$major.$((minor + 1)).0-SNAPSHOT" '.version = $version' $package > $package
-              modules="$modules $(echo $module | jq -rc 'name')"
+              cd $path
+              pnpm version "$major.$((minor + 1)).0-SNAPSHOT"
+              cd $workspace
+              modules="$modules $(echo $module | jq -rc '.name')"
               staging="$staging $package"
             fi
           done
