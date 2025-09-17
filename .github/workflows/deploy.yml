@@ -232,7 +232,7 @@ jobs:
       - name: tag
         id: tag
         run: |
-          current=$(date +YYYY_MM_JJ)
+          current=$(date +%Y_%m_%d)
           echo "value=release_$current" >> $GITHUB_OUTPUT
       - name: create tag
         uses: pmeig/github-actions/actions/github/release@main
