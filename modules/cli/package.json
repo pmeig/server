@@ -1,6 +1,6 @@
 {
   "name": "@pmeig/srv-cli",
-  "version": "1.0.2-SNAPSHOT",
+  "version": "1.0.3-SNAPSHOT",
   "description": "",
   "main": "index.js",
   "homepage": "https://github.com/pmeig/server/tree/main/modules/cli",
