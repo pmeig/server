@@ -43,4 +43,9 @@ const main = async (params: string[]) => {
   }
 };
 
-(async () => await main(process.argv.slice(2)).then(() => exit(0)))();
+(async () => await main(process.argv.slice(2))
+  .then(() => exit(0))
+  .catch(error => {
+    console.error(error);
+    exit(1);
+  }))();

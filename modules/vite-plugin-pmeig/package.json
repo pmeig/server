@@ -1,10 +1,11 @@
 {
   "name": "@pmeig/vite-plugin",
-  "version": "0.1.0-SNAPSHOT",
+  "version": "1.0.2-SNAPSHOT",
   "description": "",
   "scripts": {
     "tsc": "tsc",
-    "build": "pmeig build"
+    "build": "pmeig build vite-plugin-pmeig",
+    "build:prod": "pnpm build -- --prod"
   },
   "homepage": "https://github.com/pmeig/server/tree/main/modules/vite-plugin-pmeig",
   "repository": {
@@ -16,7 +17,6 @@
     "plugin",
     "vite"
   ],
-
   "license": "ISC",
   "dependencies": {
     "@rollup/pluginutils": "^5.1.4",

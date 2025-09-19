@@ -36,17 +36,11 @@ jobs:
       - name: metadata
         id: metadata
         uses: pmeig/github-actions/actions/context/metadata@main
-      - name: find last release
-        id: release
-        if: ${{ steps.metadata.outputs.env-target == 'prod' && github.event_name != 'workflow_dispatch' }}
-        uses: pmeig/github-actions/actions/github/release/latest@main
       - name: retrieve module change
         id: modules-accepted
         if: ${{ steps.metadata.outputs.env-target == 'prod' && github.event_name != 'workflow_dispatch' }}
         uses: pmeig/github-actions/actions/github/diff@main
         with:
-          target: ${{ steps.release.outputs.target }}
-          origin: ${{ steps.metadata.outputs.tag }}
           includes: 'start=modules'
       - name: prepare modules
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.modules != '' }}
@@ -173,7 +167,7 @@ jobs:
         if: ${{ matrix.module.name != 'cli' }}
         working-directory: ${{ matrix.module.root }}
         run: |
-          pnpm build
+          pnpm build --${{ needs.context.outputs.env }}
       - name: pack
         id: pack
         if: ${{ matrix.module.name != 'cli' }}
@@ -190,8 +184,11 @@ jobs:
             options="$options --tag snapshot"
           fi
           # pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} $options
-          pnpm config delete @pmeig:registry
-          pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --access public $options
+          if [ '${{ needs.context.outputs.env }}' == 'prod' ]
+          then
+            pnpm config delete @pmeig:registry
+            pnpm publish ${{ steps.pack.outputs.path }}${{ steps.cli.outputs.path }} --access public $options
+          fi
   prepare-tag:
     if: ${{ needs.context.outputs.env == 'prod' }}
     needs:
@@ -229,7 +226,7 @@ jobs:
       - name: tag
         id: tag
         run: |
-          current=$(date +YYYY_MM_JJ)
+          current=$(date +%Y_%m_%d)
           echo "value=release_$current" >> $GITHUB_OUTPUT
       - name: create tag
         uses: pmeig/github-actions/actions/github/release@main
@@ -259,6 +256,7 @@ jobs:
         run: |
           staging=''
           modules=''
+          workspace=$(pwd)
           for module in $(echo '${{ needs.context.outputs.modules }}' | jq -rc '.[]')
           do
             path=$(echo $module | jq -rc '.root')
@@ -271,8 +269,10 @@ jobs:
             
             if (( $minor == $release ))
             then
-              jq --arg version "$major.$((minor + 1)).0-SNAPSHOT" '.version = $version' $package > $package
-              modules="$modules $(echo $module | jq -rc 'name')"
+              cd $path
+              pnpm version "$major.$((minor + 1)).0-SNAPSHOT"
+              cd $workspace
+              modules="$modules $(echo $module | jq -rc '.name')"
               staging="$staging $package"
             fi
           done

@@ -1,9 +1,10 @@
 {
   "name": "@pmeig/srv-core",
-  "version": "0.1.0-SNAPSHOT",
+  "version": "1.0.2-SNAPSHOT",
   "description": "",
   "scripts": {
-    "build": "pmeig build core --prod",
+    "build": "pmeig build core",
+    "build:prod": "pnpm build -- --prod",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "homepage": "https://github.com/pmeig/server/tree/main/modules/core",

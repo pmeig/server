@@ -25,7 +25,7 @@ export class Launcher {
   });
 
   constructor(
-    private readonly manager?: 'pnpm' | 'npm' | string,
+    public readonly manager?: 'pnpm' | 'npm' | string,
     private readonly workspace = process.cwd(),
     private readonly printCommand = false
   ) {
@@ -97,15 +97,13 @@ export class Launcher {
         log.error(data.toString());
       });
       thread.stdout?.on('data', data => {
-        const line = data.toString();
-        if (!line.includes(`${argument} "${args.join('" "')}"`)) {
-          consoleCommand.success.push(line);
-        }
+        consoleCommand.success.push(data.toString());
         log.info(data.toString());
       });
       thread.on('close', code => {
         consoleCommand.code = code ?? 0;
-        // consoleCommand.success.shift();
+        consoleCommand.success = consoleCommand.success.flatMap(line => line.split('\n').filter(value => value.length > 0 && !value.startsWith('> ')));
+        consoleCommand.error = consoleCommand.error.flatMap(line => line.split('\n').filter(value => value.length > 0));
         consoleCommand.error = consoleCommand.error.filter(error => {
           const message = error.trim();
           return !['Debugger listening on', 'Debugger attached', 'Waiting for the debugger to disconnect...'].some(
