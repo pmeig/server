@@ -270,7 +270,8 @@ jobs:
             if (( $minor == $release ))
             then
               cd $path
-              pnpm version "$major.$((minor + 1)).0-SNAPSHOT"
+              json=$(jq -r --arg version "$major.$((minor + 1)).0-SNAPSHOT" '.version = $version' package.json)
+              echo $json | jq -r '.' > package.json
               cd $workspace
               modules="$modules $(echo $module | jq -rc '.name')"
               staging="$staging $package"
