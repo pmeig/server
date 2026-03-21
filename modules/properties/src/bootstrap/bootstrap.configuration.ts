@@ -74,7 +74,7 @@ export class Bootstrap implements Env {
 
   private async createVault() {
     this.vault.properties = await findVaultProperties(this);
-    return createVaultClient(this.vault.properties);
+    return this.vault.properties ? createVaultClient(this.vault.properties) : undefined;
   }
 
   private refreshSources() {

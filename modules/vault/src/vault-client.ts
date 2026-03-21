@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { existsSync, readFileSync } from 'fs';
 import { VaultKubernetesPlugin, VaultProperties } from './vault.properties';
 import { VaultHealth } from './vault-health';
-import { Nullable, Component } from '@pmeig/srv-core';
+import { Component, Nullable } from '@pmeig/srv-core';
 
 export type VaultNode = { [key: string]: string | undefined };
 
@@ -105,6 +105,7 @@ export class VaultClient {
 }
 
 export const createVaultClient = async (vaultProperties?: VaultProperties) => {
+  if (!vaultProperties?.credentials?.role && !vaultProperties?.credentials?.secret) return undefined;
   const vaultClient = new VaultClient(vaultProperties);
   const health = await vaultClient.health();
   if (!health || !health.initialized) {

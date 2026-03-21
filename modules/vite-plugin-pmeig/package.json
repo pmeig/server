@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "tsc": "tsc",
-    "build": "pmeig build vite-plugin-pmeig",
+    "pmeig": "pmeig",
+    "build": "pnpm pmeig build @pmeig/vite-plugin",
     "build:prod": "pnpm build -- --prod"
   },
   "homepage": "https://github.com/pmeig/server/tree/main/modules/vite-plugin-pmeig",
@@ -28,16 +29,16 @@
     "reflect-metadata": "^0.2.2",
     "typescript": "^5.8.3"
   },
-  "typings": "src/index.d.ts",
-  "main": "src/index.ts",
+  "typings": "index.d.ts",
+  "main": "index.ts",
   "exports": {
     "./package.json": {
       "default": "./package.json"
     },
     ".": {
-      "types": "./src/index.d.ts",
-      "default": "./src/index.js"
+      "types": "./index.d.ts",
+      "default": "./index.js"
     }
   },
-  "packageManager": "pnpm@10.11.0"
+  "packageManager": "pnpm@10.15.1"
 }

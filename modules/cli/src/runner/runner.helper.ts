@@ -37,7 +37,7 @@ const createParameterMapper = <T extends RunnerParameterConfiguration>(configura
       value.alias?.forEach(anotherKey => {
         acc[anotherKey] = config;
       });
-      if (value.position) {
+      if (typeof value.position !== 'undefined') {
         acc[value.position] = config;
       }
       return acc;
@@ -59,7 +59,11 @@ export const extractParameters = <T extends RunnerParameterConfiguration>(
 ): Parameters<T> => {
   let max = args.length;
   const numberArguments = max;
-  const parameters = {} as Record<keyof T, string[]>;
+  const parameters = {
+    root: [''],
+    prefix: [''],
+    destination: ['']
+  } as Record<keyof T, string[]>;
   const mapper = createParameterMapper(configurations);
   const command: string[] = [];
   let indexWithoutParameterNamed = 0;
@@ -78,7 +82,7 @@ export const extractParameters = <T extends RunnerParameterConfiguration>(
     }
     if (config) {
       let adjust = byIndexes ? config.indexes : 0;
-      indexWithoutParameterNamed = adjust + 1;
+      indexWithoutParameterNamed = adjust + (byIndexes ? 1 : 0);
       if (max + adjust > numberArguments) {
         throw new Error(
           `Missing argument for ${config.key.toString()}, expected ${config.indexes} but got ${numberArguments - max} instead.`

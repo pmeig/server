@@ -79,6 +79,7 @@ export const browseDir = (
 export const findFile = <T = any>(path: string, test: (folder: string) => T) => {
   let found: T | undefined;
   let parent = path;
+  found = test(parent);
   while (!found && dirname(parent) !== parent) {
     found = test(parent);
     parent = dirname(parent);
