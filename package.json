@@ -11,7 +11,7 @@
     "build:cli": "pnpm --filter @pmeig/srv-cli build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "install:cli": "rimraf dist/cli && pnpm build:cli && pnpm copyfiles -F -f ./modules/cli/package.json dist/cli && cd dist/cli && pnpm pack && cd ../.."
+    "install:cli": "rimraf dist/cli && pnpm build:cli && pnpm copyfiles -F -f ./modules/cli/package.json dist/cli && cd dist/cli && pnpm pack && cd ../.. && pnpm add -w dist/cli/*.tgz"
   },
   "keywords": [],
   "author": "",
@@ -30,6 +30,7 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
+    "@pmeig/srv-cli": "file:dist\\cli\\pmeig-srv-cli-1.1.0-SNAPSHOT.tgz",
     "express": "^5.1.0"
   }
 }

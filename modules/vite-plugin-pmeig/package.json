@@ -5,8 +5,8 @@
   "scripts": {
     "tsc": "tsc",
     "pmeig": "pmeig",
-    "build": "pnpm pmeig build @pmeig/vite-plugin",
-    "build:prod": "pnpm build -- --prod"
+    "build": "pnpm pmeig build vite-plugin-pmeig",
+    "build:prod": "pnpm build --prod"
   },
   "homepage": "https://github.com/pmeig/server/tree/main/modules/vite-plugin-pmeig",
   "repository": {
