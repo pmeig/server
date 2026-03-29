@@ -1,0 +1,34 @@
+{
+  "name": "@pmeig/srv-data",
+  "version": "1.0.0-SNAPSHOT",
+  "description": "",
+  "scripts": {
+    "tsc": "tsc",
+    "build": "pmeig build data",
+    "build:prod": "npm build -- --prod"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@pmeig/srv-core": "workspace:*",
+    "@pmeig/srv-properties": "workspace:*",
+    "typeorm": "^0.3.28"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.19",
+    "reflect-metadata": "^0.2.2",
+    "typescript": "^5.8.3"
+  },
+  "typings": "src/index.d.ts",
+  "exports": {
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    }
+  },
+  "packageManager": "pnpm@10.15.1"
+}
