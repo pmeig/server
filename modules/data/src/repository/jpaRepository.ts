@@ -12,6 +12,7 @@ import { FindOneOptions } from 'typeorm/find-options/FindOneOptions';
 import { QueryRunner } from 'typeorm/query-runner/QueryRunner';
 import { SelectQueryBuilder } from 'typeorm/query-builder/SelectQueryBuilder';
 
+// noinspection JSUnusedLocalSymbols
 export class JpaRepository<Entity extends ObjectLiteral> {
   constructor() {}
 

@@ -80,11 +80,11 @@ class RepositoryProxy implements ProxyHandler<any> {
 
   private createQueryParameters(query: string, name: string | symbol) {
     const parameterNames = retrieveParam(this.type, name);
-    let parametersTransformer: (parameters: any[]) => any[] = (parameters: any[]) => [];
+    let parametersTransformer: (parameters: any[]) => any[] = () => [];
     let sql = query;
     let index = 0;
-    query.match(new RegExp(' (:[a-zA-Z0-9]+|[?]) ', 'g'))?.forEach(match => {
-      sql = sql.replace(match, `?`);
+    query.match(new RegExp(' (:[a-zA-Z0-9]+|[?]) ?', 'g'))?.forEach(match => {
+      sql = sql.replace(match, ` ? `);
       const indexParam = this.findIndexParam(match, parameterNames, index++);
       const previous = parametersTransformer;
       parametersTransformer = (parameters: any[]) => {
