@@ -18,6 +18,9 @@ import { LifecycleModule } from './lifecycle/init-handler.lifecycle';
 import { ConverterModule } from './converters/converter.module';
 import { ImportFactory } from './factory/import.factory';
 import * as crypto from 'node:crypto';
+import { ApplicationRegistrar } from './registrar/application.registrar';
+import { Registrar } from './registrar/registrar';
+import { ApplicationContextRegistrar } from './registrar/application-context.registrar';
 
 const checked: string[] = [];
 
@@ -32,6 +35,7 @@ export class ApplicationContext implements Context {
     if (typeof boot === 'function') {
       boot = retrieveModuleContext(boot) ?? {};
     }
+    boot?.providers?.unshift(ApplicationRegistrar);
     return new ApplicationContext(boot).start(...args);
   }
 
@@ -44,6 +48,7 @@ export class ApplicationContext implements Context {
 
   async start(...args: any[]) {
     await this.searchModuleByDecorators();
+    await this.registrarAllBean();
     const boots = await this.multiResolve(Bootable);
     for (const boot of boots) {
       await boot.run(this, ...args);
@@ -156,8 +161,7 @@ export class ApplicationContext implements Context {
   private async findAll(key: ProviderToken<any>): Promise<ProviderFactory[]> {
     const token = this.extractToken(key);
     if (ApplicationContext.cache[token]) return ApplicationContext.cache[token];
-    const factories = (await this.findAllContext(token)).map(factory => factory.factory)
-      .filter(factory => !!factory);
+    const factories = (await this.findAllContext(token)).map(factory => factory.factory).filter(factory => !!factory);
     ApplicationContext.cache[token] = factories;
     return factories;
   }
@@ -241,6 +245,8 @@ export class ApplicationContext implements Context {
   }
 
   private initProviders(providers: Provider[]) {
+    if (this.contextReference.id === this.id) {
+    }
     providers.forEach(provider => {
       let targetProvider = provider;
       if (typeof provider !== 'function') {
@@ -359,5 +365,18 @@ export class ApplicationContext implements Context {
     const compareSecond = this.compareOrderContext(second.compare ?? { order: 0 }, first.names ?? []);
     if (typeof compareSecond === 'string') return compareSecond === 'after' ? -1 : 0;
     return compareFirst - compareSecond;
+  }
+
+  private async registrarAllBean() {
+    const applicationRegistrar = await this.resolveRequired(ApplicationRegistrar);
+    this.children.push(
+      new ImportFactory(ApplicationRegistrar, () =>
+        Promise.resolve(new ApplicationContextRegistrar(applicationRegistrar, this.contextReference))
+      )
+    );
+    const registrar = await this.multiResolve(Registrar);
+    for (const reg of registrar) {
+      await reg.registrar(applicationRegistrar, this);
+    }
   }
 }

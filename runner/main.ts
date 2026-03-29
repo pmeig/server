@@ -1,4 +1,15 @@
-import { ApplicationContext, Component, Import, Module, Order, Scope } from '@pmeig/srv-core';
+import {
+  ApplicationContext,
+  ApplicationRegistrar,
+  Component,
+  Configuration,
+  Context,
+  Import,
+  Module,
+  Order,
+  Registrar,
+  Scope
+} from '@pmeig/srv-core';
 import { randomBytes } from 'crypto';
 import { Properties, PropertiesModule } from '@pmeig/srv-properties';
 import { Catch, Controller, ControllerAdvisor, Delete, Get, Params, Put, Req, Res, RestModule } from '@pmeig/srv-rest';
@@ -53,6 +64,18 @@ export class FirstSecondModule {}
 @Import(FirstSecondModule)
 export class InjectModule {}
 
+
+export class RegisterComponent {}
+
+@Configuration
+export class RegistarConfiguration extends Registrar {
+  registrar(registrar: ApplicationRegistrar, context: Context): Promise<void> {
+    registrar.register(RegisterComponent)
+    return Promise.resolve(undefined);
+  }
+  
+}
+
 @Controller('test')
 export class TestController {
   private attempt = 0;
@@ -60,7 +83,8 @@ export class TestController {
     private readonly props: Props,
     private readonly context: ApplicationContext,
     private readonly testScopedRequest: ScopedRequest,
-    private readonly testService: TestService
+    private readonly testService: TestService,
+    private readonly registerComponent: RegisterComponent
   ) {}
 
   @Get(':id/:number')
@@ -91,7 +115,7 @@ export class TestAdvisor {
 
 @Module({
   imports: [PropertiesModule, RestModule, SecurityModule],
-  providers: [First, TestController, Props, ScopedRequest, TestService, TestAdvisor, InjectModule]
+  providers: [First, TestController, Props, ScopedRequest, TestService, TestAdvisor, InjectModule, RegistarConfiguration]
 })
 export class ThirdFourthModule {}
 

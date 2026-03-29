@@ -1,4 +1,4 @@
-import { CliContext } from '../server/cli.context';
+import { CliContext, CliGenerate } from '../server/cli.context';
 
 export interface ParameterConfiguration {
   indexes: number;
@@ -52,10 +52,43 @@ const createParameterMapper = <T extends RunnerParameterConfiguration>(configura
   );
 };
 
+const cliConfiguration =  <T extends RunnerParameterConfiguration>(architecture: {
+  prefix?: string;
+  library?: CliGenerate;
+  application?: CliGenerate;
+  service?: CliGenerate;
+  controller?: CliGenerate;
+  properties?: CliGenerate
+}, parameters: Record<keyof T, string[]>, command: string[]) => {
+  const type = (command.length > 0 ? command[0] : '') as keyof typeof architecture | '';
+  let prefix = architecture.prefix;
+  let destination = parameters.destination?.[0];
+  if (type) {
+    const cliGenerate = (architecture[type] as CliGenerate | undefined)
+    if (cliGenerate) {
+      prefix = parameters.prefix?.[0] || cliGenerate.prefix || prefix;
+      destination = destination || cliGenerate.root || '';
+    }
+  }
+  parameters['prefix' as keyof T] = [prefix ?? ''];
+  parameters['destination' as keyof T] = [destination ?? ''];
+  return {
+    cli: parameters,
+    command
+  };
+};
 export const extractParameters = <T extends RunnerParameterConfiguration>(
   args: string[],
   configurations: T,
-  projects: CliContext['projects']
+  projects: CliContext['projects'],
+  architecture: {
+    prefix?: string;
+    library?: CliGenerate;
+    application?: CliGenerate;
+    service?: CliGenerate;
+    controller?: CliGenerate;
+    properties?: CliGenerate;
+  }
 ): Parameters<T> => {
   let max = args.length;
   const numberArguments = max;
@@ -100,8 +133,5 @@ export const extractParameters = <T extends RunnerParameterConfiguration>(
       parameters[config.key] = content;
     } else command.unshift(value);
   }
-  return {
-    cli: parameters,
-    command
-  };
+  return cliConfiguration(architecture, parameters, command);
 };

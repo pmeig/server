@@ -32,7 +32,8 @@ const main = async (params: string[]) => {
     }
     const runner = Runner[request as keyof typeof Runner];
     if (runner) {
-      const parameters = extractParameters(params, runner.parameters, contextMetadata.context?.projects ?? {});
+      const parameters = extractParameters(params, runner.parameters,
+        contextMetadata.context?.projects ?? {}, contextMetadata.context?.architecture ?? {});
       return runner.run(
         contextMetadata.context ?? NoopContext,
         parameters.cli,

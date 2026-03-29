@@ -147,7 +147,7 @@ library-template/
 ├── package.json            # Package configuration
 ├── tsconfig.json          # TypeScript config
 ├── src/
-│   ├── index.ts          # Main export
+│   ├── index.registrar.ts          # Main export
 │   └── example.ts        # Example component
 └── README.md             # Documentation
 ```
@@ -245,7 +245,6 @@ pmeig build
 
 ### Build Configuration
 ```json
-// In project's package.json
 {
   "scripts": {
     "build": "pmeig build"

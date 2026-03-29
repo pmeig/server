@@ -233,14 +233,14 @@ class LibraryBuilder extends Builder {
       });
       updateContent(resolve(outDirPath, 'package.json'), content =>
         content.replaceAll('src/index.d.ts', 'index.d.ts')
-          .replaceAll('src/index.ts', 'index.js')
+          .replaceAll('src/index.registrar.ts', 'index.js')
       );
     }
     return prepare;
   }
 
   private async exposeOnlyPublicApi(path: string) {
-    const typings = (JSON.parse(readFileSync(resolve(path, 'package.json'), 'utf-8')).typings ?? 'index.ts') as string;
+    const typings = (JSON.parse(readFileSync(resolve(path, 'package.json'), 'utf-8')).typings ?? 'index.registrar.ts') as string;
     if (existsSync(resolve(path, typings))) {
       const keep = new Set<string>();
       await this.addFileToKeep(path, typings, keep);

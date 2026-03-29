@@ -66,6 +66,13 @@
         "root": "modules/security"
       },
       "assets": []
+    },
+    "data": {
+      "type": "library",
+      "location": {
+        "root": "modules/data"
+      },
+      "assets": []
     }
   }
 }

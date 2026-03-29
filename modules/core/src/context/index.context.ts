@@ -7,3 +7,4 @@ export { Context } from './context.model';
 export * from './bootable';
 export * from './factory/provider.factory';
 export * from './converters/index.converter';
+export * from './registrar/index.registrar';
