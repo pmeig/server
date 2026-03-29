@@ -32,7 +32,10 @@ export const PutType = (target: object, metadata: Record<string, any> = {}) => {
   updateContext({ metadata, names }, target);
 };
 
-export const retrieveContext = (target: object): ComponentContext => {
+export const retrieveContext = (target: object, propertyKey?: string | symbol): ComponentContext => {
+  if (propertyKey) {
+    return Reflect.getMetadata(context_key, target, propertyKey) as ComponentContext;
+  }
   return Reflect.getMetadata(context_key, target) as ComponentContext;
 };
 
@@ -54,7 +57,7 @@ export const PutLocationFrom = (location: 'before' | 'after', target: Type<any>,
   updateContext({ compare: { [location]: target.name } }, bean);
 };
 
-export const PutScope = (target: object, scope: ScopeType) => {
+export const PutScope = (target: object, propertyKey: string | symbol | undefined, scope: ScopeType) => {
   updateContext({ factory: new FactoryProviderScoped[scope](target as Type<any>) }, target);
 };
 
@@ -74,11 +77,14 @@ export const PutName = (target: object, ...names: (string | symbol)[]) => {
 
 export const updateContext = (
   context: Partials<Exclude<ComponentContext, 'factory'>> & Pick<ComponentContext, 'factory'>,
-  target: object
+  target: object,
+  propertyKey?: string | symbol
 ) => {
   const previous = Reflect.getMetadata(context_key, target) as ComponentContext;
   const names = new Set(context.names ?? []);
   previous?.names?.forEach(name => names.add(name));
+  const affected: [Object] | [Object, string | symbol] = [target]
+  if (propertyKey) affected.push(propertyKey);
   Reflect.defineMetadata(
     context_key,
     {
@@ -97,7 +103,7 @@ export const updateContext = (
         ...previous?.metadata
       }
     },
-    target
+    ...affected
   );
 };
 

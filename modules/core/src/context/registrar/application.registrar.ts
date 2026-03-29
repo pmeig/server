@@ -1,11 +1,9 @@
 import { Context } from '../context.model';
 import { Provider, ScopeType, Type } from '../provider/provider.type';
 import { Component, Configuration, Import } from '../../decorators/components/component.decorator';
-import { Module } from '../context.decorators';
 
 // noinspection JSMismatchedCollectionQueryUpdate
 @Configuration
-@Module({})
 export class ApplicationRegistrar {
   private providers: Provider[] = [];
   private imports: Type<any>[] = [];

@@ -1,6 +1,6 @@
 import { import_key, inject_key, PutLocationFrom, PutName, PutOrder, PutScope, PutType } from './component.helper';
 import { ScopeType, Type } from '../../context/provider/provider.type';
-import { ClassDecorator } from '../type.decorators';
+import { ClassDecorator, MethodDecorator } from '../type.decorators';
 import { Decorators } from '../decorator.builder';
 import { reflectMultiUpdate, reflectUpdate } from '../decorators.helper';
 import { ModuleContext } from '../../context/context.model';
@@ -20,7 +20,7 @@ export const Before = (target: Type<any>) =>
 
 export const After = (target: Type<any>) => Decorators.class('After', bean => PutLocationFrom('after', target, bean));
 
-export const Scope = (scope: ScopeType) => Decorators.class('Scope', target => PutScope(target, scope));
+export const Scope = (scope: ScopeType): ClassDecorator & MethodDecorator => Decorators.all('Scope', (target, propertyKey) => PutScope(target, propertyKey, scope));
 
 export const Named: (...names: string[]) => ClassDecorator = names =>
   Decorators.class('Named', target => PutName(target, names));

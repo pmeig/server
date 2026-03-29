@@ -21,6 +21,7 @@ import * as crypto from 'node:crypto';
 import { ApplicationRegistrar } from './registrar/application.registrar';
 import { Registrar } from './registrar/registrar';
 import { ApplicationContextRegistrar } from './registrar/application-context.registrar';
+import { RegistrarModule } from './registrar/registrar.module';
 
 const checked: string[] = [];
 
@@ -35,7 +36,7 @@ export class ApplicationContext implements Context {
     if (typeof boot === 'function') {
       boot = retrieveModuleContext(boot) ?? {};
     }
-    boot?.providers?.unshift(ApplicationRegistrar);
+    boot?.imports?.unshift(RegistrarModule, LifecycleModule, ConverterModule);
     return new ApplicationContext(boot).start(...args);
   }
 
@@ -216,9 +217,6 @@ export class ApplicationContext implements Context {
   }
 
   private initImports(imports: Type<any>[]) {
-    if (this.id === this.contextReference.id) {
-      imports.unshift(LifecycleModule, ConverterModule);
-    }
     imports
       .map(module => {
         const context = retrieveContext(module) ?? {};
@@ -245,8 +243,6 @@ export class ApplicationContext implements Context {
   }
 
   private initProviders(providers: Provider[]) {
-    if (this.contextReference.id === this.id) {
-    }
     providers.forEach(provider => {
       let targetProvider = provider;
       if (typeof provider !== 'function') {
@@ -370,7 +366,7 @@ export class ApplicationContext implements Context {
   private async registrarAllBean() {
     const applicationRegistrar = await this.resolveRequired(ApplicationRegistrar);
     this.children.push(
-      new ImportFactory(ApplicationRegistrar, () =>
+      new ImportFactory(ApplicationContextRegistrar, () =>
         Promise.resolve(new ApplicationContextRegistrar(applicationRegistrar, this.contextReference))
       )
     );

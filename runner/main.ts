@@ -64,16 +64,14 @@ export class FirstSecondModule {}
 @Import(FirstSecondModule)
 export class InjectModule {}
 
-
 export class RegisterComponent {}
 
 @Configuration
-export class RegistarConfiguration extends Registrar {
+export class RegistrarConfiguration extends Registrar {
   registrar(registrar: ApplicationRegistrar, context: Context): Promise<void> {
-    registrar.register(RegisterComponent)
+    registrar.register(RegisterComponent);
     return Promise.resolve(undefined);
   }
-  
 }
 
 @Controller('test')
@@ -85,7 +83,8 @@ export class TestController {
     private readonly testScopedRequest: ScopedRequest,
     private readonly testService: TestService,
     private readonly registerComponent: RegisterComponent
-  ) {}
+  ) {
+  }
 
   @Get(':id/:number')
   @Public
@@ -115,7 +114,16 @@ export class TestAdvisor {
 
 @Module({
   imports: [PropertiesModule, RestModule, SecurityModule],
-  providers: [First, TestController, Props, ScopedRequest, TestService, TestAdvisor, InjectModule, RegistarConfiguration]
+  providers: [
+    First,
+    TestController,
+    Props,
+    ScopedRequest,
+    TestService,
+    TestAdvisor,
+    InjectModule,
+    RegistrarConfiguration
+  ]
 })
 export class ThirdFourthModule {}
 

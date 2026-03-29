@@ -5,8 +5,9 @@ import { DecoratorRef } from '../../decorators/type.decorators';
 import { ApplicationRegistrar } from './application.registrar';
 import { ApplicationContext } from '../application.context';
 import { ComponentContext } from '../../decorators/components/component.helper';
+import { Module } from '../context.decorators';
 
-
+@Module({})
 export class ApplicationContextRegistrar implements Context {
   private delegate: Context;
 
@@ -54,7 +55,10 @@ export class ApplicationContextRegistrar implements Context {
   private apply<T>(propertyName: 'resolveRequired', ...parameters: any[]): Promise<T>;
   private apply<T>(propertyName: 'resolve', ...parameters: any[]): Promise<Nullable<T>>;
   private apply<T>(propertyName: 'multiResolve' | 'multiResolveRequired', ...parameters: any[]): Promise<T[]>;
-  private apply<T>(propertyName: keyof ApplicationContext | 'findAllContext', ...parameters: any[]): Promise<Nullable<T> | T[]> {
+  private apply<T>(
+    propertyName: keyof ApplicationContext | 'findAllContext',
+    ...parameters: any[]
+  ): Promise<Nullable<T> | T[]> {
     if (this.registrar['reload']) {
       this.registrar['reload'] = false;
       this.delegate = new ApplicationContext(
