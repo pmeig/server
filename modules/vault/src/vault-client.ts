@@ -45,11 +45,13 @@ export class VaultClient {
   }
 
   private getData<T extends VaultNode>(path: string): Promise<Nullable<T>> {
-    return this.apply(() =>
-      this.getResponseBody<{ data: { data: T } }>(this.vaultClient.get('secret/data/' + path)).then(
-        response => response?.data?.data
-      )
-    ).catch(() => undefined as unknown as T);
+    return this.apply(() => {
+      const index = path.indexOf('/');
+      let pathSecret = path + '/data'
+      if (index > -1) pathSecret = path.substring(0, index) + '/data' + path.substring(index)
+      return this.getResponseBody<{ data: { data: T } }>(this.vaultClient.get(pathSecret))
+        .then(response => response?.data?.data);
+    }).catch(() => undefined as unknown as T);
   }
 
   private isTokenExpired(): boolean {
