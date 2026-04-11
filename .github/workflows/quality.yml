@@ -39,9 +39,9 @@ jobs:
           role-id: ${{ secrets.VAULT_ROLE_ID }}
           secret-id: ${{ secrets.VAULT_SECRET_ID }}
           secrets: |
-            pmeig/server/data/cicd/sonar token | SONAR_TOKEN;
-            pmeig/server/data/cicd/jfrog/reader user | ARTIFACTORY_USER;
-            pmeig/server/data/cicd/jfrog/reader token | ARTIFACTORY_PASSWORD;
+            pmeig/cicd/data/sonar token | SONAR_TOKEN;
+            pmeig/cicd/data/artifactory/jfrog/npm/reader user | ARTIFACTORY_USER;
+            pmeig/cicd/data/artifactory/jfrog/npm/reader reference | ARTIFACTORY_PASSWORD;
       - name: retrieve module change
         if: ${{ github.event_name != 'workflow_dispatch' }}
         id: diff
