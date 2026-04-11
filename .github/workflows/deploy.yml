@@ -42,6 +42,7 @@ jobs:
         uses: pmeig/github-actions/actions/github/diff@main
         with:
           includes: 'start=modules'
+          excludes: 'end=/package.json'
       - name: prepare modules
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.modules != '' }}
         id: files
@@ -120,10 +121,9 @@ jobs:
           role-id: ${{ secrets.VAULT_ROLE_ID }}
           secret-id: ${{ secrets.VAULT_SECRET_ID }}
           secrets: |
-            pmeig/server/data/cicd/jfrog/writer user | ARTIFACTORY_USER;
-            pmeig/server/data/cicd/jfrog/writer password | ARTIFACTORY_PASSWORD;
-            pmeig/server/data/cicd/npm user | REMOTE_USER;
-            pmeig/server/data/cicd/npm token | REMOTE_TOKEN;
+            pmeig/cicd/data/artifactory/jfrog/npm/writer user | ARTIFACTORY_USER;
+            pmeig/cicd/data/artifactory/jfrog/npm/writer reference | ARTIFACTORY_PASSWORD;
+            pmeig/cicd/data/artifactory/npm writer | REMOTE_TOKEN;
       - name: node setup
         uses: pmeig/github-actions/actions/node/setup@main
         id: node-setup
@@ -270,7 +270,8 @@ jobs:
             if (( $minor == $release ))
             then
               cd $path
-              pnpm version "$major.$((minor + 1)).0-SNAPSHOT"
+              json=$(jq -r --arg version "$major.$((minor + 1)).0-SNAPSHOT" '.version = $version' package.json)
+              echo $json | jq -r '.' > package.json
               cd $workspace
               modules="$modules $(echo $module | jq -rc '.name')"
               staging="$staging $package"

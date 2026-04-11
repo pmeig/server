@@ -54,7 +54,7 @@ export abstract class ConstructorFactory {
     bean: T,
     name: string | symbol
   ): Promise<T> {
-    if (name !== BeanPost.name) {
+    if (bean && name !== BeanPost.name) {
       const postConstructors = await context.multiResolve(BeanPost, []);
       for (const postConstructor of postConstructors) {
         if (postConstructor.isHandler(target, name, bean)) {

@@ -1,6 +1,6 @@
 {
   "name": "@pmeig/srv-properties",
-  "version": "1.0.3-SNAPSHOT",
+  "version": "1.2.0-SNAPSHOT",
   "description": "",
   "main": "src/index.ts",
   "scripts": {

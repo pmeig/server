@@ -23,7 +23,8 @@ const checked: string[] = [];
 
 export class ApplicationContext implements Context {
   private factories: Record<string | symbol, ComponentContext[]> = {};
-  private factoriesOrdered: Record<string | symbol, ComponentContext[]> = {};
+  private static cache: Record<string | symbol, ProviderFactory[]> = {};
+  private static validates: Record<string | symbol, boolean> = {};
   private children: ImportFactory[] = [];
   readonly id: string = crypto.randomUUID();
 
@@ -61,20 +62,26 @@ export class ApplicationContext implements Context {
     for (const bean of beans) {
       await bean.close(this);
     }
+    ApplicationContext.cache = {};
+    ApplicationContext.validates = {};
   }
 
   async has(key: any): Promise<boolean> {
     const token = this.extractToken(key);
+    if (ApplicationContext.validates[token]) return ApplicationContext.validates[token];
     let found = (await this.findFactories(token)).length > 0;
-    if (found) return true;
+    if (found) {
+      ApplicationContext.validates[token] = true;
+    }
     const modules = await this.findValidChildren();
-    if (!found && modules.length > 0) {
+    if (modules.length > 0) {
       const iterator = [...modules];
       while (!found && iterator.length > 0) {
         const child = iterator.shift()!;
         found = await child.has(key);
       }
     }
+    ApplicationContext.validates[token] = found;
     return found;
   }
 
@@ -83,8 +90,8 @@ export class ApplicationContext implements Context {
     if ([ApplicationContext.name, 'Context'].includes(token.toString())) {
       return this as unknown as T;
     }
-    const factory = (await this.findAll(token)).shift();
-    return this.useChildren(factory?.factory?.build(this.contextReference, token), token, defaultValue).then(value => {
+    const potentialFactory = (await this.findAll(token))[0];
+    return this.useChildren(potentialFactory?.build(this.contextReference, token), token, defaultValue).then(value => {
       if (value) {
         value['_myContextId'] = this.id;
       }
@@ -104,7 +111,7 @@ export class ApplicationContext implements Context {
     const factories = await this.findAll(token);
     const beans: any[] = [];
     for (const factory of factories) {
-      const bean = await factory.factory?.build(this.contextReference, token);
+      const bean = await factory.build(this.contextReference, token);
       if (bean) {
         beans.push(bean);
       }
@@ -146,19 +153,25 @@ export class ApplicationContext implements Context {
     return beans;
   }
 
-  private async findAll(key: ProviderToken<any>): Promise<ComponentContext[]> {
+  private async findAll(key: ProviderToken<any>): Promise<ProviderFactory[]> {
     const token = this.extractToken(key);
-    // if (this.factoriesOrdered[token]) return this.factoriesOrdered[token];
+    const caching = ApplicationContext.cache[token]
+    if (caching) return caching;
+    const factories = (await this.findAllContext(token)).map(factory => factory.factory)
+      .filter(factory => !!factory);
+    ApplicationContext.cache[token] = factories;
+    return factories;
+  }
+
+  private async findAllContext(token: string | symbol): Promise<ComponentContext[]> {
     const factories = await this.findFactories(token);
     const children = await this.findValidChildren();
     for (const child of children) {
       if (await child.has(token)) {
-        factories.push(...(await (child as ApplicationContext).findAll(token)));
+        factories.push(...(await (child as ApplicationContext).findAllContext(token)));
       }
     }
-    const factoriesOrdered = factories.sort((first, second) => this.sortContext(first, second));
-    this.factoriesOrdered[token] = factoriesOrdered;
-    return factoriesOrdered;
+    return factories.sort((first, second) => this.sortContext(first, second));
   }
 
   private async findFactories(token: string | symbol) {

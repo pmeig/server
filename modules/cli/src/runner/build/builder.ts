@@ -54,40 +54,27 @@ export abstract class Builder {
   }
 
   private static retrieveProjectNameVersion(rootProject: string, projects?: Record<string, CliProject>) {
-    return Object.entries(projects ?? {}).reduce((acc, [name, context]) => {
-      const json = readJson(resolve(rootProject, context.location.root, 'package.json'));
-      const item = {
-        name,
-        version: json.version,
-        module: json.name,
-        path: context.location.root
-      }
-      acc[item.module] = item;
-      acc[name] = item;
-      return acc;
-    }, {} as Record<string, BuildProjectContext>)
+    return Object.entries(projects ?? {}).reduce(
+      (acc, [name, context]) => {
+        const json = readJson(resolve(rootProject, context.location.root, 'package.json'));
+        const item = {
+          name,
+          version: json.version,
+          module: json.name,
+          path: context.location.root
+        };
+        acc[item.module] = item;
+        acc[name] = item;
+        return acc;
+      },
+      {} as Record<string, BuildProjectContext>
+    );
   }
 
   async build(_: Parameters<BuildParameter>['cli'], ...options: string[]): Promise<ConsoleCommand> {
     const root = resolve(this.rootProject, this.context.location.root);
     this.isProd = options.includes('--prod');
-    let command;
-    let outDirPath;
-    try {
-      const executor = launcher.cwd(root);
-      const outDirConsole = await executor.launch('tsc', '--showConfig', ...options);
-      const json = this.linesToJson(outDirConsole.success);
-      const outDir = JSON.parse(json || '{}').compilerOptions.outDir;
-      if (!outDir) {
-        throw new Error('No outDir found');
-      }
-      outDirPath = resolve(root, outDir);
-      this.removeDist(outDirPath);
-      command = await executor.launch('tsc', ...options);
-    } catch (error) {
-      console.error(error.message);
-      throw error;
-    }
+    const {command, outDirPath} = (await this.cleanLastBuild(root, options));
 
     let result = Promise.resolve(command);
     if (command.code === 0 && this.context.assets.length > 0) {
@@ -111,13 +98,40 @@ export abstract class Builder {
           return content;
         });
         return command;
-      })
+      });
     }
     return result.catch(error => {
       console.error(error.message);
       throw error;
     });
   }
+
+  private async cleanLastBuild(root: string, options: string[]) {
+    const context = {
+      outDirPath: '',
+      command: {
+        error: [],
+        success: [],
+        code: 0
+      } as ConsoleCommand
+    };
+    try {
+      const executor = launcher.cwd(root);
+      const outDirConsole = await executor.launch('tsc', '--showConfig', ...options);
+      const json = this.linesToJson(outDirConsole.success);
+      const outDir = JSON.parse(json || '{}').compilerOptions.outDir;
+      if (!outDir) {
+        throw new Error('No outDir found');
+      }
+      context.outDirPath = resolve(root, outDir);
+      this.removeDist(context.outDirPath);
+      context.command = await executor.launch('tsc', ...options);
+    } catch (error) {
+      console.error(error.message);
+      throw error;
+    }
+    return context;
+  };
 
   private removeDist(outDirPath: string) {
     if (existsSync(outDirPath)) {
@@ -142,7 +156,7 @@ export abstract class Builder {
     if (this.isProd) {
       removeSnapshot = (version: string) => {
         return version.replace(/-SNAPSHOT$/, '');
-      }
+      };
     }
     return Object.entries(dependencies).reduce(
       (acc, [key, value]) => {
@@ -218,7 +232,8 @@ class LibraryBuilder extends Builder {
         return content;
       });
       updateContent(resolve(outDirPath, 'package.json'), content =>
-        content.replaceAll('src/index.d.ts', 'index.d.ts').replaceAll('src/index.js', 'index.js')
+        content.replaceAll('src/index.d.ts', 'index.d.ts')
+          .replaceAll('src/index.ts', 'index.js')
       );
     }
     return prepare;

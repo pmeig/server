@@ -1,11 +1,11 @@
 {
   "name": "@pmeig/srv-vault",
-  "version": "1.1.1-SNAPSHOT",
+  "version": "1.2.0-SNAPSHOT",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
     "build": "pmeig build vault",
-    "build:prod": "pnpm build -- --prod"
+    "build:prod": "pnpm build --prod"
   },
   "homepage": "https://github.com/pmeig/server/tree/main/modules/vault",
   "repository": {

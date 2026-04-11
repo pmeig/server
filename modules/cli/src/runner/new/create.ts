@@ -1,5 +1,5 @@
 import { CliContext } from '../../server/cli.context';
-import { CreateParameter, CreateParameters } from './create.runner';
+import { CreateParameters } from './create.runner';
 import { dirname, resolve } from 'path';
 import { mkdirSync } from 'fs';
 import { browseDir } from '../../helper/io.helper';
@@ -27,6 +27,7 @@ export const createContext = (parameters: CreateParameters) => {
   const context = {} as CliContext;
   context.type = parameters.type as 'application' | 'library';
   context.name = parameters.name;
+  context.architecture = context.architecture ?? {};
   context.architecture[context.type] = {
     root: parameters.root
   };

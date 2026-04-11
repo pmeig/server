@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { existsSync, readFileSync } from 'fs';
 import { VaultKubernetesPlugin, VaultProperties } from './vault.properties';
 import { VaultHealth } from './vault-health';
-import { Nullable, Component } from '@pmeig/srv-core';
+import { Component, Nullable } from '@pmeig/srv-core';
 
 export type VaultNode = { [key: string]: string | undefined };
 
@@ -45,11 +45,13 @@ export class VaultClient {
   }
 
   private getData<T extends VaultNode>(path: string): Promise<Nullable<T>> {
-    return this.apply(() =>
-      this.getResponseBody<{ data: { data: T } }>(this.vaultClient.get('secret/data/' + path)).then(
-        response => response?.data?.data
-      )
-    ).catch(() => undefined as unknown as T);
+    return this.apply(() => {
+      const index = path.indexOf('/');
+      let pathSecret = path + '/data'
+      if (index > -1) pathSecret = path.substring(0, index) + '/data' + path.substring(index)
+      return this.getResponseBody<{ data: { data: T } }>(this.vaultClient.get(pathSecret))
+        .then(response => response?.data?.data);
+    }).catch(() => undefined as unknown as T);
   }
 
   private isTokenExpired(): boolean {
@@ -105,6 +107,7 @@ export class VaultClient {
 }
 
 export const createVaultClient = async (vaultProperties?: VaultProperties) => {
+  if (!vaultProperties?.credentials?.role && !vaultProperties?.credentials?.secret) return undefined;
   const vaultClient = new VaultClient(vaultProperties);
   const health = await vaultClient.health();
   if (!health || !health.initialized) {
