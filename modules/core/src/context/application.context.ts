@@ -155,7 +155,8 @@ export class ApplicationContext implements Context {
 
   private async findAll(key: ProviderToken<any>): Promise<ProviderFactory[]> {
     const token = this.extractToken(key);
-    if (ApplicationContext.cache[token]) return ApplicationContext.cache[token];
+    const caching = ApplicationContext.cache[token]
+    if (caching) return caching;
     const factories = (await this.findAllContext(token)).map(factory => factory.factory)
       .filter(factory => !!factory);
     ApplicationContext.cache[token] = factories;
