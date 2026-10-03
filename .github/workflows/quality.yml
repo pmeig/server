@@ -49,12 +49,13 @@ jobs:
         with:
           includes: 'start=modules'
           excludes: 'contains=/vite-plugin-pmeig/'
+          parent: 'true'
       - name: create matrix from github diff
         if: ${{ github.event_name != 'workflow_dispatch' }}
         id: matrix
         run: |
           matrix='[]'
-          for file in ${{ steps.diff.outputs.files }}
+          for file in ${{ steps.diff.outputs.parents }}
           do
             name=$(echo "$file" | cut -d'/' -f2)
             matrix="$(echo $matrix | jq -rc --arg module "modules/$name" '. += [$module]')"
