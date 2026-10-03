@@ -26,6 +26,8 @@ export class VaultProperties {
     public credentials: VaultCredentials = new VaultCredentials(),
     public plugins: VaultPlugins = new VaultPlugins(),
     public endpoint: string = process.env.VAULT_ADDRESS ?? 'https://vault.factory.cloud',
-    public namespace: string = process.env.VAULT_NAMESPACE ?? ''
+    public namespace: string = process.env.VAULT_NAMESPACE ?? '',
+    // Vault is enabled by default; VAULT_ENABLED=false turns it off (local dev, tests)
+    public enabled: boolean = process.env.VAULT_ENABLED !== 'false'
   ) {}
 }

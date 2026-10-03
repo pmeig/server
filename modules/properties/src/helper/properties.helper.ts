@@ -57,6 +57,9 @@ export const findVaultProperties = async (bootstrap: Env) => {
     vaultProperties.credentials.role = properties['credentials']?.['role'] ?? vaultProperties.credentials.role;
     vaultProperties.credentials.secret = properties['credentials']?.['secret'] ?? vaultProperties.credentials.secret;
     vaultProperties.plugins.kubernetes = properties['plugins']?.['kubernetes'] ?? vaultProperties.plugins.kubernetes;
+    // boolean or "true"/"false" string (e.g. enabled: ${VAULT_ENABLED})
+    vaultProperties.enabled =
+      typeof properties['enabled'] === 'undefined' ? vaultProperties.enabled : String(properties['enabled']) !== 'false';
   }
   return vaultProperties;
 };
