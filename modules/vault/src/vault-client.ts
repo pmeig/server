@@ -6,13 +6,42 @@ import { Component, Nullable } from '@pmeig/srv-core';
 
 export type VaultNode = { [key: string]: string | undefined };
 
+/** Secret engine as listed by sys/internal/ui/mounts, keyed by its path ("pmeig/budget/"). */
+export interface VaultMount {
+  type: string;
+  options?: Nullable<{ version?: string }>;
+}
+
+export type VaultMounts = Record<string, VaultMount>;
+
 interface VaultLogin {
   auth: { client_token: string; lease_duration: number };
 }
 
+const isKvV2 = (mount: VaultMount) => mount.type === 'kv' && mount.options?.version === '2';
+
+/**
+ * Finds the engine mounted on the longest prefix of the path and, for a KV v2 engine, replaces that engine path
+ * by "<engine path>/data": "pmeig/budget/app" on "pmeig/budget/" → "pmeig/budget/data/app".
+ * Returns undefined when no engine is mounted on the path.
+ */
+export const toSecretPath = (path: string, mounts: VaultMounts): { path: string; kvV2: boolean } | undefined => {
+  const normalized = path.replace(/^\/+|\/+$/g, '');
+  const mountPath = Object.keys(mounts)
+    .filter(mount => `${normalized}/`.startsWith(mount))
+    .sort((a, b) => b.length - a.length)[0];
+  if (!mountPath) return undefined;
+  const kvV2 = isKvV2(mounts[mountPath]);
+  return {
+    path: kvV2 ? `${mountPath}data/${normalized.substring(mountPath.length)}`.replace(/\/$/, '') : normalized,
+    kvV2
+  };
+};
+
 @Component
 export class VaultClient {
   private ttl = new Date();
+  private mounts?: VaultMounts;
   private vaultClient: AxiosInstance;
 
   constructor(private readonly vaultProperties?: VaultProperties) {
@@ -44,14 +73,33 @@ export class VaultClient {
     );
   }
 
+  /**
+   * Secret engines the token can access. sys/internal/ui/mounts needs no dedicated policy (sys/mounts does):
+   * Vault filters it with the token policies. Cached once loaded.
+   */
+  listMounts(): Promise<VaultMounts> {
+    if (this.mounts) return Promise.resolve(this.mounts);
+    return this.apply(() =>
+      this.getResponseBody<{ data: { secret: VaultMounts } }>(this.vaultClient.get('sys/internal/ui/mounts'))
+    ).then(response => {
+      const mounts = response?.data?.secret;
+      if (mounts) this.mounts = mounts;
+      return mounts ?? {};
+    });
+  }
+
   private getData<T extends VaultNode>(path: string): Promise<Nullable<T>> {
-    return this.apply(() => {
-      const index = path.indexOf('/');
-      let pathSecret = path + '/data'
-      if (index > -1) pathSecret = path.substring(0, index) + '/data' + path.substring(index)
-      return this.getResponseBody<{ data: { data: T } }>(this.vaultClient.get(pathSecret))
-        .then(response => response?.data?.data);
-    }).catch(() => undefined as unknown as T);
+    return this.listMounts()
+      .then(mounts => {
+        const secret = toSecretPath(path, mounts);
+        if (!secret) return undefined;
+        return this.apply(() =>
+          this.getResponseBody<{ data: T | { data: T } }>(this.vaultClient.get(secret.path)).then(response =>
+            secret.kvV2 ? (response?.data as Nullable<{ data: T }>)?.data : (response?.data as Nullable<T>)
+          )
+        );
+      })
+      .catch(() => undefined as unknown as T);
   }
 
   private isTokenExpired(): boolean {
