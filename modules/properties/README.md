@@ -288,6 +288,11 @@ database:
   password: vault(path/secrets/database, key_secrets_password)
 ```
 
+The path is given without `/data`: the client lists the secret engines the token can access
+(`sys/internal/ui/mounts`, no dedicated policy needed), takes the engine mounted on the longest prefix of the path
+and, for a KV v2 engine, inserts `/data` after it (`pmeig/budget/app` on the engine `pmeig/budget/` →
+`pmeig/budget/data/app`). KV v1 paths are read as is.
+
 
 ## Hot Reload and Watch Mode
 
