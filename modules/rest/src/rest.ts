@@ -88,7 +88,7 @@ export const insertMiddleware = (middleware: RestHandler): ClassDecorator | Meth
 
 export const insertErrorMiddleware = (middleware: RestErrorHandler): ClassDecorator | MethodDecorator =>
   Decorators.all('ErrorMiddleware', (target: Type<any>, propertyKey?: string | symbol) => {
-    reflectMetadataContext(rest_middleware_key, target, propertyKey).set(middleware);
+    reflectMetadataContext(rest_error_middleware_key, target, propertyKey).set(middleware);
   });
 
 export const retrieveMiddleware = (target: Type<any>, propertyKey?: string | symbol) =>
