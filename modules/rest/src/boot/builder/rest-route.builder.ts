@@ -5,7 +5,7 @@ import { RestPath } from '../resolver/rest-path.resolver';
 import type { RestErrorHandler, RestHandler } from '../../http/http.type';
 
 export interface RestRoute {
-  path: string;
+  configPath: string;
   middlewares: RestHandler[];
   errorMiddlewares: RestErrorHandler[];
   paths: RestPath[];
@@ -14,7 +14,7 @@ export interface RestRoute {
 @Configuration
 export class RestRouteBuilder {
   private paths: RestPath[];
-  private path: string;
+  private configPath: string;
   private middlewares: RestHandler[];
   private errorMiddleware: RestErrorHandler[];
   constructor(private readonly middlewareResolver: RestMiddlewareResolver) {}
@@ -23,9 +23,9 @@ export class RestRouteBuilder {
     const beanDecorator = getTypeOf(controller);
     const mapper = retrieveRestConfig(beanDecorator);
     this.paths = [];
-    this.path = mapper?.path ? (mapper.path.startsWith('/') ? mapper.path : '/' + mapper.path) : '';
+    this.configPath = mapper?.path ? (mapper.path.startsWith('/') ? mapper.path : '/' + mapper.path) : '';
 
-    const middlewares = this.middlewareResolver.resolveRoute(this.path, controller);
+    const middlewares = this.middlewareResolver.resolveRoute(this.configPath, controller);
     this.middlewares = middlewares.middlewares;
     this.errorMiddleware = middlewares.errorMiddlewares;
     return this;
@@ -37,7 +37,7 @@ export class RestRouteBuilder {
 
   build(): RestRoute {
     return {
-      path: this.path,
+      configPath: this.configPath,
       middlewares: this.middlewares,
       errorMiddlewares: this.errorMiddleware,
       paths: this.paths

@@ -22,11 +22,19 @@ export const chainHandlers =
       done(error as Error | undefined);
     };
 
+    // `step` moves the chain forward. It is called once to start the chain, then by the `next` given to
+    // each handler:
+    // - `step(error)`: a handler failed or called `next(error)`, the chain is aborted and the error goes to
+    //   Fastify (`done(error)`), the remaining handlers are not run;
+    // - `step()`: runs the next handler, or hands over to Fastify (`done()`) when all of them have run.
+    // A handler that answers by itself and never calls `next` simply stops the chain: Fastify expects no
+    // `done` once the reply is sent.
     const step = (error?: unknown): void => {
       if (error) return finish(error);
       const handler = handlers[index++];
       if (!handler) return finish();
 
+      // calling `next` twice must not run the following handlers twice
       let called = false;
       const next: RestNext = nextError => {
         if (called) return;
@@ -34,6 +42,8 @@ export const chainHandlers =
         step(nextError);
       };
 
+      // a synchronous throw or a rejected promise of the handler is turned into an error of the chain
+      // (an error raised after `done` was called is ignored: Fastify can only be told once)
       try {
         const result = handler(request, response, next);
         if (result && typeof result.catch === 'function') result.catch(finish);

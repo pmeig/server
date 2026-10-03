@@ -21,6 +21,10 @@ export interface RestRouteConfig {
   rest?: RestRouteContext;
 }
 
+// Fastify types the `config` of a route (`route({ config })`, `request.routeOptions.config`) with this empty
+// interface, made to be extended. The controller / method of each route is stored there, which gives
+// `request.routeOptions.config.rest` typed access without casts. It adds an optional `rest` key to
+// FastifyContextConfig for every code importing this module.
 declare module 'fastify' {
   interface FastifyContextConfig extends RestRouteConfig {}
 }

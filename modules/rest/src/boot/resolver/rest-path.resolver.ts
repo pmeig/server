@@ -8,7 +8,7 @@ import type { RestErrorHandler, RestHandler, RestRequest, RestResponse, RestRout
 
 export interface RestPath {
   method: Method;
-  path: string;
+  configPath: string;
   context: RestRouteContext;
   middlewares: RestHandler[];
   errorMiddlewares: RestErrorHandler[];
@@ -29,11 +29,16 @@ export class RestPathResolver {
     if (config) {
       const responseHandler = this.createHandlerResponse(config.options);
       const params = this.parameterResolver.resolve(controller, methodName);
-      const path = config.path ? (config.path.startsWith('/') ? config.path : '/' + config.path) : '';
-      const middlewares = this.middlewaresResolver.resolvePath(path, config.options.method, controller, methodName);
+      const configPath = config.path ? (config.path.startsWith('/') ? config.path : '/' + config.path) : '';
+      const middlewares = this.middlewaresResolver.resolvePath(
+        configPath,
+        config.options.method,
+        controller,
+        methodName
+      );
       return {
         method: config.options.method,
-        path,
+        configPath,
         context: { controller, method: methodName },
         middlewares: middlewares.middlewares,
         errorMiddlewares: middlewares.errorMiddlewares,

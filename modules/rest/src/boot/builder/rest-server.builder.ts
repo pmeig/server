@@ -8,7 +8,7 @@ import { RestMiddlewareResolver } from '../resolver/rest-middleware.resolver';
 import { RestRoute } from './rest-route.builder';
 import { chainErrorHandlers, chainHandlers } from '../../http/http.chain';
 
-const BODY_LIMIT = 100 * 1024;
+// 200 requests per client every 15 minutes
 const RATE_LIMIT = { max: 200, timeWindow: 15 * 60 * 1000 };
 
 @Configuration
@@ -18,8 +18,9 @@ export class RestServerBuilder {
 
   async builder() {
     this.server = Fastify({
-      bodyLimit: BODY_LIMIT,
-      // express routing is not strict about the trailing slash
+      // built-in Pino logger: one structured log line per request and response, and the listening address
+      logger: true,
+      // REST clients send `/users/` as often as `/users`: serve both instead of answering 404
       routerOptions: { ignoreTrailingSlash: true }
     });
     await this.server.register(compress);
@@ -38,23 +39,23 @@ export class RestServerBuilder {
   }
 
   addRoute(route: RestRoute) {
-    route.paths.forEach(path => {
-      const middlewares = [...route.middlewares, ...path.middlewares];
-      const errorMiddlewares = [...path.errorMiddlewares, ...route.errorMiddlewares];
+    route.paths.forEach(restPath => {
+      const middlewares = [...route.middlewares, ...restPath.middlewares];
+      const errorMiddlewares = [...restPath.errorMiddlewares, ...route.errorMiddlewares];
       this.server.route({
-        method: path.method,
-        url: route.path + path.path || '/',
-        config: { rest: path.context },
+        method: restPath.method,
+        url: route.configPath + restPath.configPath || '/',
+        config: { rest: restPath.context },
         ...(middlewares.length > 0 && { preHandler: chainHandlers(middlewares) }),
         ...(errorMiddlewares.length > 0 && { errorHandler: chainErrorHandlers(errorMiddlewares) }),
-        handler: path.handler
+        handler: restPath.handler
       });
     });
   }
 
   async start(port: number) {
+    // 0.0.0.0 to be reachable from outside a container, Fastify only listens on localhost by default
     await this.server.listen({ port, host: '0.0.0.0' });
-    console.log(`Server started on port ${port}`);
     return this.server;
   }
 }
