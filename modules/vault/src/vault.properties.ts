@@ -27,7 +27,7 @@ export class VaultProperties {
     public plugins: VaultPlugins = new VaultPlugins(),
     public endpoint: string = process.env.VAULT_ADDRESS ?? 'https://vault.factory.cloud',
     public namespace: string = process.env.VAULT_NAMESPACE ?? '',
-    // Vault is only called when enabled (production): VAULT_ENABLED=true
-    public enabled: boolean = process.env.VAULT_ENABLED === 'true'
+    // Vault is enabled by default; VAULT_ENABLED=false turns it off (local dev, tests)
+    public enabled: boolean = process.env.VAULT_ENABLED !== 'false'
   ) {}
 }

@@ -66,7 +66,7 @@ export class VaultClient {
     });
   }
 
-  /** False when VAULT_ENABLED is not "true": the client then never calls Vault. */
+  /** False when VAULT_ENABLED is "false": the client then never calls Vault. */
   get enabled(): boolean {
     return !!this.vaultProperties?.enabled;
   }
