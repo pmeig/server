@@ -22,7 +22,6 @@ export class RestServerBuilder {
       // express routing is not strict about the trailing slash
       routerOptions: { ignoreTrailingSlash: true }
     });
-    this.tolerateEmptyJsonBody();
     await this.server.register(compress);
     await this.server.register(formbody, { parser: (body: string) => qs.parse(body) });
     await this.server.register(rateLimit, { ...RATE_LIMIT, enableDraftSpec: true });
@@ -36,20 +35,6 @@ export class RestServerBuilder {
       this.server.setErrorHandler(chainErrorHandlers(middlewares.errorMiddlewares));
     }
     return this;
-  }
-
-  /**
-   * express.json() yields `{}` for an empty body sent as `application/json`, Fastify answers 400.
-   * Everything else keeps the Fastify JSON parser (prototype poisoning protection included).
-   */
-  private tolerateEmptyJsonBody() {
-    const parse = this.server.getDefaultJsonParser('error', 'error');
-    this.server.removeContentTypeParser('application/json');
-    this.server.addContentTypeParser(
-      'application/json',
-      { parseAs: 'string', bodyLimit: BODY_LIMIT },
-      (request, body, done) => (body.length === 0 ? done(null, {}) : parse(request, body as string, done))
-    );
   }
 
   addRoute(route: RestRoute) {
