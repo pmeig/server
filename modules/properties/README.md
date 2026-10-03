@@ -281,6 +281,10 @@ vault:
   namespace: myapp
 ```
 
+Vault is disabled unless `VAULT_ENABLED=true` (or `enabled: true` in the configuration above, which overrides the
+environment variable). When disabled, no Vault client is created and `VaultClient` never calls Vault: `read()`
+resolves `undefined` and `health()` reports a non-initialized, sealed Vault.
+
 
 ### Vault Property References
 ```yaml

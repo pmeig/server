@@ -26,6 +26,8 @@ export class VaultProperties {
     public credentials: VaultCredentials = new VaultCredentials(),
     public plugins: VaultPlugins = new VaultPlugins(),
     public endpoint: string = process.env.VAULT_ADDRESS ?? 'https://vault.factory.cloud',
-    public namespace: string = process.env.VAULT_NAMESPACE ?? ''
+    public namespace: string = process.env.VAULT_NAMESPACE ?? '',
+    // Vault is only called when enabled (production): VAULT_ENABLED=true
+    public enabled: boolean = process.env.VAULT_ENABLED === 'true'
   ) {}
 }

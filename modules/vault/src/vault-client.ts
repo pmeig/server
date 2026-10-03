@@ -56,6 +56,7 @@ export class VaultClient {
   read<T extends VaultNode>(path: string): Promise<T>;
   read(path: string, key: string): Promise<string>;
   read<T extends VaultNode>(path: string, key?: string): Promise<T | string> {
+    if (!this.enabled) return Promise.resolve(undefined as unknown as T);
     return this.getData(path).then(data => {
       let value: T | string | undefined = data as T | undefined;
       if (key) {
@@ -65,7 +66,15 @@ export class VaultClient {
     });
   }
 
+  /** False when VAULT_ENABLED is not "true": the client then never calls Vault. */
+  get enabled(): boolean {
+    return !!this.vaultProperties?.enabled;
+  }
+
   health(): Promise<Nullable<VaultHealth>> {
+    if (!this.enabled) {
+      return Promise.resolve({ initialized: false, sealed: true, standby: false } as VaultHealth);
+    }
     return this.getResponseBody(
       this.vaultClient.get<VaultHealth>('sys/health', {
         headers: { 'X-Vault-Namespace': '', 'X-Vault-Token': '' }
@@ -78,6 +87,7 @@ export class VaultClient {
    * Vault filters it with the token policies. Cached once loaded.
    */
   listMounts(): Promise<VaultMounts> {
+    if (!this.enabled) return Promise.resolve({});
     if (this.mounts) return Promise.resolve(this.mounts);
     return this.apply(() =>
       this.getResponseBody<{ data: { secret: VaultMounts } }>(this.vaultClient.get('sys/internal/ui/mounts'))
@@ -155,6 +165,7 @@ export class VaultClient {
 }
 
 export const createVaultClient = async (vaultProperties?: VaultProperties) => {
+  if (!vaultProperties?.enabled) return undefined;
   if (!vaultProperties?.credentials?.role && !vaultProperties?.credentials?.secret) return undefined;
   const vaultClient = new VaultClient(vaultProperties);
   const health = await vaultClient.health();
