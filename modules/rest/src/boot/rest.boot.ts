@@ -1,13 +1,14 @@
 import { Bootable, Configuration, Context } from '@pmeig/srv-core';
 import { Controller } from '../decorators/rest.decorators';
-import { Server } from 'http';
+import type { Server } from 'http';
+import type { FastifyInstance } from 'fastify';
 import { RestServerBuilder } from './builder/rest-server.builder';
 import { RestRouteBuilder } from './builder/rest-route.builder';
 import { RestPathResolver } from './resolver/rest-path.resolver';
 
 @Configuration
 export class RestBootable extends Bootable {
-  private runner: Server;
+  private server: FastifyInstance;
 
   constructor(
     private readonly serverBuilder: RestServerBuilder,
@@ -22,7 +23,7 @@ export class RestBootable extends Bootable {
     port: number;
   }> {
     const controllers = await context.withDecorator(Controller);
-    const builder = this.serverBuilder.builder();
+    const builder = await this.serverBuilder.builder();
     controllers.forEach(controller => {
       const routeBuilder = this.routeBuilder.builder(controller);
       const keys = Object.getOwnPropertyNames(Object.getPrototypeOf(controller));
@@ -37,14 +38,14 @@ export class RestBootable extends Bootable {
       });
       builder.addRoute(routeBuilder.build());
     });
-    this.runner = builder.start(3000);
+    this.server = await builder.start(3000);
     return {
-      runner: this.runner,
+      runner: this.server.server,
       port: 3000
     };
   }
 
-  close(): Promise<void> | void {
-    this.runner.close();
+  async close(): Promise<void> {
+    await this.server?.close();
   }
 }

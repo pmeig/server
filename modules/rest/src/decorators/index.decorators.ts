@@ -1,2 +1,2 @@
-export * from './express.decorators';
+export * from './http.decorators';
 export * from './rest.decorators';

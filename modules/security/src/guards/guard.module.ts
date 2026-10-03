@@ -3,13 +3,13 @@ import { GuardMiddleware } from './guard.middleware';
 import { Guard } from './guard';
 import { User } from '../models/user.model';
 import { retrieveControllerCreator } from '@pmeig/srv-rest';
-import { Request } from 'express';
+import type { RestRequest } from '@pmeig/srv-rest';
 import { retrieveGuard } from '../decorators/security-service.decorators';
 
 @Order(Number.MAX_SAFE_INTEGER)
 @Component
 export class DecoratorGuard extends Guard {
-  canActivate(request: Request, user: Nullable<User>): boolean {
+  canActivate(request: RestRequest, user: Nullable<User>): boolean {
     const controllerResolver = retrieveControllerCreator();
     if (!controllerResolver) {
       return false;

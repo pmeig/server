@@ -2,7 +2,7 @@ import { ApplicationContext, Component, Import, Module, Order, Scope } from '@pm
 import { randomBytes } from 'crypto';
 import { Properties, PropertiesModule } from '@pmeig/srv-properties';
 import { Catch, Controller, ControllerAdvisor, Delete, Get, Params, Put, Req, Res, RestModule } from '@pmeig/srv-rest';
-import type { Request, Response } from 'express';
+import type { RestRequest, RestResponse } from '@pmeig/srv-rest';
 import { Public, SecurityModule } from '@pmeig/srv-security';
 
 interface Named {
@@ -65,7 +65,7 @@ export class TestController {
 
   @Get(':id/:number')
   @Public
-  async test(@Req request: Request, @Res response: Response, @Params params: Record<string, any>) {
+  async test(@Req request: RestRequest, @Res response: RestResponse, @Params params: Record<string, any>) {
     this.testService.test.sub.testing++;
     this.testService.test.message += 5;
     if (this.attempt++ > 2) {
@@ -84,7 +84,7 @@ export class TestController {
 @ControllerAdvisor()
 export class TestAdvisor {
   @Catch(Error)
-  test(error: Error, response: Response) {
+  test(error: Error, response: RestResponse) {
     return response.send(error.message);
   }
 }

@@ -1,6 +1,6 @@
 # @pmeig/srv-rest
 
-A powerful REST API framework module built on Express.js with dependency injection, decorators, and automatic routing. Part of the @pmeig/srv framework ecosystem that provides NestJS-inspired server architecture.
+A powerful REST API framework module built on Fastify with dependency injection, decorators, and automatic routing. Part of the @pmeig/srv framework ecosystem that provides NestJS-inspired server architecture.
 
 ## Installation
 
@@ -12,7 +12,7 @@ A powerful REST API framework module built on Express.js with dependency injecti
 ## Features
 
 - 🎯 **Controller Decorators** - Define REST endpoints with intuitive decorators
-- 🔧 **Express Integration** - Built on Express.js with full middleware support
+- 🔧 **Fastify Integration** - Built on Fastify (compression, rate limiting and form bodies included) with express-like middleware support
 - 📦 **Parameter Injection** - Automatic parameter extraction and injection
 - 🛡️ **Error Handling** - Comprehensive error handling with controller advisors
 - ✨ **HTTP Status Management** - Easy status code and media type configuration
@@ -69,7 +69,7 @@ export class UserController {
 ### Parameter Injection
 ```typescript
 import { Controller, Get, Params, Body, Headers, Req, Res } from '@pmeig/srv-rest';
-import type { Request, Response } from 'express';
+import type { RestRequest, RestResponse } from '@pmeig/srv-rest';
 
 @Controller('api')
 export class ApiController {
@@ -87,10 +87,10 @@ export class ApiController {
   async processData(
     @Body data: any,
     @Headers headers: Record<string, any>,
-    @Req request: Request,
-    @Res response: Response
+    @Req request: RestRequest,
+    @Res response: RestResponse
   ) {
-    // Direct access to Express request/response
+    // Direct access to the Fastify request/reply
     return { data, userAgent: headers['user-agent'] };
   }
 }
@@ -100,14 +100,14 @@ export class ApiController {
 ### Error Handling with Controller Advisors
 ```typescript
 import { ControllerAdvisor, Catch } from '@pmeig/srv-rest';
-import type { Response } from 'express';
+import type { RestResponse } from '@pmeig/srv-rest';
 
 @ControllerAdvisor('/api')
 export class ApiAdvisor {
   
   @Catch(Error)
   handleGenericError(error: Error, response: Response) {
-    return response.status(500).json({ 
+    return response.code(500).send({ 
       message: error.message,
       type: 'Internal Server Error' 
     });
@@ -115,7 +115,7 @@ export class ApiAdvisor {
 
   @Catch(ValidationError)
   handleValidationError(error: ValidationError, response: Response) {
-    return response.status(400).json({
+    return response.code(400).send({
       message: error.message,
       type: 'Validation Error'
     });
@@ -148,8 +148,8 @@ export class ApiAdvisor {
 | `@Body` | Extracts request body |
 | `@Header(name)` | Extracts header by name |
 | `@Headers` | Extracts all headers |
-| `@Req` | Injects Express Request object |
-| `@Res` | Injects Express Response object |
+| `@Req` | Injects the Fastify request (`RestRequest`) |
+| `@Res` | Injects the Fastify reply (`RestResponse`) |
 
 ### Status and Media Type Configuration
 
@@ -173,16 +173,21 @@ export class FileController {
 
 ```typescript
 import { Middleware } from '@pmeig/srv-rest';
-import rateLimit from 'express-rate-limit';
+
+// Middlewares keep the `(request, response, next)` signature, `request` and
+// `response` being the Fastify request and reply. They run in the `preHandler` phase
+// (the body is already parsed), call `next(error)` to fail the request.
+const apiKey = (request, response, next) =>
+  request.headers['x-api-key'] === 'secret' ? next() : next(new Error('missing api key'));
 
 // Method-level middleware
 @Controller('api')
 export class ApiController {
   
   @Get('limited')
-  @Middleware(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }))
+  @Middleware(apiKey)
   async limitedEndpoint() {
-    return { message: 'Rate limited endpoint' };
+    return { message: 'Protected endpoint' };
   }
 }
 
@@ -200,13 +205,13 @@ export class AdminController {
 ### Automatic Routing
 The REST module automatically:
 1. **Scans for controllers**: Finds classes decorated with `@Controller`
-2. **Maps routes**: Creates Express routes based on method decorators
+2. **Maps routes**: Registers Fastify routes based on method decorators
 3. **Handles parameters**: Extracts and injects method parameters
 4. **Applies middleware**: Processes class and method-level middleware
 5. **Error handling**: Routes errors to appropriate controller advisors
 
 ### Request Lifecycle
-1. **Route matching**: Express matches incoming request to controller method
+1. **Route matching**: Fastify matches incoming request to controller method
 2. **Parameter extraction**: Framework extracts parameters from request
 3. **Dependency injection**: Injects services and request-scoped components
 4. **Method execution**: Controller method executes with injected parameters
@@ -249,16 +254,17 @@ export class SecureController {
 
 - **@pmeig/srv-core**: ^0.1.0-SNAPSHOT - Core dependency injection and decorators
 - **@pmeig/srv-properties**: ^0.1.0-SNAPSHOT - Configuration management
-- **express**: ^5.1.0 - Web framework
-- **compression**: ^1.8.0 - Response compression
-- **express-rate-limit**: ^7.5.0 - Rate limiting middleware
+- **fastify**: ^5.6.0 - Web framework
+- **@fastify/compress**: ^8.0.1 - Response compression
+- **@fastify/rate-limit**: ^10.3.0 - Rate limiting (200 requests / 15 minutes by default)
+- **@fastify/formbody**: ^8.0.2 - `application/x-www-form-urlencoded` bodies (parsed with `qs`)
 - **node-match-path**: ^0.6.3 - Path matching utilities
 
 ## Compatibility
 
-- Node.js: 18+
+- Node.js: 20+
 - TypeScript: 5.8.3+
-- Express: 5.1.0+
+- Fastify: 5.6.0+
 - Modern ES2022+ environment
 
 ## Best Practices
@@ -280,7 +286,7 @@ export class AdminSettingsController {}
 export class GlobalErrorHandler {
   @Catch(ValidationError)
   handleValidation(error: ValidationError, response: Response) {
-    return response.status(400).json({
+    return response.code(400).send({
       error: 'Validation Failed',
       details: error.details
     });

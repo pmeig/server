@@ -2,7 +2,7 @@ import { Configuration, Converter, getMethodWithDecorator, getTypeOf, hasDecorat
 import { ControllerAdvisor, Catch } from './advisor.decorators';
 import { retrieveExceptionAdvisor, retrievePathAdvisor } from './advisor.services';
 import { RestErrorMiddleware } from '../rest.middleware';
-import type { Request, Response } from 'express';
+import type { RestRequest, RestResponse } from '../http/http.type';
 import { Method } from '../models/rest.type';
 import { match } from 'node-match-path';
 
@@ -51,7 +51,7 @@ class Advisor extends RestErrorMiddleware {
     return this.regexes.some(tester => controls.some(url => match(tester, url).matches));
   }
 
-  use(error: Error, response: Response, request: Request): void | Promise<void> {
+  use(error: Error, response: RestResponse, request: RestRequest): void | Promise<void> {
     const errorName = Object.getPrototypeOf(error).constructor.name;
     const method = this.methods.find(value => value.error === errorName)?.method;
     if (method) {

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { RestRequest, RestResponse } from '@pmeig/srv-rest';
 import { JwtProperties } from '../jwt.properties';
 import { TokenManager } from '../token.manager';
 import { Configuration } from '@pmeig/srv-core';
@@ -15,12 +15,13 @@ export class HeaderManager extends TokenManager {
     super(jwtProperties);
   }
 
-  expose(token: TokenMetadata, res: Response) {
-    return res.setHeader(this.key, `${this.jwtProperties.expose.prefix.trimEnd()} ${token.accessToken}`);
+  expose(token: TokenMetadata, res: RestResponse) {
+    return res.header(this.key, `${this.jwtProperties.expose.prefix.trimEnd()} ${token.accessToken}`);
   }
 
-  extract(req: Request): string | undefined {
-    const token = req.header(this.key);
+  extract(req: RestRequest): string | undefined {
+    const header = req.headers[this.key.toLowerCase()];
+    const token = Array.isArray(header) ? header[0] : header;
     if (!token) {
       return undefined;
     }

@@ -8,7 +8,7 @@ import {
   retrieveContext
 } from '@pmeig/srv-core';
 import { RestMiddleware } from './rest.middleware';
-import type { NextFunction, Request, Response } from 'express';
+import type { RestNext, RestRequest, RestResponse } from './http/http.type';
 import { randomUUID, UUID } from 'crypto';
 import { AsyncLocalStorage } from 'async_hooks';
 
@@ -41,7 +41,7 @@ export class RequestFactoryScoped extends BeanPost {
       get(target: any, p: string | symbol, _: any): any {
         const store = requestStorage.getStore() as {
           request: UUID;
-          response: Response;
+          response: RestResponse;
         };
         if (store) {
           target = factory.getInstance(store.request);
@@ -51,7 +51,7 @@ export class RequestFactoryScoped extends BeanPost {
       set(target: any, p: string | symbol, value: any, _: any): boolean {
         const store = requestStorage.getStore() as {
           request: UUID;
-          response: Response;
+          response: RestResponse;
         };
         if (store) {
           target = factory.getInstance(store.request);
@@ -71,7 +71,7 @@ export class RequestGeneratorId extends RestMiddleware {
   constructor() {
     super();
   }
-  async use(_: Request, next: NextFunction, response: Response) {
+  async use(_: RestRequest, next: RestNext, response: RestResponse) {
     const request = randomUUID();
     for (const { factory } of factories) {
       await factory.createInstance(request);

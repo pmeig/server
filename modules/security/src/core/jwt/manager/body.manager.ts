@@ -1,4 +1,4 @@
-import type { Request, Response } from 'express';
+import type { RestRequest, RestResponse } from '@pmeig/srv-rest';
 import { CookieProperties } from './cookie/cookie.properties';
 import { JwtProperties } from '../jwt.properties';
 import { TokenManager } from '../token.manager';
@@ -24,11 +24,11 @@ export class BodyManager extends TokenManager {
     this.cookie = new CookieManager(jwtProperties, applicationProperties, cookieProperties);
   }
 
-  expose(token: TokenMetadata, res: Response) {
-    return res.json(token);
+  expose(token: TokenMetadata, res: RestResponse) {
+    return res.send(token);
   }
 
-  extract(req: Request): string | undefined {
+  extract(req: RestRequest): string | undefined {
     return this.header.extract(req) ?? this.cookie.extract(req);
   }
 }

@@ -1,19 +1,13 @@
 import { Configuration, InjectByDecorator, List, Optional } from '@pmeig/srv-core';
-import {
-  RestErrorMiddleware,
-  RestMiddleware,
-  toExpressErrorMiddleware,
-  toExpressMiddleware
-} from '../../rest.middleware';
+import { RestErrorMiddleware, RestMiddleware, toRestErrorHandler, toRestHandler } from '../../rest.middleware';
 import { Method } from '../../models/rest.type';
 import { retrieveErrorMiddleware, retrieveMiddleware } from '../../rest';
-import { ErrorRequestHandler, RequestHandler } from 'express';
+import type { RestErrorHandler, RestHandler } from '../../http/http.type';
 import { ControllerAdvisor } from '../../errors/advisor.decorators';
-import { pathIdentifiers } from '../rest-controller.middleware';
 
 export interface MiddlewareResolved {
-  middlewares: RequestHandler[];
-  errorMiddlewares: ErrorRequestHandler[];
+  middlewares: RestHandler[];
+  errorMiddlewares: RestErrorHandler[];
 }
 
 interface MiddlewareResolver<T> {
@@ -108,10 +102,6 @@ export class RestMiddlewareResolver {
     const uri = this.state.path + path;
     const middlewares = this.state.middlewares.filter(value => value.accept(uri, method));
     const errorMiddlewares = this.state.errorMiddlewares.filter(value => value.accept(uri, method));
-    pathIdentifiers[uri] = {
-      controller,
-      method: methodName.toString()
-    };
     return this.addMiddlewareFromDecorator(middlewares, errorMiddlewares, controller, methodName);
   }
 
@@ -121,21 +111,21 @@ export class RestMiddlewareResolver {
     controller?: any,
     key?: string | symbol
   ): MiddlewareResolved {
-    const expressMiddleware = middlewares.map(value => toExpressMiddleware(value));
-    const expressErrorMiddleware = errorMiddleware.map(value => toExpressErrorMiddleware(value));
+    const restMiddleware = middlewares.map(value => toRestHandler(value));
+    const restErrorMiddleware = errorMiddleware.map(value => toRestErrorHandler(value));
     if (controller) {
       const middlewareDecorator = retrieveMiddleware(controller, key);
       const errorMiddlewareDecorator = retrieveErrorMiddleware(controller, key);
       if (middlewareDecorator) {
-        expressMiddleware.unshift(middlewareDecorator);
+        restMiddleware.unshift(middlewareDecorator);
       }
       if (errorMiddlewareDecorator) {
-        expressErrorMiddleware.unshift(errorMiddlewareDecorator);
+        restErrorMiddleware.unshift(errorMiddlewareDecorator);
       }
     }
     return {
-      middlewares: expressMiddleware,
-      errorMiddlewares: expressErrorMiddleware
+      middlewares: restMiddleware,
+      errorMiddlewares: restErrorMiddleware
     };
   }
 }

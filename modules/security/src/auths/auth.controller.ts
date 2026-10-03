@@ -1,7 +1,7 @@
 import { Controller, Delete, Get, HttpStatus, Params, Res, Status } from '@pmeig/srv-rest';
+import type { RestResponse } from '@pmeig/srv-rest';
 import { AuthService } from './auth.service';
 import { TokenManager } from '../core/jwt/token.manager';
-import type { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -17,7 +17,7 @@ export class AuthController {
   }
 
   @Get('callback')
-  async callback(@Params queries: Record<string, string>, @Res response: Response) {
+  async callback(@Params queries: Record<string, string>, @Res response: RestResponse) {
     const token = await this.authService.createToken(queries);
     return this.tokenManager.expose(token, response);
   }

@@ -1,10 +1,9 @@
 import { Configuration, Decorators } from '@pmeig/srv-core';
 import { insertMiddleware, OptionsMapper, RequestMapper } from '../rest';
 import { HttpStatus, HttpStatusText } from '../models/status.model';
-import { RequestHandler } from 'express';
+import type { RestHandler } from '../http/http.type';
 
-export const Middleware = (middleware: RequestHandler): ClassDecorator | MethodDecorator =>
-  insertMiddleware(middleware);
+export const Middleware = (middleware: RestHandler): ClassDecorator | MethodDecorator => insertMiddleware(middleware);
 
 export const Controller = (path?: string) =>
   Decorators.class('Controller', target => {
