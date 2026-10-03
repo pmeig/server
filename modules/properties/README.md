@@ -283,7 +283,7 @@ vault:
 
 Vault is disabled unless `VAULT_ENABLED=true` (or `enabled: true` in the configuration above, which overrides the
 environment variable). When disabled, no Vault client is created and `VaultClient` never calls Vault: `read()`
-resolves `undefined` and `health()` reports a non-initialized, sealed Vault.
+resolves `undefined` and `health()` answers like a healthy Vault (`initialized: true`, `sealed: false`).
 
 
 ### Vault Property References

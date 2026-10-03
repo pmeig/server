@@ -72,8 +72,9 @@ export class VaultClient {
   }
 
   health(): Promise<Nullable<VaultHealth>> {
+    // disabled is an expected state: answer like a healthy Vault so health checks stay green
     if (!this.enabled) {
-      return Promise.resolve({ initialized: false, sealed: true, standby: false } as VaultHealth);
+      return Promise.resolve({ initialized: true, sealed: false, standby: false } as VaultHealth);
     }
     return this.getResponseBody(
       this.vaultClient.get<VaultHealth>('sys/health', {
