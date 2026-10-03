@@ -7,12 +7,12 @@ import {
   retrieveParameterTypes,
   Type
 } from '@pmeig/srv-core';
-import type { Request, Response } from 'express';
+import type { RestRequest, RestResponse } from '../../http/http.type';
 
 export const request_parameter = 'request:param';
 
 @Configuration
-export class ExpressParameterResolver {
+export class RestParameterResolver {
   private readonly converters: Converter<any>[] = [];
   constructor(@List(Converter) converters: Converter<any>[]) {
     this.converters = converters;
@@ -21,7 +21,7 @@ export class ExpressParameterResolver {
   resolve(target: any, name: string | symbol) {
     const metadata = getMultiMetadataReflection<{
       index: number;
-      handler: (request: Request, response: Response) => any;
+      handler: (request: RestRequest, response: RestResponse) => any;
     }>(request_parameter, target, name);
     const types = retrieveParameterTypes(target, name);
     const customConverters = retrieveConverters(target, name) ?? {};
@@ -40,22 +40,22 @@ export class ExpressParameterResolver {
         converter = this.converters.find(convert => convert.hasConverter(instance));
       }
       if (!converter) {
-        return (request: Request, response: Response, params: any[]) => {
+        return (request: RestRequest, response: RestResponse, params: any[]) => {
           params[item.index] = item.handler(request, response);
           return params;
         };
       }
-      return (request: Request, response: Response, params: any[]) => {
+      return (request: RestRequest, response: RestResponse, params: any[]) => {
         params[item.index] = converter.to(item.handler(request, response));
         return params;
       };
     });
     return params.reduce(
-      (acc: (request: Request, response: Response) => any[], setter) => {
+      (acc: (request: RestRequest, response: RestResponse) => any[], setter) => {
         const origin = acc;
         return (request, response) => setter(request, response, origin(request, response));
       },
       request => Array(types.length).fill(request.body)
-    ) as (request: Request, response: Response) => any[];
+    ) as (request: RestRequest, response: RestResponse) => any[];
   }
 }

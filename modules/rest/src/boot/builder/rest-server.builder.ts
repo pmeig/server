@@ -1,43 +1,61 @@
 import { Configuration } from '@pmeig/srv-core';
-import express, { ErrorRequestHandler, Express, json, urlencoded } from 'express';
-import compression from 'compression';
-import rateLimit from 'express-rate-limit';
+import Fastify, { FastifyContextConfig, FastifyInstance } from 'fastify';
+import compress from '@fastify/compress';
+import formbody from '@fastify/formbody';
+import rateLimit from '@fastify/rate-limit';
+import qs from 'qs';
 import { RestMiddlewareResolver } from '../resolver/rest-middleware.resolver';
 import { RestRoute } from './rest-route.builder';
+import { chainErrorHandlers, toHook } from '../../http/http.chain';
+import type { RestRouteConfig } from '../../http/http.internal';
+
+// 200 requests per client every 15 minutes
+const RATE_LIMIT = { max: 200, timeWindow: 15 * 60 * 1000 };
 
 @Configuration
 export class RestServerBuilder {
-  private server: Express;
-  private errorMiddleware: ErrorRequestHandler[];
+  private server: FastifyInstance;
   constructor(private readonly middlewareResolver: RestMiddlewareResolver) {}
 
-  builder() {
-    this.server = express();
-    this.server.use(compression());
-    this.server.use(json());
-    this.server.use(urlencoded({ extended: true }));
+  async builder() {
+    this.server = Fastify({
+      // built-in Pino logger: one structured log line per request and response, and the listening address
+      logger: true,
+      // REST clients send `/users/` as often as `/users`: serve both instead of answering 404
+      routerOptions: { ignoreTrailingSlash: true }
+    });
+    await this.server.register(compress);
+    await this.server.register(formbody, { parser: (body: string) => qs.parse(body) });
+    await this.server.register(rateLimit, { ...RATE_LIMIT, enableDraftSpec: true });
+
     const middlewares = this.middlewareResolver.resolveServer();
-    middlewares.middlewares.unshift(
-      rateLimit({
-        windowMs: 15 * 60 * 1000,
-        limit: 200,
-        standardHeaders: true,
-        legacyHeaders: false
-      })
-    );
-    this.errorMiddleware = middlewares.errorMiddlewares;
-    this.server.use(...middlewares.middlewares);
+    // preHandler (and not onRequest) so that the middlewares can read the parsed body
+    middlewares.middlewares.forEach(middleware => this.server.addHook('preHandler', toHook(middleware)));
+    if (middlewares.errorMiddlewares.length > 0) {
+      this.server.setErrorHandler(chainErrorHandlers(middlewares.errorMiddlewares));
+    }
     return this;
   }
 
   addRoute(route: RestRoute) {
-    this.server.use(route.path, route.handler);
+    route.paths.forEach(restPath => {
+      const middlewares = [...route.middlewares, ...restPath.middlewares];
+      const errorMiddlewares = [...restPath.errorMiddlewares, ...route.errorMiddlewares];
+      const config = { rest: restPath.context } satisfies RestRouteConfig as FastifyContextConfig;
+      this.server.route({
+        method: restPath.method,
+        url: route.configPath + restPath.configPath || '/',
+        config,
+        preHandler: middlewares.map(toHook),
+        ...(errorMiddlewares.length > 0 && { errorHandler: chainErrorHandlers(errorMiddlewares) }),
+        handler: restPath.handler
+      });
+    });
   }
 
-  start(port: number) {
-    if (this.errorMiddleware.length > 0) this.server.use(...this.errorMiddleware);
-    return this.server.listen(port, () => {
-      console.log(`Server started on port ${port}`);
-    });
+  async start(port: number) {
+    // 0.0.0.0 to be reachable from outside a container, Fastify only listens on localhost by default
+    await this.server.listen({ port, host: '0.0.0.0' });
+    return this.server;
   }
 }

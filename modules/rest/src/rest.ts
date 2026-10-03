@@ -7,8 +7,7 @@ import {
   Type
 } from '@pmeig/srv-core';
 import { Method } from './models/rest.type';
-import { ErrorRequestHandler, RequestHandler } from 'express';
-import { ExpressErrorMiddleware, ExpressMiddleware } from './rest.middleware';
+import type { RestErrorHandler, RestHandler } from './http/http.type';
 import { HttpStatus, HttpStatusCode } from './models/status.model';
 import { MediaType } from './models/media.model';
 
@@ -82,18 +81,18 @@ export const OptionsMapper = (
 export const retrieveRestConfig = (target: Type<any>, propertyKey?: string | symbol) =>
   getMetadataReflection<RestMapper>(rest_key, target, propertyKey);
 
-export const insertMiddleware = (middleware: RequestHandler): ClassDecorator | MethodDecorator =>
+export const insertMiddleware = (middleware: RestHandler): ClassDecorator | MethodDecorator =>
   Decorators.all('Middleware', (target: Type<any>, propertyKey?: string | symbol) => {
     reflectMetadataContext(rest_middleware_key, target, propertyKey).set(middleware);
   });
 
-export const insertErrorMiddleware = (middleware: ErrorRequestHandler): ClassDecorator | MethodDecorator =>
+export const insertErrorMiddleware = (middleware: RestErrorHandler): ClassDecorator | MethodDecorator =>
   Decorators.all('ErrorMiddleware', (target: Type<any>, propertyKey?: string | symbol) => {
-    reflectMetadataContext(rest_middleware_key, target, propertyKey).set(middleware);
+    reflectMetadataContext(rest_error_middleware_key, target, propertyKey).set(middleware);
   });
 
 export const retrieveMiddleware = (target: Type<any>, propertyKey?: string | symbol) =>
-  getMetadataReflection<ExpressMiddleware>(rest_middleware_key, target, propertyKey);
+  getMetadataReflection<RestHandler>(rest_middleware_key, target, propertyKey);
 
 export const retrieveErrorMiddleware = (target: Type<any>, propertyKey?: string | symbol) =>
-  getMetadataReflection<ExpressErrorMiddleware>(rest_error_middleware_key, target, propertyKey);
+  getMetadataReflection<RestErrorHandler>(rest_error_middleware_key, target, propertyKey);

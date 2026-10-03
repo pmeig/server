@@ -1,6 +1,6 @@
 import { After, Before, Configuration } from '@pmeig/srv-core';
 import { RestMiddleware } from '@pmeig/srv-rest';
-import type { NextFunction, Request } from 'express';
+import type { RestNext, RestRequest } from '@pmeig/srv-rest';
 import { TokenManager } from '../core/jwt/token.manager';
 import { JwtService } from '../core/jwt/jwt.service';
 import { SECURITY_USER_FIELD_NAME } from '../core/security.constant';
@@ -20,7 +20,7 @@ export class AuthMiddleware extends RestMiddleware {
     super();
   }
 
-  use(request: Request, next: NextFunction): void | Promise<void> {
+  use(request: RestRequest, next: RestNext): void | Promise<void> {
     const token = this.tokenManager.extract(request);
     request[SECURITY_USER_FIELD_NAME] = token
       ? this.jwtService.decode(token, this.issuerProvider.getIssuer())

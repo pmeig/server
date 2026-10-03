@@ -4,7 +4,7 @@ import { RestServerBuilder } from './builder/rest-server.builder';
 import { RestRouteBuilder } from './builder/rest-route.builder';
 import { RestMiddlewareResolver } from './resolver/rest-middleware.resolver';
 import { RestPathResolver } from './resolver/rest-path.resolver';
-import { ExpressParameterResolver } from './resolver/express-parameter.resolver';
+import { RestParameterResolver } from './resolver/rest-parameter.resolver';
 import { RequestGeneratorId } from '../rest.scoped';
 import { RestControllerMiddleware } from './rest-controller.middleware';
 import { RestControllerResolver } from './resolver/rest-controller.resolver';
@@ -18,7 +18,7 @@ import { RestControllerResolver } from './resolver/rest-controller.resolver';
     RestRouteBuilder,
     RestMiddlewareResolver,
     RestPathResolver,
-    ExpressParameterResolver,
+    RestParameterResolver,
     RequestGeneratorId
   ]
 })

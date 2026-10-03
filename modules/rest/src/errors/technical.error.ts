@@ -33,6 +33,8 @@ export abstract class TechnicalError extends HttpError {
       business = message;
       message = status;
       httpStatus = HttpStatus.serverError.SERVICE_UNAVAILABLE;
+    } else {
+      httpStatus = status;
     }
     if (typeof message === 'string') {
       msg = {

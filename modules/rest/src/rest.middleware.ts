@@ -1,22 +1,20 @@
-import type { NextFunction, Request, Response } from 'express';
+import type { RestErrorHandler, RestHandler, RestNext, RestRequest, RestResponse } from './http/http.type';
 import { Method } from './models/rest.type';
-import { AsyncSync, Type } from '@pmeig/srv-core';
+import { Type } from '@pmeig/srv-core';
 import { RestControllerResolver } from './boot/resolver/rest-controller.resolver';
 import { controllerStorage } from './boot/rest-internal.boot';
 
-export type ExpressMiddleware = (req: Request, res: Response, next: NextFunction) => AsyncSync<void>;
-export type ExpressErrorMiddleware = (error: Error, req: Request, res: Response, next: NextFunction) => AsyncSync<void>;
-
-export const toExpressMiddleware =
-  (middleware: RestMiddleware) => (request: Request, response: Response, next: NextFunction) => {
+export const toRestHandler =
+  (middleware: RestMiddleware): RestHandler =>
+  (request, response, next) => {
     return middleware.use(request, next, response);
   };
 
-export const toExpressErrorMiddleware = (middleware: RestErrorMiddleware) => {
-  return (error: Error, req: Request, res: Response, next: NextFunction) => {
-    return middleware.use(error, res, req, next);
+export const toRestErrorHandler =
+  (middleware: RestErrorMiddleware): RestErrorHandler =>
+  (error, request, response, next) => {
+    return middleware.use(error, response, request, next);
   };
-};
 
 export const retrieveControllerCreator = () => {
   const store = controllerStorage.getStore() as { controller: Type<any>; method: string };
@@ -36,7 +34,7 @@ export abstract class RestMiddleware {
     return false;
   }
 
-  abstract use(request: Request, next: NextFunction, response: Response): void | Promise<void>;
+  abstract use(request: RestRequest, next: RestNext, response: RestResponse): void | Promise<void>;
 }
 
 export abstract class RestErrorMiddleware {
@@ -47,5 +45,5 @@ export abstract class RestErrorMiddleware {
     return false;
   }
 
-  abstract use(error: Error, response: Response, request: Request, next: NextFunction): void | Promise<void>;
+  abstract use(error: Error, response: RestResponse, request: RestRequest, next: RestNext): void | Promise<void>;
 }

@@ -2,21 +2,25 @@ import { RestMiddlewareResolver } from './rest-middleware.resolver';
 import { Configuration, Nullable, toPromise } from '@pmeig/srv-core';
 import { Method } from '../../models/rest.type';
 import { HttpStatusCode, HttpStatusNoValue, is3xx } from '../../models/status.model';
-import { ErrorRequestHandler, RequestHandler, Response } from 'express';
-import { ExpressParameterResolver } from './express-parameter.resolver';
+import { RestParameterResolver } from './rest-parameter.resolver';
 import { retrieveRestConfig } from '../../rest';
+import type { RestErrorHandler, RestHandler, RestRequest, RestResponse } from '../../http/http.type';
+import type { RestRouteContext } from '../../http/http.internal';
 
 export interface RestPath {
   method: Method;
-  path: string;
-  handler: (RequestHandler | ErrorRequestHandler)[];
+  configPath: string;
+  context: RestRouteContext;
+  middlewares: RestHandler[];
+  errorMiddlewares: RestErrorHandler[];
+  handler: (request: RestRequest, response: RestResponse) => Promise<RestResponse>;
 }
 
 @Configuration
 export class RestPathResolver {
   constructor(
     private readonly middlewaresResolver: RestMiddlewareResolver,
-    private readonly expressParameterResolver: ExpressParameterResolver
+    private readonly parameterResolver: RestParameterResolver
   ) {}
 
   resolve(controller: any, method: Function): Nullable<RestPath> {
@@ -25,23 +29,31 @@ export class RestPathResolver {
     const config = retrieveRestConfig(controller, methodName);
     if (config) {
       const responseHandler = this.createHandlerResponse(config.options);
-      const params = this.expressParameterResolver.resolve(controller, methodName);
-      const path = config.path ? (config.path.startsWith('/') ? config.path : '/' + config.path) : '';
-      const middlewares = this.middlewaresResolver.resolvePath(path, config.options.method, controller, methodName);
+      const params = this.parameterResolver.resolve(controller, methodName);
+      const configPath = config.path ? (config.path.startsWith('/') ? config.path : '/' + config.path) : '';
+      const middlewares = this.middlewaresResolver.resolvePath(
+        configPath,
+        config.options.method,
+        controller,
+        methodName
+      );
       return {
         method: config.options.method,
-        path,
-        handler: [
-          ...middlewares.middlewares.map(value => value),
-          async (request: any, response: Response) => {
-            const value = await toPromise(handler(...params(request, response)));
-            response = response.appendHeader('Content-type', config.options.media);
-            if (typeof value !== 'undefined') {
-              responseHandler(value, response);
-            } else response.sendStatus(HttpStatusNoValue(config.options.status));
-          },
-          ...middlewares.errorMiddlewares
-        ]
+        configPath,
+        context: { controller, method: methodName },
+        middlewares: middlewares.middlewares,
+        errorMiddlewares: middlewares.errorMiddlewares,
+        handler: async (request, response) => {
+          const answered = trackAnswer(response);
+          const value = await toPromise(handler(...params(request, response)));
+          // the handler answered by itself through @Res (response.send(), redirect(), ...)
+          if (answered() || response.sent) return response;
+          response.header('content-type', config.options.media);
+          if (typeof value === 'undefined' || value === response) {
+            return response.code(HttpStatusNoValue(config.options.status)).send();
+          }
+          return responseHandler(value, response);
+        }
       };
     }
     return undefined;
@@ -49,8 +61,30 @@ export class RestPathResolver {
 
   private createHandlerResponse(options: { status: HttpStatusCode; media: string; method: Method }) {
     if (is3xx(options.status)) {
-      return (value: any, response: Response) => response.status(options.status).redirect(value);
+      return (value: any, response: RestResponse) => response.redirect(value, options.status);
     }
-    return (value: any, response: Response) => response.status(options.status).json(value);
+    const json = options.media.includes('json');
+    return (value: any, response: RestResponse) => {
+      // strings and buffers are sent as is unless the media type is JSON, everything else is serialized
+      const raw = !json && (typeof value === 'string' || Buffer.isBuffer(value));
+      return response.code(options.status).send(raw ? value : JSON.stringify(value));
+    };
   }
 }
+
+/**
+ * Tells whether the handler already answered through `@Res`, to avoid answering a second time.
+ *
+ * `reply.sent` only turns true once the response is flushed, and that is asynchronous with some onSend
+ * hooks (compression of a payload over 1 kB for example). Relying on it, a handler doing
+ * `@Res response` + `response.send(bigPayload)` would be answered twice (`premature close`).
+ */
+const trackAnswer = (response: RestResponse) => {
+  let answered = false;
+  const send = response.send.bind(response);
+  response.send = ((...args: Parameters<RestResponse['send']>) => {
+    answered = true;
+    return send(...args);
+  }) as RestResponse['send'];
+  return () => answered;
+};

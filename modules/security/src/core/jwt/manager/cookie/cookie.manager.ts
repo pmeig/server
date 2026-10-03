@@ -1,5 +1,6 @@
-import type { CookieOptions, Request, Response } from 'express';
+import type { RestRequest, RestResponse } from '@pmeig/srv-rest';
 import { CookieProperties } from './cookie.properties';
+import { CookieWriteOptions, writeCookie } from './cookie.writer';
 import { TokenManager } from '../../token.manager';
 import { JwtProperties } from '../../jwt.properties';
 import { Configuration } from '@pmeig/srv-core';
@@ -7,6 +8,9 @@ import { ApplicationProperties } from '@pmeig/srv-properties';
 import { TokenMetadata } from '../../token';
 
 const SUFFIX_LENGTH = 3;
+
+// filled by cookie-parser (see CookieParserMiddleware)
+type CookieRequest = RestRequest & { cookies?: Record<string, any>; signedCookies?: Record<string, any> };
 
 @Configuration
 export class CookieManager extends TokenManager {
@@ -25,27 +29,29 @@ export class CookieManager extends TokenManager {
     this.maxLength -= this.key.length;
   }
 
-  expose(token: TokenMetadata, res: Response) {
-    const options = {
+  expose(token: TokenMetadata, res: RestResponse) {
+    const options: CookieWriteOptions = {
       httpOnly: this.cookieProperties.httpOnly,
       secure: this.cookieProperties.secure,
       sameSite: this.cookieProperties.sameSite,
       maxAge: token.expiresIn,
       domain:
         this.cookieProperties.domain ??
-        res.req.header('Referer') ??
-        res.req.header('Origin') ??
-        res.req.header('Host')?.split(':')[0] ??
-        res.req.hostname,
-      signed: this.cookieProperties.signed
+        res.request.headers.referer ??
+        res.request.headers.origin ??
+        res.request.headers.host?.split(':')[0] ??
+        res.request.hostname.split(':')[0],
+      signed: this.cookieProperties.signed,
+      secret: this.cookieProperties.sign
     };
     if (token.accessToken.length > this.maxLength) {
       return this.sendMultipleCookie(token, res, options);
     }
-    return res.cookie(this.key, token.accessToken, options);
+    return writeCookie(res, this.key, token.accessToken, options);
   }
 
-  extract(req: Request): string | undefined {
+  extract(request: RestRequest): string | undefined {
+    const req = request as CookieRequest;
     if (this.cookieProperties.signed) {
       if (!req.signedCookies) {
         return undefined;
@@ -64,7 +70,7 @@ export class CookieManager extends TokenManager {
     return req.cookies[this.key] as string;
   }
 
-  private sendMultipleCookie(token: TokenMetadata, res: Response, options: CookieOptions) {
+  private sendMultipleCookie(token: TokenMetadata, res: RestResponse, options: CookieWriteOptions) {
     const values = [token.accessToken];
     const maxLength = this.maxLength - SUFFIX_LENGTH;
     while (values[values.length - 1].length > maxLength) {
@@ -74,7 +80,7 @@ export class CookieManager extends TokenManager {
     }
     values.forEach((value, index) => {
       const key = `${this.key}-${index}`;
-      res.cookie(key, value, options);
+      writeCookie(res, key, value, options);
     });
     return res;
   }

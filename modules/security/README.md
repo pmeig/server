@@ -369,9 +369,9 @@ export class AuthController {
 
 ## Compatibility
 
-- Node.js: 18+
+- Node.js: 20+
 - TypeScript: 5.8.3+
-- Express: 5.1.0+
+- Fastify: 5.6.0+ (through `@pmeig/srv-rest`)
 - Modern ES2022+ environment
 
 ## Common Patterns

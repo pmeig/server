@@ -14,7 +14,6 @@
   "license": "ISC",
   "devDependencies": {
     "@pmeig/vite-plugin": "link:..\\dist\\vite-plugin-pmeig",
-    "@types/express": "^5.0.2",
     "@types/node": "^22.15.19",
     "reflect-metadata": "^0.2.2",
     "typescript": "^5.8.3",
@@ -25,7 +24,6 @@
     "@pmeig/srv-properties": "workspace:*",
     "@pmeig/srv-rest": "workspace:*",
     "@pmeig/srv-vault": "workspace:*",
-    "@pmeig/srv-security": "workspace:*",
-    "express": "^5.1.0"
+    "@pmeig/srv-security": "workspace:*"
   }
 }

@@ -1,17 +1,17 @@
 import { User } from '../models/user.model';
-import { Request } from 'express';
 import { AuthenticationException } from './authentication.exception';
-import { HttpStatusClientError } from '@pmeig/srv-rest';
+import { HttpStatusClientError, requestPath } from '@pmeig/srv-rest';
+import type { RestRequest } from '@pmeig/srv-rest';
 import { AsyncSync, Nullable } from '@pmeig/srv-core';
 
 export abstract class Guard<T extends User = User> {
-  abstract canActivate(request: Request, user: Nullable<T>): AsyncSync<boolean>;
+  abstract canActivate(request: RestRequest, user: Nullable<T>): AsyncSync<boolean>;
 
-  unauthorized(request: Request, user: Nullable<T>): AuthenticationException {
+  unauthorized(request: RestRequest, user: Nullable<T>): AuthenticationException {
     return new AuthenticationException(
       100,
       HttpStatusClientError.NOT_FOUND,
-      `Unauthorized on path ${request.path} for user: ${user?.name}`
+      `Unauthorized on path ${requestPath(request)} for user: ${user?.name}`
     );
   }
 }

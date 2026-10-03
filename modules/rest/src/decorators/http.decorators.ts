@@ -1,12 +1,12 @@
 import { AsyncSync, Decorators, MethodParameterDecorator, NoConvert, reflectMultiUpdate } from '@pmeig/srv-core';
-import { NextFunction, Request, Response } from 'express';
-import { request_parameter } from '../boot/resolver/express-parameter.resolver';
+import { request_parameter } from '../boot/resolver/rest-parameter.resolver';
+import type { RestNext, RestRequest, RestResponse } from '../http/http.type';
 import { Middleware } from './rest.decorators';
 
 export const RestDecorators = Object.freeze({
   parameter: (
     name: string,
-    handler: (request: Request, response: Response) => AsyncSync<any>,
+    handler: (request: RestRequest, response: RestResponse) => AsyncSync<any>,
     ...applies: MethodParameterDecorator[]
   ) =>
     Decorators.parameter.method(name, (target, propertyKey, index) => {
@@ -26,7 +26,7 @@ export const RestDecorators = Object.freeze({
     }),
   method: (
     name: string,
-    handler: (request: Request, response: Response, next: NextFunction) => void,
+    handler: (request: RestRequest, response: RestResponse, next: RestNext) => void,
     ...applies: MethodDecorator[]
   ) =>
     Decorators.method(name, (target, propertyKey, descriptor) => {
@@ -39,7 +39,7 @@ export const RestDecorators = Object.freeze({
 
 export const Param = (name: string) =>
   RestDecorators.parameter('Param', request => {
-    return request.query[name];
+    return (request.query as Record<string, unknown>)[name];
   });
 export const Params = RestDecorators.parameter('Params', request => {
   return request.query;
@@ -47,7 +47,7 @@ export const Params = RestDecorators.parameter('Params', request => {
 
 export const Path = (name: string) =>
   RestDecorators.parameter(name, request => {
-    return request.params[name];
+    return (request.params as Record<string, unknown>)[name];
   });
 
 export const Paths = RestDecorators.parameter('Paths', request => {

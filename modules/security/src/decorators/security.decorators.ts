@@ -1,5 +1,5 @@
 import { ClassDecorator, Decorators, reflectUpdate, Type } from '@pmeig/srv-core';
-import { GuardAuthorities, security_guard } from './security-service.decorators';
+import { GuardAuthorities, security_guard, security_public } from './security-service.decorators';
 import { Authority } from '../models/user.model';
 
 const securityGuardReflection = (name: string, operator: '&&' | '||' | string, authorities: string[], not: boolean) =>
@@ -27,9 +27,7 @@ const SecurityDecorators = Object.freeze({
 });
 
 export const Public = Decorators.all('Public', (target, propertyKey) => {
-  setTimeout(() => {
-    reflectUpdate<GuardAuthorities>(() => () => true, security_guard, target, propertyKey);
-  }, 250);
+  reflectUpdate<boolean>(() => true, security_public, target, propertyKey);
 }) as ClassDecorator & MethodDecorator;
 
 export const UseGuard = (check: (authority: Authority) => boolean) =>
