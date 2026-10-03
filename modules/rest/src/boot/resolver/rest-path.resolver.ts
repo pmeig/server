@@ -4,7 +4,8 @@ import { Method } from '../../models/rest.type';
 import { HttpStatusCode, HttpStatusNoValue, is3xx } from '../../models/status.model';
 import { RestParameterResolver } from './rest-parameter.resolver';
 import { retrieveRestConfig } from '../../rest';
-import type { RestErrorHandler, RestHandler, RestRequest, RestResponse, RestRouteContext } from '../../http/http.type';
+import type { RestErrorHandler, RestHandler, RestRequest, RestResponse } from '../../http/http.type';
+import type { RestRouteContext } from '../../http/http.internal';
 
 export interface RestPath {
   method: Method;
@@ -72,8 +73,11 @@ export class RestPathResolver {
 }
 
 /**
- * `reply.sent` only turns true once the response is flushed, which is asynchronous with some onSend hooks
- * (compression for example), so the calls to `send` are tracked to avoid answering twice.
+ * Tells whether the handler already answered through `@Res`, to avoid answering a second time.
+ *
+ * `reply.sent` only turns true once the response is flushed, and that is asynchronous with some onSend
+ * hooks (compression of a payload over 1 kB for example). Relying on it, a handler doing
+ * `@Res response` + `response.send(bigPayload)` would be answered twice (`premature close`).
  */
 const trackAnswer = (response: RestResponse) => {
   let answered = false;

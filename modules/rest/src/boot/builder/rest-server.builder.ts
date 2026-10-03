@@ -1,12 +1,13 @@
 import { Configuration } from '@pmeig/srv-core';
-import Fastify, { FastifyInstance } from 'fastify';
+import Fastify, { FastifyContextConfig, FastifyInstance } from 'fastify';
 import compress from '@fastify/compress';
 import formbody from '@fastify/formbody';
 import rateLimit from '@fastify/rate-limit';
 import qs from 'qs';
 import { RestMiddlewareResolver } from '../resolver/rest-middleware.resolver';
 import { RestRoute } from './rest-route.builder';
-import { chainErrorHandlers, chainHandlers } from '../../http/http.chain';
+import { chainErrorHandlers, toHook } from '../../http/http.chain';
+import type { RestRouteConfig } from '../../http/http.internal';
 
 // 200 requests per client every 15 minutes
 const RATE_LIMIT = { max: 200, timeWindow: 15 * 60 * 1000 };
@@ -29,9 +30,7 @@ export class RestServerBuilder {
 
     const middlewares = this.middlewareResolver.resolveServer();
     // preHandler (and not onRequest) so that the middlewares can read the parsed body
-    if (middlewares.middlewares.length > 0) {
-      this.server.addHook('preHandler', chainHandlers(middlewares.middlewares));
-    }
+    middlewares.middlewares.forEach(middleware => this.server.addHook('preHandler', toHook(middleware)));
     if (middlewares.errorMiddlewares.length > 0) {
       this.server.setErrorHandler(chainErrorHandlers(middlewares.errorMiddlewares));
     }
@@ -42,11 +41,12 @@ export class RestServerBuilder {
     route.paths.forEach(restPath => {
       const middlewares = [...route.middlewares, ...restPath.middlewares];
       const errorMiddlewares = [...restPath.errorMiddlewares, ...route.errorMiddlewares];
+      const config = { rest: restPath.context } satisfies RestRouteConfig as FastifyContextConfig;
       this.server.route({
         method: restPath.method,
         url: route.configPath + restPath.configPath || '/',
-        config: { rest: restPath.context },
-        ...(middlewares.length > 0 && { preHandler: chainHandlers(middlewares) }),
+        config,
+        preHandler: middlewares.map(toHook),
         ...(errorMiddlewares.length > 0 && { errorHandler: chainErrorHandlers(errorMiddlewares) }),
         handler: restPath.handler
       });
