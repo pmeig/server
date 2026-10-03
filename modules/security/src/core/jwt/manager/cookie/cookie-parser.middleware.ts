@@ -18,11 +18,8 @@ export class CookieParserMiddleware extends RestMiddleware {
 
   use(req: RestRequest, next: RestNext, res: RestResponse) {
     if (!this.parser) {
-      if (this.cookieProperties.signed) {
-        this.parser = cookieParser(this.cookieProperties.sign);
-      } else {
-        this.parser = (_, _res, next) => next();
-      }
+      // without a secret cookie-parser still fills `request.cookies`, it only skips `request.signedCookies`
+      this.parser = cookieParser(this.cookieProperties.signed ? this.cookieProperties.sign : undefined);
     }
     this.parser(req, res, next);
   }
